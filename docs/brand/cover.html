@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+body{width:1600px;height:900px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0b3b37;color:#fff;overflow:hidden;position:relative}
+.bg{position:absolute;inset:0;background:radial-gradient(1200px 700px at 85% 20%,#14857a 0,transparent 60%),radial-gradient(900px 600px at 0% 100%,#0f766e 0,transparent 60%)}
+.wrap{position:absolute;inset:0;padding:90px 100px;display:flex;gap:70px;align-items:center}
+.left{flex:1.1}
+.logo{display:flex;gap:18px;align-items:center;margin-bottom:46px}
+.logo svg{width:76px;height:76px}
+.logo b{font-size:46px;letter-spacing:-.02em}
+h1{font-size:68px;line-height:1.05;letter-spacing:-.03em;margin-bottom:28px}
+h1 em{font-style:normal;color:#5eead4}
+p{font-size:27px;line-height:1.4;color:#cdeae6;max-width:720px}
+.amd{margin-top:48px;display:inline-flex;gap:14px;align-items:center;font-size:21px;font-weight:600;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);padding:12px 20px;border-radius:999px}
+.right{flex:.9;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;color:#1c2421;border-radius:18px;padding:20px 24px;box-shadow:0 20px 50px rgba(0,0,0,.3);border-left:8px solid #15803d}
+.card.r{border-left-color:#b91c1c}.card.a{border-left-color:#b45309}
+.pill{display:inline-block;font-size:15px;font-weight:700;padding:3px 12px;border-radius:999px;margin-bottom:8px}
+.g .pill{background:#e7f5ec;color:#15803d}.r .pill{background:#fdecec;color:#b91c1c}.a .pill{background:#fdf3e2;color:#b45309}
+.card .t{font-size:22px;line-height:1.35}
+.card .s{font-size:16px;color:#5d6b66;margin-top:6px}
+</style></head><body><div class="bg"></div><div class="wrap">
+<div class="left">
+<div class="logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#5eead4"/><path d="M8 17l8-7 8 7v8h-5v-5h-6v5H8z" fill="#0b3b37"/></svg><b>Homeward</b></div>
+<h1>Discharge instructions patients can <em>actually follow</em></h1>
+<p>Plain language, the patient's own language, every sentence checked against the chart, and a human on every risky line.</p>
+<div class="amd">Open model on AMD Instinct MI300X · vLLM · ROCm</div>
+</div>
+<div class="right">
+<div class="card g"><span class="pill">Verified</span><div class="t">Siga tomando metoprolol succinate 50 mg una vez al día.</div><div class="s">Matches fact F7 · back-translation agrees</div></div>
+<div class="card r"><span class="pill">Blocked</span><div class="t">No beba más de <u>15</u> litros de líquido al día.</div><div class="s">Source says 1.5 L · number changed in translation</div></div>
+<div class="card a"><span class="pill">Uncertain</span><div class="t">Stop taking ibuprofen.</div><div class="s">Source says pause until kidneys are rechecked</div></div>
+</div></div></body></html>

@@ -1,0 +1,533 @@
+{
+ "_meta": {
+  "source": "scripted",
+  "note": "Hand-written sample run for demo without a GPU. Replace with a recorded AMD MI300X run (scripts/record_samples.py)."
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "You were in hospital because your heart failure got worse; salt and an anti-inflammatory pain medicine played a part.",
+     "source_quote": "Acute decompensated heart failure with reduced ejection fraction (EF 30%), precipitated by dietary sodium indiscretion and NSAID use."
+    },
+    {
+     "id": "F2",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Spironolactone",
+     "dose": "25 mg",
+     "frequency": "once daily",
+     "detail": "Start spironolactone 25 mg by mouth once a day.",
+     "source_quote": "NEW: Spironolactone 25 mg by mouth once daily"
+    },
+    {
+     "id": "F3",
+     "kind": "medication",
+     "med_action": "changed",
+     "drug": "Furosemide",
+     "dose": "40 mg",
+     "frequency": "twice daily (8 AM and 2 PM)",
+     "detail": "Furosemide dose goes up from 20 mg to 40 mg, taken twice a day at 8 AM and 2 PM.",
+     "source_quote": "CHANGED: Furosemide increased from 20 mg to 40 mg by mouth twice daily (8 AM and 2 PM)"
+    },
+    {
+     "id": "F4",
+     "kind": "medication",
+     "med_action": "hold",
+     "drug": "Ibuprofen",
+     "dose": null,
+     "frequency": null,
+     "detail": "Do not take ibuprofen until your cardiologist rechecks your kidney function.",
+     "source_quote": "HOLD: Ibuprofen - do not take until kidney function is rechecked by your cardiologist"
+    },
+    {
+     "id": "F5",
+     "kind": "medication",
+     "med_action": "stop",
+     "drug": "Lisinopril",
+     "dose": "10 mg",
+     "frequency": "daily",
+     "detail": "Stop taking lisinopril 10 mg.",
+     "source_quote": "STOP: Lisinopril 10 mg daily - discontinued"
+    },
+    {
+     "id": "F6",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Sacubitril/valsartan",
+     "dose": "24/26 mg",
+     "frequency": "twice daily",
+     "detail": "Start sacubitril/valsartan 24/26 mg twice a day, but not within 36 hours of your last lisinopril dose.",
+     "source_quote": "NEW: Sacubitril/valsartan 24/26 mg by mouth twice daily. Do not take within 36 hours of your last lisinopril dose."
+    },
+    {
+     "id": "F7",
+     "kind": "medication",
+     "med_action": "continue",
+     "drug": "Metoprolol succinate",
+     "dose": "50 mg",
+     "frequency": "once daily",
+     "detail": "Keep taking metoprolol succinate 50 mg once a day.",
+     "source_quote": "CONTINUE: Metoprolol succinate 50 mg by mouth once daily"
+    },
+    {
+     "id": "F8",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Call 911 or go to the Emergency Department for chest pain, shortness of breath at rest, or fainting.",
+     "source_quote": "Return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting."
+    },
+    {
+     "id": "F9",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Call the heart failure clinic at [PHONE_1] if your weight goes up more than 2 lb in one day or 5 lb in one week, or if your leg swelling gets worse.",
+     "source_quote": "Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens."
+    },
+    {
+     "id": "F10",
+     "kind": "diet",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Eat less than 2 g of sodium (salt) a day.",
+     "source_quote": "Sodium restriction < 2 g/day."
+    },
+    {
+     "id": "F11",
+     "kind": "diet",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Drink no more than 1.5 L of fluid a day.",
+     "source_quote": "Fluid restriction 1.5 L/day."
+    },
+    {
+     "id": "F12",
+     "kind": "activity",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Weigh yourself every morning after you pee and before breakfast, and write it down.",
+     "source_quote": "Weigh yourself every morning after urinating and before breakfast and record daily weights."
+    },
+    {
+     "id": "F13",
+     "kind": "activity",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Walk as much as you can manage; do not lift more than 10 lb for 2 weeks.",
+     "source_quote": "Walk as tolerated; no lifting > 10 lb for 2 weeks."
+    },
+    {
+     "id": "F14",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Heart failure clinic visit with [CLINICIAN_1] on 10/21/2026 at 10:30 AM.",
+     "source_quote": "Heart failure clinic with [CLINICIAN_1] on 10/21/2026 at 10:30 AM."
+    },
+    {
+     "id": "F15",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Blood test (basic metabolic panel) on 10/18/2026 at the outpatient lab.",
+     "source_quote": "Basic metabolic panel (blood test) on 10/18/2026 at the outpatient lab."
+    }
+   ]
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "S1",
+     "section": "why",
+     "text": "You stayed in the hospital because your heart was not pumping well and fluid built up.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "S2",
+     "section": "why",
+     "text": "Too much salt and a pain medicine called an NSAID made it worse.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "S3",
+     "section": "medicines",
+     "text": "Start spironolactone 25 mg. Take it once a day.",
+     "fact_ids": [
+      "F2"
+     ]
+    },
+    {
+     "id": "S4",
+     "section": "medicines",
+     "text": "Your furosemide dose is now 40 mg. Take it 2 times a day, at 8 AM and 2 PM.",
+     "fact_ids": [
+      "F3"
+     ]
+    },
+    {
+     "id": "S5",
+     "section": "medicines",
+     "text": "Stop taking ibuprofen.",
+     "fact_ids": [
+      "F4"
+     ]
+    },
+    {
+     "id": "S6",
+     "section": "medicines",
+     "text": "Stop taking lisinopril. Do not take it again.",
+     "fact_ids": [
+      "F5"
+     ]
+    },
+    {
+     "id": "S7",
+     "section": "medicines",
+     "text": "Start sacubitril/valsartan 24/26 mg, 2 times a day.",
+     "fact_ids": [
+      "F6"
+     ]
+    },
+    {
+     "id": "S8",
+     "section": "medicines",
+     "text": "Wait at least 36 hours after your last lisinopril before your first sacubitril/valsartan.",
+     "fact_ids": [
+      "F6",
+      "F5"
+     ]
+    },
+    {
+     "id": "S9",
+     "section": "medicines",
+     "text": "Keep taking metoprolol succinate 50 mg once a day, the same as before.",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "S10",
+     "section": "warning_signs",
+     "text": "Call 911 or go to the emergency room if you have chest pain, trouble breathing while resting, or you faint.",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "S11",
+     "section": "daily_care",
+     "text": "Eat less than 2 grams of salt each day.",
+     "fact_ids": [
+      "F10"
+     ]
+    },
+    {
+     "id": "S12",
+     "section": "daily_care",
+     "text": "Drink no more than 1.5 liters of fluid each day.",
+     "fact_ids": [
+      "F11"
+     ]
+    },
+    {
+     "id": "S13",
+     "section": "daily_care",
+     "text": "Weigh yourself every morning after you pee and before breakfast. Write it down.",
+     "fact_ids": [
+      "F12"
+     ]
+    },
+    {
+     "id": "S14",
+     "section": "daily_care",
+     "text": "Walk as much as feels OK. Do not lift more than 10 pounds for 2 weeks.",
+     "fact_ids": [
+      "F13"
+     ]
+    },
+    {
+     "id": "S15",
+     "section": "appointments",
+     "text": "See [CLINICIAN_1] at the heart failure clinic on 10/21/2026 at 10:30 AM.",
+     "fact_ids": [
+      "F14"
+     ]
+    },
+    {
+     "id": "S16",
+     "section": "appointments",
+     "text": "Get a blood test at the outpatient lab on 10/18/2026.",
+     "fact_ids": [
+      "F15"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "Usted estuvo en el hospital porque su corazón no bombeaba bien y se acumuló líquido."
+    },
+    {
+     "id": "S2",
+     "text": "Demasiada sal y un medicamento para el dolor llamado AINE lo empeoraron."
+    },
+    {
+     "id": "S3",
+     "text": "Empiece a tomar spironolactone 25 mg. Tómelo una vez al día."
+    },
+    {
+     "id": "S4",
+     "text": "Su dosis de furosemide ahora es 40 mg. Tómela 2 veces al día, a las 8 de la mañana y a las 2 de la tarde."
+    },
+    {
+     "id": "S5",
+     "text": "Deje de tomar ibuprofen."
+    },
+    {
+     "id": "S6",
+     "text": "Deje de tomar lisinopril. No lo vuelva a tomar."
+    },
+    {
+     "id": "S7",
+     "text": "Empiece a tomar sacubitril/valsartan 24/26 mg, 2 veces al día."
+    },
+    {
+     "id": "S8",
+     "text": "Espere al menos 36 horas después de su última dosis de lisinopril antes de su primera dosis de sacubitril/valsartan."
+    },
+    {
+     "id": "S9",
+     "text": "Siga tomando metoprolol succinate 50 mg una vez al día, igual que antes."
+    },
+    {
+     "id": "S10",
+     "text": "Llame al 911 o vaya a la sala de emergencias si tiene dolor de pecho, dificultad para respirar en reposo o se desmaya."
+    },
+    {
+     "id": "S11",
+     "text": "Coma menos de 2 gramos de sal al día."
+    },
+    {
+     "id": "S12",
+     "text": "No beba más de 15 litros de líquido al día."
+    },
+    {
+     "id": "S13",
+     "text": "Pésese cada mañana después de orinar y antes del desayuno. Anótelo."
+    },
+    {
+     "id": "S14",
+     "text": "Camine lo que le resulte cómodo. No levante más de 10 libras durante 2 semanas."
+    },
+    {
+     "id": "S15",
+     "text": "Vea a [CLINICIAN_1] en la clínica de insuficiencia cardíaca el 10/21/2026 a las 10:30 de la mañana."
+    },
+    {
+     "id": "S16",
+     "text": "Hágase un análisis de sangre en el laboratorio ambulatorio el 10/18/2026."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "You were in the hospital because your heart was not pumping well and fluid accumulated."
+    },
+    {
+     "id": "S2",
+     "text": "Too much salt and a medicine for pain called NSAID made it worse."
+    },
+    {
+     "id": "S3",
+     "text": "Start taking spironolactone 25 mg. Take it once a day."
+    },
+    {
+     "id": "S4",
+     "text": "Your dose of furosemide now is 40 mg. Take it 2 times a day, at 8 in the morning and at 2 in the afternoon."
+    },
+    {
+     "id": "S5",
+     "text": "Stop taking ibuprofen."
+    },
+    {
+     "id": "S6",
+     "text": "Stop taking lisinopril. Do not take it again."
+    },
+    {
+     "id": "S7",
+     "text": "Start taking sacubitril/valsartan 24/26 mg, 2 times a day."
+    },
+    {
+     "id": "S8",
+     "text": "Wait at least 36 hours after your last dose of lisinopril before your first dose of sacubitril/valsartan."
+    },
+    {
+     "id": "S9",
+     "text": "Keep taking metoprolol succinate 50 mg once a day, the same as before."
+    },
+    {
+     "id": "S10",
+     "text": "Call 911 or go to the emergency room if you have chest pain, difficulty breathing at rest, or you faint."
+    },
+    {
+     "id": "S11",
+     "text": "Eat less than 2 grams of salt per day."
+    },
+    {
+     "id": "S12",
+     "text": "Do not drink more than 15 liters of liquid per day."
+    },
+    {
+     "id": "S13",
+     "text": "Weigh yourself every morning after urinating and before breakfast. Write it down."
+    },
+    {
+     "id": "S14",
+     "text": "Walk what is comfortable for you. Do not lift more than 10 pounds for 2 weeks."
+    },
+    {
+     "id": "S15",
+     "text": "See [CLINICIAN_1] at the heart failure clinic on 10/21/2026 at 10:30 in the morning."
+    },
+    {
+     "id": "S16",
+     "text": "Get a blood test at the outpatient laboratory on 10/18/2026."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "es": {
+   "verdicts": [
+    {
+     "id": "S1",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S2",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S3",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S4",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S5",
+     "verdict": "partially_supported",
+     "reason": "Source says hold until kidney recheck; sentence reads as a permanent stop."
+    },
+    {
+     "id": "S6",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S7",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S8",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S9",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S10",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S11",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S12",
+     "verdict": "contradicts",
+     "reason": "Back-translation says 15 liters; the fact says 1.5 L per day."
+    },
+    {
+     "id": "S13",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S14",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S15",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    },
+    {
+     "id": "S16",
+     "verdict": "supported",
+     "reason": "Matches the cited facts."
+    }
+   ]
+  }
+ },
+ "suggest": {
+  "es:F9": {
+   "text_en": "Call the heart clinic at [PHONE_1] if your weight goes up more than 2 pounds in one day or 5 pounds in one week, or if your legs swell more.",
+   "text_tl": "Llame a la clínica del corazón al [PHONE_1] si su peso sube más de 2 libras en un día o 5 libras en una semana, o si sus piernas se hinchan más."
+  },
+  "es:F4": {
+   "text_en": "Do not take ibuprofen until your heart doctor checks your kidneys again and says it is OK.",
+   "text_tl": "No tome ibuprofen hasta que su cardiólogo vuelva a revisar sus riñones y le diga que puede tomarlo."
+  }
+ }
+}

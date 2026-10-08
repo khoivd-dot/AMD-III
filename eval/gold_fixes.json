@@ -1,0 +1,20 @@
+{
+ "hf-maria-es": {
+  "edit": {
+   "S5": {"text_en": "Do not take ibuprofen until your heart doctor checks your kidneys again and says it is OK.",
+          "text_tl": "No tome ibuprofen hasta que su cardiólogo vuelva a revisar sus riñones y le diga que puede tomarlo.",
+          "back_en": "Do not take ibuprofen until your cardiologist checks your kidneys again and tells you that you can take it."},
+   "S12": {"text_tl": "No beba más de 1,5 litros de líquido al día.",
+           "back_en": "Do not drink more than 1.5 liters of liquid per day."}
+  },
+  "add": [
+   {"id": "S17", "section": "warning_signs", "fact_ids": ["F9"],
+    "text_en": "Call the heart clinic at [PHONE_1] if your weight goes up more than 2 pounds in one day or 5 pounds in one week, or if your legs swell more.",
+    "text_tl": "Llame a la clínica del corazón al [PHONE_1] si su peso sube más de 2 libras en un día o 5 libras en una semana, o si sus piernas se hinchan más.",
+    "back_en": "Call the heart clinic at [PHONE_1] if your weight goes up more than 2 pounds in one day or 5 pounds in one week, or if your legs swell more."}
+  ]
+ },
+ "knee-giulia-it": {
+  "remove": ["S6"]
+ }
+}

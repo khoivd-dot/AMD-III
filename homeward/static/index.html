@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homeward</title>
+<meta name="description" content="Verified, multilingual discharge instructions with human review and teach-back.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M8 17l8-7 8 7v8h-5v-5h-6v5H8z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M8 17l8-7 8 7v8h-5v-5h-6v5H8z"/></svg>
+    <div><strong>Homeward</strong><span>Discharge instructions patients can follow</span></div>
+  </div>
+  <nav id="tabs" role="tablist">
+    <button data-view="nurse" class="active" role="tab">1 · Prepare</button>
+    <button data-view="review" role="tab">2 · Review</button>
+    <button data-view="patient" role="tab">3 · Patient</button>
+    <button data-view="impact" role="tab">4 · Impact</button>
+  </nav>
+  <div id="mode" class="mode"></div>
+</header>
+
+<main>
+  <!-- NURSE -->
+  <section id="view-nurse" class="view active">
+    <div class="intro">
+      <h1>Turn discharge instructions into a packet the patient can follow</h1>
+      <p>Homeward rewrites the clinician's text in plain language and in the patient's own language, checks every sentence against the source, and sends only the risky ones to a human. It never diagnoses or adds medical advice.</p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Discharge text</h2>
+        <div id="samples" class="samples"></div>
+        <label>Clinician's discharge instructions
+          <textarea id="source" rows="14" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
+        </label>
+        <div class="row">
+          <label>Patient's language <select id="language"></select></label>
+          <label>Patient name (masked before any model call) <input id="pname" placeholder="optional"></label>
+        </div>
+        <div class="row">
+          <label class="file">Or upload a .txt or .pdf <input type="file" id="file" accept=".txt,.pdf"></label>
+          <button id="run" class="primary">Create packet</button>
+        </div>
+        <p class="fine">Use synthetic or de-identified text only. This is a demo, not a medical device.</p>
+      </div>
+      <div class="card" id="progress-card">
+        <h2>What happens</h2>
+        <ol id="stages" class="stages"></ol>
+        <div id="run-error" class="error hidden"></div>
+        <div id="run-summary"></div>
+      </div>
+    </div>
+    <div class="card hidden" id="ledger-card">
+      <h2>Fact ledger <small>every instruction the model found, each tied to a quote from the source</small></h2>
+      <div id="med-issues"></div>
+      <div class="table-wrap"><table id="ledger"></table></div>
+      <details><summary>Source as the model saw it (identifiers masked)</summary><pre id="masked"></pre></details>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section id="view-review" class="view">
+    <div class="empty" id="review-empty">Create a packet first.</div>
+    <div id="review-body" class="hidden">
+      <div class="reviewbar card">
+        <div id="review-stats" class="stats"></div>
+        <div class="row">
+          <label>Reviewer <input id="reviewer" placeholder="e.g. RN Sam Lee"></label>
+          <label class="check"><input type="checkbox" id="only-flagged" checked> Show only what needs a human</label>
+          <button id="signoff" class="primary">Sign off and release</button>
+        </div>
+        <div id="blockers" class="blockers"></div>
+      </div>
+      <div id="omissions"></div>
+      <div id="sentences"></div>
+    </div>
+  </section>
+
+  <!-- PATIENT -->
+  <section id="view-patient" class="view">
+    <div class="empty" id="patient-empty">The packet appears here after a reviewer signs it off.</div>
+    <div id="patient-body" class="hidden patient">
+      <div class="patient-head">
+        <div>
+          <h1 id="p-title">Your instructions for going home</h1>
+          <p class="signed" id="p-signed"></p>
+        </div>
+        <div class="row">
+          <div class="seg" id="p-lang"></div>
+          <button id="p-print">Print</button>
+        </div>
+      </div>
+      <div id="p-sections"></div>
+      <div class="card quiz">
+        <h2 id="q-title">Check your understanding</h2>
+        <p id="q-intro" class="fine"></p>
+        <div id="quiz"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section id="view-impact" class="view">
+    <div class="empty" id="impact-empty">Create a packet first.</div>
+    <div id="impact-body" class="hidden">
+      <div id="kpis" class="kpis"></div>
+      <div class="grid2">
+        <div class="card"><h2>What the checks caught</h2><div id="caught"></div></div>
+        <div class="card"><h2>Model on AMD</h2><div id="model"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h2>Nurse alerts from teach-back</h2><div id="alerts"></div></div>
+        <div class="card"><h2>Audit trail</h2><div id="audit" class="audit"></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Homeward never diagnoses or recommends treatment. It restates what a clinician wrote, and nothing reaches a patient until a named person signs it off.</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

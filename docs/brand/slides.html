@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Homeward slides</title><style>
+@page{size:1600px 900px;margin:0}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1c2421;background:#ddd}
+.s{width:1600px;height:900px;padding:80px 100px;position:relative;background:#f6f7f5;page-break-after:always;overflow:hidden}
+.s.dark{background:#0b3b37;color:#fff}
+.k{font-size:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0f766e;margin-bottom:18px}
+.dark .k{color:#5eead4}
+h1{font-size:64px;line-height:1.08;letter-spacing:-.03em;margin-bottom:28px}
+h2{font-size:52px;line-height:1.1;letter-spacing:-.02em;margin-bottom:36px}
+p,li{font-size:28px;line-height:1.45}
+.muted{color:#5d6b66}.dark .muted{color:#cdeae6}
+ul{padding-left:30px}li{margin-bottom:14px}
+.n{position:absolute;bottom:40px;right:60px;font-size:18px;color:#9aa8a3}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.stat{background:#fff;border-radius:18px;padding:30px;border:1px solid #e2e6e3}
+.stat b{display:block;font-size:64px;letter-spacing:-.03em;color:#0f766e;margin-bottom:8px}
+.stat span{font-size:22px;line-height:1.35;display:block}
+.stat small{display:block;font-size:16px;color:#5d6b66;margin-top:12px}
+.flow{display:flex;gap:14px;align-items:stretch;margin-top:20px}
+.flow div{flex:1;background:#fff;border:1px solid #e2e6e3;border-radius:16px;padding:22px;font-size:21px;line-height:1.35}
+.flow div b{display:block;font-size:24px;margin-bottom:8px;color:#0f766e}
+table{border-collapse:collapse;width:100%;font-size:21px}
+td,th{padding:12px 14px;border-bottom:1px solid #e2e6e3;text-align:left;vertical-align:top}
+th{font-size:17px;text-transform:uppercase;color:#5d6b66;letter-spacing:.04em}
+td:first-child{font-weight:700;width:26%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+img.shot{width:100%;border-radius:14px;border:1px solid #e2e6e3;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.crop{height:640px;overflow:hidden;border-radius:14px}
+.pill{display:inline-block;font-size:18px;font-weight:700;padding:4px 14px;border-radius:999px}
+.g{background:#e7f5ec;color:#15803d}.r{background:#fdecec;color:#b91c1c}.a{background:#fdf3e2;color:#b45309}
+.quote{font-size:40px;line-height:1.3;max-width:1200px}
+</style></head><body>
+
+<section class="s dark"><img src="cover.png" style="position:absolute;inset:0;width:100%;height:100%"></section>
+
+<section class="s"><div class="k">The patient</div><h2>Maria, 72, going home after heart failure</h2>
+<div class="two"><div><p>Five medicine changes in one day: one new, one doubled, one paused, one stopped, one swapped with a 36-hour gap.</p><br><p>The instructions are in English, written for clinicians. Maria reads Spanish. Her daughter will manage her pills.</p><br><p class="muted">If Maria keeps taking ibuprofen, or drinks 15 litres instead of 1.5, she is back in hospital within the week.</p></div>
+<div><img class="shot" src="../screenshots/1-prepare.png" style="height:600px;object-fit:cover;object-position:top"></div></div><div class="n">2</div></section>
+
+<section class="s"><div class="k">The evidence</div><h2>Discharge is where instructions get lost</h2>
+<div class="grid">
+<div class="stat"><b>48%</b><span>of patients knew what their medicines were for</span><small>Karliner et al., Medical Care 2012</small></div>
+<div class="stat"><b>50%</b><span>of limited-English patients knew their follow-up (vs 66%)</span><small>Karliner et al., Medical Care 2012</small></div>
+<div class="stat"><b>Grade 10</b><span>reading level of discharge notes; the AMA recommends grade 6</span><small>Mayo Clinic, Am J Surg 2016</small></div>
+<div class="stat"><b>−59%</b><span>post-discharge calls after rewriting notes more simply (22 → 9 per 100)</span><small>Mayo Clinic, ACS 2017</small></div>
+</div><div class="n">3</div></section>
+
+<section class="s"><div class="k">Why AI alone is not the answer</div><h2>Rewriting is easy. Trusting the rewrite is the problem.</h2>
+<div class="grid" style="grid-template-columns:repeat(3,1fr)">
+<div class="stat"><b>18%</b><span>of physician reviews of GPT-4 patient-friendly summaries raised a safety concern</span><small>Zaretsky et al., JAMA Netw Open 2024</small></div>
+<div class="stat"><b>24%</b><span>found omissions; 4% found hallucinations</span><small>Zaretsky et al., JAMA Netw Open 2024</small></div>
+<div class="stat"><b>"keep taking"</b><span>is what machine translation made of "hold the kidney medicine" in Chinese</span><small>Khoong et al., JAMA Intern Med 2019</small></div>
+</div><div class="n">4</div></section>
+
+<section class="s"><div class="k">How Homeward works</div><h2>Every sentence earns its place</h2>
+<div class="flow">
+<div><b>1 · Mask</b>Names, record numbers, birth dates, phones replaced before any model call</div>
+<div><b>2 · Fact ledger</b>Every instruction tied to an exact quote; medicine list cross-checked by rules</div>
+<div><b>3 · Plain draft</b>Grade 6, each sentence cites its facts</div>
+<div><b>4 · Translate</b>…and back-translate to check meaning</div>
+<div><b>5 · Check</b>Numbers, medicines, stop vs keep, contacts, coverage; safety model verdict</div>
+<div><b>6 · Human</b>Only flagged and high-risk lines; named sign-off</div>
+<div><b>7 · Teach-back</b>Quiz from approved sentences; wrong answers alert the nurse</div>
+</div>
+<p class="muted" style="margin-top:40px">Five schema-constrained model calls per packet, all on one AMD Instinct MI300X. Deterministic checks around the model, so its mistakes are caught instead of trusted.</p><div class="n">5</div></section>
+
+<section class="s"><div class="k">Safety, as the track asks</div><h2 style="margin-bottom:20px">Six rules, built into the workflow</h2>
+<table><tr><th>Requirement</th><th>How it is handled</th></tr>
+<tr><td>No diagnosis or advice</td><td>Restates the clinician only. No cited fact or an unknown medicine means blocked.</td></tr>
+<tr><td>Wrong or unsupported output</td><td>Quote check, rule-based medicine cross-check, number / medicine / stop-vs-keep checks, safety model.</td></tr>
+<tr><td>Sensitive information</td><td>Identifiers masked before any model call; self-hosted model; memory-only cases.</td></tr>
+<tr><td>Uncertain results</td><td><span class="pill g">green</span> <span class="pill a">amber</span> <span class="pill r">red</span> on every sentence, with the reason. Unsupported language or too many failures go to an interpreter.</td></tr>
+<tr><td>High-risk decisions</td><td>Blood thinners, insulin, opioids, any stop or dose change, warning signs: always signed off by a person.</td></tr>
+<tr><td>Human review</td><td>Nothing reaches the patient without a named sign-off. Red lines cannot be approved as they are. Full audit trail.</td></tr>
+</table><div class="n">6</div></section>
+
+<section class="s"><div class="k">The product</div><h2>Review in minutes, not a full re-read</h2>
+<div class="two"><div class="crop"><img class="shot" src="../screenshots/2-review-before.png"></div><div class="crop"><img class="shot" src="../screenshots/4-patient.png"></div></div><div class="n">7</div></section>
+
+<section class="s"><div class="k">Results</div><h2>What it caught</h2>
+<div class="grid">
+<div class="stat"><b style="font-size:54px">8.7 → 3.8</b><span>reading grade, heart failure case</span><small>Flesch-Kincaid on the English draft</small></div>
+<div class="stat"><b>63%</b><span>of sentences verified with no human needed</span><small>the reviewer reads 6 of 16</small></div>
+<div class="stat"><b>3 / 3</b><span>planted problems stopped: 15 L vs 1.5 L, hold-as-stop, missing warning</span><small>plus an invented ibuprofen in the Italian case</small></div>
+<div class="stat"><b>99.4%</b><span>of 161 injected errors flagged by deterministic checks alone</span><small>0 false alarms on clean packets; synthetic test</small></div>
+</div><div class="n">8</div></section>
+
+<section class="s dark"><div class="k">AMD</div><h2>A 72B multilingual model on one GPU, inside the hospital</h2>
+<ul class="muted"><li>vLLM + ROCm on an AMD Instinct MI300X (192 GB HBM3), AMD Developer Cloud</li>
+<li>192 GB fits Qwen2.5-72B-Instruct in bf16 on a single GPU: no third-party API sees patient text</li>
+<li>vLLM batches a whole ward's discharges on one card</li>
+<li>Measured on MI300X: latency, tokens/s and GPU cost per packet (from <code>scripts/benchmark.py</code>)</li></ul><div class="n">9</div></section>
+
+<section class="s"><div class="k">Value and next steps</div><h2>Fewer calls back, fewer readmissions, less nurse time</h2>
+<ul><li>Every discharge, every language, at GPU cost of cents per packet</li>
+<li>Reviewer time goes to the 4 in 10 sentences that need it</li>
+<li>Teach-back catches misunderstanding before the patient leaves, not after</li>
+<li>Next: FHIR read from the EHR, more languages, pilot on one ward with nurse time and call-back rates measured</li></ul>
+<p class="muted" style="margin-top:40px">Homeward never diagnoses. It makes sure what the clinician wrote reaches the patient, in their language, and that they understood it.</p><div class="n">10</div></section>
+</body></html>
