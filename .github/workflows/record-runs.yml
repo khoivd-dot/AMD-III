@@ -1,0 +1,143 @@
+name: Record real model runs
+
+# Runs the sample cases through a real model and commits the outputs to a
+# branch named runs/<label>. Two backends:
+#   cpu-llamacpp  an open model on the GitHub runner's CPU via llama.cpp
+#                 (small and slow; a stand-in until the AMD GPU is up)
+#   endpoint      any OpenAI-compatible server, e.g. vLLM on the AMD MI300X.
+#                 Needs repository secrets HOMEWARD_LLM_BASE_URL and
+#                 HOMEWARD_LLM_API_KEY, and the model name as an input.
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend:
+        type: choice
+        options: [cpu-llamacpp, endpoint]
+        default: cpu-llamacpp
+      gguf:
+        description: "cpu-llamacpp only: Hugging Face repo and file of the GGUF model"
+        default: "Qwen/Qwen2.5-3B-Instruct-GGUF/qwen2.5-3b-instruct-q4_k_m.gguf"
+      model:
+        description: "Model name to record (endpoint: the name the server expects)"
+        default: "Qwen2.5-3B-Instruct (Q4_K_M GGUF)"
+      hardware:
+        description: "Hardware label shown in the app"
+        default: "GitHub Actions CPU runner · llama.cpp (not AMD)"
+      label:
+        description: "Run label, used for data/runs/<label> and the branch runs/<label>"
+        default: "cpu-qwen2.5-3b"
+      samples:
+        description: "JSON list of sample ids"
+        default: '["hf-maria-es","knee-giulia-it","af-binh-vi","dm-ana-es","copd-pierre-fr"]'
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: ${{ fromJSON(inputs.samples) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+
+      - name: Build llama.cpp server
+        if: inputs.backend == 'cpu-llamacpp'
+        run: |
+          git clone --depth 1 https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
+          cmake -S /tmp/llama.cpp -B /tmp/llama.cpp/build -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=OFF
+          cmake --build /tmp/llama.cpp/build -j "$(nproc)" --target llama-server
+
+      - name: Cache model
+        if: inputs.backend == 'cpu-llamacpp'
+        uses: actions/cache@v4
+        with:
+          path: /tmp/model.gguf
+          key: gguf-${{ inputs.gguf }}
+
+      - name: Start model server
+        if: inputs.backend == 'cpu-llamacpp'
+        env:
+          GGUF: ${{ inputs.gguf }}
+        run: |
+          if [ ! -s /tmp/model.gguf ]; then
+            repo="$(dirname "$GGUF")"; file="$(basename "$GGUF")"
+            curl -fL --retry 3 -o /tmp/model.gguf "https://huggingface.co/$repo/resolve/main/$file"
+          fi
+          nohup /tmp/llama.cpp/build/bin/llama-server -m /tmp/model.gguf --host 127.0.0.1 --port 8080 \
+            -c 16384 -np 1 -t "$(nproc)" --jinja > /tmp/llama.log 2>&1 &
+          for i in $(seq 1 120); do curl -sf http://127.0.0.1:8080/health && break; sleep 5; done
+          curl -sf http://127.0.0.1:8080/health
+          echo "HOMEWARD_LLM_BASE_URL=http://127.0.0.1:8080/v1" >> "$GITHUB_ENV"
+
+      - name: Use configured endpoint
+        if: inputs.backend == 'endpoint'
+        env:
+          BASE: ${{ secrets.HOMEWARD_LLM_BASE_URL }}
+        run: |
+          test -n "$BASE" || { echo "Add the HOMEWARD_LLM_BASE_URL repository secret"; exit 1; }
+          echo "HOMEWARD_LLM_BASE_URL=$BASE" >> "$GITHUB_ENV"
+
+      - name: Record
+        env:
+          HOMEWARD_LLM_API_KEY: ${{ secrets.HOMEWARD_LLM_API_KEY }}
+          HOMEWARD_LLM_MODEL: ${{ inputs.model }}
+          HOMEWARD_HARDWARE: ${{ inputs.hardware }}
+          LABEL: ${{ inputs.label }}
+          SAMPLE: ${{ matrix.sample }}
+        run: |
+          echo "Runner: $(nproc) CPUs, $(free -g | awk '/Mem/{print $2}') GB RAM"
+          python scripts/record_samples.py --out "data/runs/$LABEL/$SAMPLE" "$SAMPLE"
+
+      - name: Server log
+        if: always() && inputs.backend == 'cpu-llamacpp'
+        run: tail -n 40 /tmp/llama.log || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: run-${{ matrix.sample }}
+          path: data/runs/${{ inputs.label }}/${{ matrix.sample }}
+          if-no-files-found: warn
+
+  collect:
+    needs: record
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/runs
+      - name: Merge runs and write report
+        env:
+          LABEL: ${{ inputs.label }}
+        run: |
+          out="data/runs/$LABEL"
+          mkdir -p "$out"
+          python eval/merge_runs.py /tmp/runs "$out"
+          python eval/real_runs_report.py "$out" > "$out/REPORT.md"
+          cat "$out/REPORT.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit to runs branch
+        env:
+          LABEL: ${{ inputs.label }}
+          BACKEND: ${{ inputs.backend }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "runs/$LABEL"
+          git add "data/runs/$LABEL"
+          git commit -m "Record $LABEL runs ($BACKEND)"
+          git push -f origin "runs/$LABEL"

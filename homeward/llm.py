@@ -14,7 +14,8 @@ from pathlib import Path
 
 import httpx
 
-REPLAY_DIR = Path(__file__).resolve().parent.parent / "data" / "replay"
+REPLAY_DIR = Path(os.environ.get("HOMEWARD_REPLAY_DIR")
+                  or Path(__file__).resolve().parent.parent / "data" / "replay")
 
 
 class LLMError(RuntimeError):
@@ -68,7 +69,7 @@ class OpenAICompatClient:
                  timeout: float = 180.0, transport: httpx.AsyncBaseTransport | None = None):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.hardware = hardware or "AMD Instinct MI300X (vLLM + ROCm)"
+        self.hardware = hardware or "hardware not stated"
         self.api_key = api_key
         self.timeout = timeout
         self.transport = transport
@@ -117,10 +118,13 @@ class OpenAICompatClient:
 class RecordingClient(OpenAICompatClient):
     """Live client that also saves outputs for built-in sample cases."""
 
+    directory: Path = REPLAY_DIR
+
     async def complete_json(self, stage, key, messages, schema, usage, case_id=None):
         result = await super().complete_json(stage, key, messages, schema, usage, case_id)
         if case_id:
-            path = REPLAY_DIR / f"{case_id}.json"
+            self.directory.mkdir(parents=True, exist_ok=True)
+            path = self.directory / f"{case_id}.json"
             data = json.loads(path.read_text()) if path.exists() else {}
             data.setdefault("_meta", {}).update({
                 "source": "recorded", "model": self.model, "hardware": self.hardware,
@@ -142,6 +146,8 @@ class ReplayClient:
     def available(self) -> dict[str, dict]:
         out = {}
         for path in sorted(self.directory.glob("*.json")):
+            if path.stem == "summary":
+                continue
             meta = json.loads(path.read_text()).get("_meta", {})
             out[path.stem] = meta
         return out
