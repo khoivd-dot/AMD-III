@@ -51,7 +51,7 @@ async def run(case: dict, client) -> dict:
         case["stage"] = "facts"
         out = await client.complete_json("facts", "en", prompts.facts_messages(case["source_masked"]),
                                          prompts.FACTS_SCHEMA, usage, cid)
-        facts = out["facts"]
+        facts = _norm_facts(out)
         verify_facts(facts, case["source_masked"])
         case["facts"] = facts
         case["med_issues"] = cross_check_meds(facts, case["source_masked"])
@@ -59,9 +59,7 @@ async def run(case: dict, client) -> dict:
         case["stage"] = "draft"
         out = await client.complete_json("draft", "en", prompts.draft_messages(facts),
                                          prompts.DRAFT_SCHEMA, usage, cid)
-        sentences = [{"id": s["id"], "section": s["section"], "text_en": s["text"],
-                      "fact_ids": s.get("fact_ids", []), "review": None}
-                     for s in out["sentences"]]
+        sentences = _norm_sentences(out)
         case["sentences"] = sentences
 
         if case["language"] not in LANGUAGES:
@@ -71,7 +69,7 @@ async def run(case: dict, client) -> dict:
             case["stage"] = "translate"
             out = await client.complete_json("translate", key, prompts.translate_messages(sentences, name),
                                              prompts.TRANSLATION_SCHEMA, usage, cid)
-            tl = {i["id"]: i["text"] for i in out["items"]}
+            tl = _by_id(out, "items", "text")
             for s in sentences:
                 s["text_tl"] = tl.get(s["id"], "")
             case["stage"] = "back_translate"
@@ -79,7 +77,7 @@ async def run(case: dict, client) -> dict:
             out = await client.complete_json("back_translate", key,
                                              prompts.back_translate_messages(items, name),
                                              prompts.TRANSLATION_SCHEMA, usage, cid)
-            back = {i["id"]: i["text"] for i in out["items"]}
+            back = _by_id(out, "items", "text")
             for s in sentences:
                 s["back_en"] = back.get(s["id"], "")
 
@@ -94,7 +92,7 @@ async def run(case: dict, client) -> dict:
             rows.append(row)
         out = await client.complete_json("judge", key, prompts.judge_messages(rows),
                                          prompts.JUDGE_SCHEMA, usage, cid)
-        verdicts = {v["id"]: v for v in out["verdicts"]}
+        verdicts = {v["id"]: v for v in (out.get("verdicts") or []) if isinstance(v, dict) and v.get("id")}
         for s in sentences:
             s["judge_en"] = verdicts.get(s["id"])
 
@@ -116,6 +114,53 @@ async def run(case: dict, client) -> dict:
         case["error"] = str(exc)
         audit(case, "system", "pipeline error", str(exc))
     return case
+
+
+# Small or busy models sometimes return slightly off-schema JSON. Normalise it
+# rather than fail; anything still unusable shows up as a failed check.
+SECTIONS = ("why", "medicines", "warning_signs", "appointments", "daily_care")
+
+
+def _norm_facts(out: dict) -> list[dict]:
+    facts, seen = [], set()
+    for i, f in enumerate(out.get("facts") or [], 1):
+        if not isinstance(f, dict):
+            continue
+        fid = str(f.get("id") or f"F{i}")
+        if fid in seen:
+            fid = f"F{i}x"
+        seen.add(fid)
+        facts.append({"id": fid, "kind": f.get("kind") if f.get("kind") in prompts.FACT_KINDS else "other",
+                      "med_action": f.get("med_action") if f.get("med_action") in prompts.MED_ACTIONS else None,
+                      **{k: (str(f[k]) if f.get(k) is not None else None) for k in ("drug", "dose", "frequency")},
+                      "detail": str(f.get("detail") or ""), "source_quote": str(f.get("source_quote") or "")})
+    if not facts:
+        raise ValueError("The model returned no facts.")
+    return facts
+
+
+def _norm_sentences(out: dict) -> list[dict]:
+    sentences, seen = [], set()
+    for i, s in enumerate(out.get("sentences") or [], 1):
+        if not isinstance(s, dict) or not str(s.get("text") or "").strip():
+            continue
+        sid = str(s.get("id") or f"S{i}")
+        if sid in seen:
+            sid = f"S{i}x"
+        seen.add(sid)
+        ids = s.get("fact_ids") or []
+        sentences.append({"id": sid, "section": s.get("section") if s.get("section") in SECTIONS else "daily_care",
+                          "text_en": str(s["text"]).strip(),
+                          "fact_ids": [str(x) for x in ids] if isinstance(ids, list) else [str(ids)],
+                          "review": None})
+    if not sentences:
+        raise ValueError("The model returned no sentences.")
+    return sentences
+
+
+def _by_id(out: dict, key: str, field: str) -> dict[str, str]:
+    return {str(i["id"]): str(i.get(field) or "") for i in (out.get(key) or [])
+            if isinstance(i, dict) and i.get("id")}
 
 
 def recheck(case: dict) -> None:

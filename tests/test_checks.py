@@ -212,3 +212,18 @@ def test_unknown_language_routes_to_interpreter():
     asyncio.run(pipeline.run(case, Stub()))
     assert case["route"] == "interpreter"
     assert all("text_tl" not in s for s in case["sentences"])
+
+
+def test_off_schema_model_output_is_normalised_not_fatal():
+    facts = pipeline._norm_facts({"facts": [
+        {"kind": "medication", "med_action": "pause", "drug": "Ibuprofen", "detail": "Hold ibuprofen.",
+         "source_quote": "HOLD: Ibuprofen"},
+        "not a fact",
+        {"id": "F1", "kind": "made_up", "detail": "x", "source_quote": "y"}]})
+    assert [f["id"] for f in facts] == ["F1", "F3x"]
+    assert facts[0]["med_action"] is None and facts[1]["kind"] == "other"
+    sents = pipeline._norm_sentences({"sentences": [
+        {"text": "Take it.", "fact_ids": "F1", "section": "meds"}, {"id": "S9", "text": " "}]})
+    assert sents == [{"id": "S1", "section": "daily_care", "text_en": "Take it.", "fact_ids": ["F1"], "review": None}]
+    with pytest.raises(ValueError):
+        pipeline._norm_sentences({"sentences": []})
