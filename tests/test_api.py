@@ -40,6 +40,8 @@ def test_api_flow_and_replay_guard():
         p = client.get(f"/api/cases/{cid}/packet").json()
         assert "Dr. Helen Marsh" in json.dumps(p, ensure_ascii=False)
         assert all("correct" not in o for q in p["quiz"] for o in q["options"])  # answers not sent to patient view
+        meds = p["sections"]["medicines"]
+        assert all("med_action" in m for m in meds) and any(m["med_action"] for m in meds)  # patient view groups by change
 
         # Edited text loses its recorded run: without a GPU the app says so instead of inventing output.
         r = client.post("/api/cases", json={"source": s["source"] + "\nExtra line.", "language": "it", "sample_id": s["id"]})

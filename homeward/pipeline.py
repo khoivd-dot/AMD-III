@@ -348,14 +348,18 @@ def packet(case: dict) -> dict:
     if not case.get("signoff"):
         raise ValueError("Packet is not signed off.")
     m = case["_mask"]
+    facts = {f["id"]: f for f in case["facts"]}
     sections = {}
     for s in case["sentences"]:
         if s.get("removed"):
             continue
+        # Lets the patient view group medicines by what changed (new, stop, keep...).
+        action = next((facts[i]["med_action"] for i in s.get("fact_ids", [])
+                       if facts.get(i, {}).get("med_action")), None)
         sections.setdefault(s["section"], []).append({
             "id": s["id"], "text_en": m.unmask(s["text_en"]),
             "text_tl": m.unmask(s.get("text_tl") or "") or None,
-            "risk": s.get("risk"),
+            "risk": s.get("risk"), "med_action": action,
         })
     return {"language": case["language"], "language_name": case["language_name"],
             "sections": sections, "signoff": case["signoff"],
