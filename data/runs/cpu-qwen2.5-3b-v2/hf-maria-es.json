@@ -1,0 +1,411 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:52 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "source_quote": "NEW: Spironolactone 25 mg by mouth once daily",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Spironolactone",
+     "dose": "25 mg",
+     "frequency": "once daily",
+     "detail": "Start taking Spironolactone 25 mg once daily."
+    },
+    {
+     "id": "F2",
+     "source_quote": "CHANGED: Furosemide increased from 20 mg to 40 mg by mouth twice daily (8 AM and 2 PM)",
+     "kind": "medication",
+     "med_action": "changed",
+     "drug": "Furosemide",
+     "dose": "40 mg",
+     "frequency": "twice daily",
+     "detail": "Increase furosemide dose to 40 mg twice daily, 8 AM and 2 PM."
+    },
+    {
+     "id": "F3",
+     "source_quote": "HOLD: Ibuprofen - do not take until kidney function is rechecked by your cardiologist",
+     "kind": "medication",
+     "med_action": "hold",
+     "drug": "Ibuprofen",
+     "dose": null,
+     "frequency": null,
+     "detail": "Pause taking Ibuprofen until kidney function is rechecked by your cardiologist."
+    },
+    {
+     "id": "F4",
+     "source_quote": "STOP: Lisinopril 10 mg daily - discontinued",
+     "kind": "medication",
+     "med_action": "stop",
+     "drug": "Lisinopril",
+     "dose": "10 mg",
+     "frequency": "daily",
+     "detail": "Stop taking Lisinopril 10 mg daily."
+    },
+    {
+     "id": "F5",
+     "source_quote": "NEW: Sacubitril/valsartan 24/26 mg by mouth twice daily. Do not take within 36 hours of your last lisinopril dose",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Sacubitril/valsartan",
+     "dose": "24/26 mg",
+     "frequency": "twice daily",
+     "detail": "Start taking Sacubitril/valsartan 24/26 mg twice daily, do not take within 36 hours of your last Lisinopril dose."
+    },
+    {
+     "id": "F6",
+     "source_quote": "CONTINUE: Metoprolol succinate 50 mg by mouth once daily",
+     "kind": "medication",
+     "med_action": "continue",
+     "drug": "Metoprolol succinate",
+     "dose": "50 mg",
+     "frequency": "once daily",
+     "detail": "Continue taking Metoprolol succinate 50 mg once daily."
+    },
+    {
+     "id": "F7",
+     "source_quote": "Return precautions: Return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting."
+    },
+    {
+     "id": "F8",
+     "source_quote": "Return precautions: Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens."
+    },
+    {
+     "id": "F9",
+     "source_quote": "Diet: Sodium restriction < 2 g/day. Fluid restriction 1.5 L/day",
+     "kind": "diet",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Follow a sodium restriction of less than 2 g/day and fluid restriction of 1.5 L/day."
+    },
+    {
+     "id": "F10",
+     "source_quote": "Activity: Weigh yourself every morning after urinating and before breakfast and record daily weights. Walk as tolerated; no lifting > 10 lb for 2 weeks",
+     "kind": "activity",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Weigh yourself every morning after urinating and before breakfast and record daily weights. Walk as tolerated, no lifting more than 10 lb for 2 weeks."
+    },
+    {
+     "id": "F11",
+     "source_quote": "Follow-up: Heart failure clinic with [CLINICIAN_1] on 10/21/2026 at 10:30 AM. Basic metabolic panel (blood test) on 10/18/2026 at the outpatient lab",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Schedule a follow-up appointment with the heart failure clinic on 10/21/2026 at 10:30 AM and a blood test on 10/18/2026 at the outpatient lab."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 74.62165551700002,
+   "prompt_tokens": 1098,
+   "completion_tokens": 1176
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 50.48753765999999,
+   "prompt_tokens": 1187,
+   "completion_tokens": 732
+  },
+  "translate:es": {
+   "stage": "translate",
+   "seconds": 30.492862868999964,
+   "prompt_tokens": 764,
+   "completion_tokens": 583
+  },
+  "back_translate:es": {
+   "stage": "back_translate",
+   "seconds": 32.42469491599991,
+   "prompt_tokens": 693,
+   "completion_tokens": 514
+  },
+  "judge:es": {
+   "stage": "judge",
+   "seconds": 40.99895513000001,
+   "prompt_tokens": 1933,
+   "completion_tokens": 356
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "F1",
+     "section": "medicines",
+     "text": "You will start taking Spironolactone 25 mg once daily.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "F2",
+     "section": "medicines",
+     "text": "You will increase furosemide to 40 mg twice daily, 8 AM and 2 PM.",
+     "fact_ids": [
+      "F2"
+     ]
+    },
+    {
+     "id": "F3",
+     "section": "warning_signs",
+     "text": "Pause taking Ibuprofen until kidney function is rechecked by your cardiologist.",
+     "fact_ids": [
+      "F3"
+     ]
+    },
+    {
+     "id": "F4",
+     "section": "medicines",
+     "text": "You will stop taking Lisinopril 10 mg daily.",
+     "fact_ids": [
+      "F4"
+     ]
+    },
+    {
+     "id": "F5",
+     "section": "medicines",
+     "text": "You will start taking Sacubitril/valsartan 24/26 mg twice daily, do not take within 36 hours of your last Lisinopril dose.",
+     "fact_ids": [
+      "F5"
+     ]
+    },
+    {
+     "id": "F6",
+     "section": "medicines",
+     "text": "You will continue taking Metoprolol succinate 50 mg once daily.",
+     "fact_ids": [
+      "F6"
+     ]
+    },
+    {
+     "id": "F7",
+     "section": "warning_signs",
+     "text": "Return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting.",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "F8",
+     "section": "warning_signs",
+     "text": "Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens.",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "F9",
+     "section": "daily_care",
+     "text": "Follow a sodium restriction of less than 2 g/day and fluid restriction of 1.5 L/day.",
+     "fact_ids": [
+      "F9"
+     ]
+    },
+    {
+     "id": "F10",
+     "section": "daily_care",
+     "text": "Weigh yourself every morning after urinating and before breakfast and record daily weights. Walk as tolerated, no lifting more than 10 lb for 2 weeks.",
+     "fact_ids": [
+      "F10"
+     ]
+    },
+    {
+     "id": "F11",
+     "section": "appointments",
+     "text": "Schedule a follow-up appointment with the heart failure clinic on 10/21/2026 at 10:30 AM and a blood test on 10/18/2026 at the outpatient lab.",
+     "fact_ids": [
+      "F11"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "es": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "Tendrás que empezar a tomar Spironolactona 25 mg al día."
+    },
+    {
+     "id": "F2",
+     "text": "Tendrás que aumentar el furosemida a 40 mg al día, por la mañana y a la tarde."
+    },
+    {
+     "id": "F3",
+     "text": "Pausa la ibuprofeno hasta que se revise la función renal por tu cardiologista."
+    },
+    {
+     "id": "F4",
+     "text": "Tendrás que dejar de tomar Lisinopril 10 mg al día."
+    },
+    {
+     "id": "F5",
+     "text": "Tendrás que empezar a tomar Sacubitril/valsartan 24/26 mg al día, no tomar dentro de 36 horas de tu última dosis de Lisinopril."
+    },
+    {
+     "id": "F6",
+     "text": "Tendrás que continuar tomando Metoprolol succinato 50 mg al día."
+    },
+    {
+     "id": "F7",
+     "text": "Regresa al Hospital de Emergencia o llama 911 si tienes dolor de pecho, dificultad para respirar a la hora de estar quieto o caerte."
+    },
+    {
+     "id": "F8",
+     "text": "Llama al centro de cardiología de corazón si el peso aumenta más de 2 libras en un día o 5 libras en una semana, o si el hinchaje de las piernas empeora."
+    },
+    {
+     "id": "F9",
+     "text": "Sigues una restricción de sodio de menos de 2 g al día y una restricción de líquidos de 1.5 L al día."
+    },
+    {
+     "id": "F10",
+     "text": "Peso cada mañana después de orinar y antes de la comida y registra los pesos diarios. Camina lo que puedas, no levantar más de 10 libras durante 2 semanas."
+    },
+    {
+     "id": "F11",
+     "text": "Programa una cita de seguimiento con el centro de cardiología de corazón el 21 de octubre de 2026 a las 10:30 AM y una prueba de sangre el 18 de octubre de 2026 en el laboratorio ambulatorio."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "es": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "You will have to start taking Spironolactona 25 mg a day."
+    },
+    {
+     "id": "F2",
+     "text": "You will have to increase Furosemida to 40 mg a day, in the morning and in the afternoon."
+    },
+    {
+     "id": "F3",
+     "text": "Pause Ibuprofeno until your cardiologist reviews your renal function."
+    },
+    {
+     "id": "F4",
+     "text": "You will have to stop taking Lisinopril 10 mg a day."
+    },
+    {
+     "id": "F5",
+     "text": "You will have to start taking Sacubitril/valsartan 24/26 mg a day, do not take within 36 hours of your last dose of Lisinopril."
+    },
+    {
+     "id": "F6",
+     "text": "You will have to continue taking Metoprolol succinato 50 mg a day."
+    },
+    {
+     "id": "F7",
+     "text": "Return to the Emergency Hospital or call 911 if you have chest pain, difficulty breathing when at rest or falling."
+    },
+    {
+     "id": "F8",
+     "text": "Call the heart center of the heart if the weight increases more than 2 pounds in a day or 5 pounds in a week, or if the swelling of the legs worsens."
+    },
+    {
+     "id": "F9",
+     "text": "You follow a sodium restriction of less than 2 g a day and a fluid restriction of 1.5 L a day."
+    },
+    {
+     "id": "F10",
+     "text": "Weigh yourself every morning after urinating and before eating and record daily weights. Walk as much as you can, do not lift more than 10 pounds for 2 weeks."
+    },
+    {
+     "id": "F11",
+     "text": "Schedule a follow-up appointment with the heart center of the heart on October 21, 2026, at 10:30 AM, and a blood test on October 18, 2026, at the outpatient laboratory."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "es": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F7",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F8",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F9",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F10",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F11",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    }
+   ]
+  }
+ }
+}
