@@ -46,31 +46,35 @@ Rewriting and translating is easy now. Making the result **trustworthy enough to
 | Requirement | How Homeward handles it |
 |---|---|
 | **No autonomous diagnosis or treatment advice** | It only restates what a clinician wrote. Every sentence must cite a fact quoted from the source; a sentence with no fact behind it is blocked. A medicine not in the source is blocked. |
-| **Incorrect or unsupported responses** | Facts must quote the source (fuzzy-matched); numbers in a fact must appear in its quote; a rule-based medicine parser cross-checks the model's list. Sentences are checked for numbers, medicine names, stop vs keep taking, and invented names or contacts. A safety model gives a second, independent verdict. |
-| **Sensitive information** | Names, record numbers, dates of birth, phone numbers, emails and addresses are replaced by placeholders before any model call, and restored only in the signed-off patient packet. The model is self-hosted on an AMD GPU, so text never goes to a third-party API. Staff screens show masked text. Cases live in memory only. |
-| **Uncertain results** | Green / amber / red on every sentence, with the reason. Translation is checked by back-translation; disagreement shows as uncertainty, never silently. If more than 30% of translated sentences are blocked, or the language is unsupported, the packet routes to a professional interpreter. |
+| **Incorrect or unsupported responses** | Facts must quote the source (fuzzy-matched); numbers in a fact must appear in its quote; the fact's kind and medicine action are re-read from the clinician's own label; a rule check adds any instruction the model left out of its ledger. Sentences are checked for numbers, units, dates, AM/PM, doses a day, "only if needed", insulin scale steps, medicine names, stop vs keep taking, invented reassurance, and invented names or contacts. A safety model gives a second verdict; a missing verdict is shown, never treated as a pass. |
+| **Sensitive information** | Names (with labels in every supported language, accents, titles, kin and "Name, MD"), record and insurance numbers, SSNs, dates of birth, admission and discharge dates, phone numbers (US, UK and international), emails and addresses are replaced by placeholders before any model call, and restored only in the signed-off patient packet. A name written with no label or title can still slip through; a de-identification model as a second pass is the next step. The model is open-weight and self-hosted (for the demo, on an AMD Developer Cloud MI300X we run), so text is not sent to a third-party model API; a hospital can run the same container on its own MI300X. Staff screens show masked text and can sit behind a staff password. Cases live in memory only. |
+| **Uncertain results** | Green / amber / red on every sentence, with the reason. Translation is checked in the target language itself (stop vs keep taking, units, dates, AM/PM, "only if needed", writing system) and by back-translation; disagreement shows as uncertainty, never silently. If more than 30% of translated sentences are blocked, or the language is unsupported, the packet routes to a professional interpreter. |
 | **High-risk decisions** | Anticoagulants, insulin, opioids and other ISMP high-alert medicines, any stop, pause or dose change, and every warning sign are high risk. They always need a named person's sign-off, even when every check passes. A "hold" written as a plain "stop" is flagged. |
-| **Human review** | Nothing reaches the patient until a named reviewer resolves every flag and signs off. Blocked sentences cannot be approved as they are, only edited or removed. Every action goes into an audit trail. Teach-back mistakes go back to the nurse. |
+| **Human review** | Nothing reaches the patient until a named reviewer resolves every flag and signs off. Blocked sentences cannot be approved as they are, only edited or removed, and re-saving them unchanged is refused. Edited wording is checked again, an English edit marks the translation out of date, and an edited high-risk line stays in review until someone approves it. High-risk instructions from the clinician cannot be dismissed. Sign-off locks the packet. Every action goes into an audit trail. Teach-back mistakes go back to the nurse. |
 
 ## Results so far
 
 | | Heart failure, Spanish | Knee replacement, Italian |
 |---|---|---|
-| Reading grade (Flesch-Kincaid), source → packet | 8.7 → 3.8 | 7.0 → 4.0 |
+| Reading grade (Flesch-Kincaid), source → packet | 8.7 → 4.1 | 7.0 → 4.4 |
 | Sentences | 16 | 17 |
-| Verified with no human needed | 10 (63%) | 10 (59%) |
+| Verified with no human needed | 10 (62%) | 9 (53%) |
 | Problems stopped | 15 L instead of 1.5 L in Spanish; ibuprofen "hold" written as "stop"; weight-gain warning left out | ibuprofen invented (patient is on enoxaparin); vague opioid wording |
 
-Flesch-Kincaid understates how hard clinical shorthand is, so the source grades above are generous to the source.
+These two cases replay hand-written model outputs (see below), so treat their numbers as a demonstration, not a measurement. Flesch-Kincaid understates how hard clinical shorthand is, so the source grades above are generous to the source.
 
-**Error-injection test** ([`docs/eval-report.md`](docs/eval-report.md)): 161 errors of the kinds reported in the literature injected into correct packets; the deterministic checks alone flag 160 (99.4%), with 0 false alarms on 33 clean sentences. The one miss ("only if needed" dropped from an opioid line) is a known blind spot; it still reaches a human because opioid lines are always reviewed. These are synthetic mutations, so treat this as a regression floor, not a real-world accuracy claim.
+**Error-injection test** ([`docs/eval-report.md`](docs/eval-report.md)): 162 errors of the kinds reported in the literature injected into correct packets; the deterministic checks alone flag all 162, with 0 false alarms on 33 clean sentences. These are synthetic mutations written alongside the checks, so treat this as a regression floor, not a real-world accuracy claim.
+
+**Red-team test** ([`docs/redteam-report.md`](docs/redteam-report.md)): an independent tester wrote five new cases (Vietnamese, Chinese, French, Spanish) and 20 subtler errors: units, AM/PM, dates, "only if needed", omitted warnings, invented reassurance, swapped insulin scales. The first version of Homeward caught 7 and flagged 23 of 92 honest sentences. The current checks flag all 20 and 1 honest sentence. They were fixed after seeing these errors, so this is now a regression suite; a fresh held-out set is the next test.
+
+**Real model output** ([`docs/real-runs.md`](docs/real-runs.md)): an open 3B model on a GitHub CPU runner (not AMD) dropped medicines and diet limits, labelled every fact "diagnosis", turned a STOP into "must not stop", and mixed Chinese into Vietnamese. Each of those is now flagged.
 
 **Sample runs:** the two cases above currently replay hand-written model outputs that reproduce error types from the studies, so the demo works without a GPU, and the app says so on screen. `scripts/record_samples.py` replaces them with recorded runs from the MI300X, and `scripts/benchmark.py` measures latency, throughput and cost per packet.
 
 ## AMD
 
 - vLLM on one **AMD Instinct MI300X** (192 GB HBM3) on AMD Developer Cloud, ROCm container from the "vLLM Quick Start" image.
-- 192 GB lets a 72B-parameter multilingual model (Qwen2.5-72B-Instruct) run in bf16 on a single GPU, which is what makes self-hosting realistic for a hospital: patient text stays on hardware the hospital controls.
+- 192 GB lets a 72B-parameter multilingual model (Qwen2.5-72B-Instruct) run in bf16 on a single GPU, which is what makes self-hosting realistic for a hospital: a single server it controls can run the whole pipeline.
 - Five model calls per packet (facts, draft, translation, back-translation, safety review), all JSON-schema constrained. vLLM batches packets from a whole ward on the same GPU.
 - Setup: [`deploy/amd/README.md`](deploy/amd/README.md).
 
