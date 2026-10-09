@@ -61,12 +61,16 @@ def fact_drugs(fact: dict) -> set[str]:
 
 
 def fact_risk(fact: dict) -> str:
-    if fact.get("kind") in ("warning_sign", "follow_up"):
+    # Appointments stay normal risk: their dates and times are checked deterministically in
+    # English and in translation, so sending every one to a person would add work, not safety.
+    if fact.get("kind") == "warning_sign":
         return "high"
     if fact.get("kind") == "medication" and fact.get("med_action") in ("stop", "hold", "changed"):
         return "high"
-    # A high-alert medicine is high risk whatever kind the model gave the fact.
-    if any(lexicon.is_high_alert(d) for d in fact_drugs(fact)):
+    # A high-alert medicine is high risk whatever kind the model gave the fact. A medicine
+    # line is judged by its own drug ("docusate while taking oxycodone" is about docusate).
+    drugs = [fact.get("drug")] if fact.get("kind") == "medication" else fact_drugs(fact)
+    if any(lexicon.is_high_alert(d) for d in drugs):
         return "high"
     return "normal"
 
@@ -146,7 +150,8 @@ def verify_facts(facts: list[dict], source: str) -> None:
     for f in facts:
         checks = classify(f, source)
         quote = f.get("source_quote") or ""
-        if quote_in_source(quote, source):
+        unlabelled = re.sub(r"^[A-Z][A-Za-z -]{2,25}:\s*", "", quote)  # "Follow-up: <a later sentence>"
+        if quote_in_source(quote, source) or (len(unlabelled) >= 20 and quote_in_source(unlabelled, source)):
             checks.append(check("quote", "pass"))
         else:
             checks.append(check("quote", "fail", "Could not find this in the clinician's text."))
@@ -393,6 +398,20 @@ def per_day(text: str) -> set[int]:
     return out
 
 
+def _span_for(text: str, drug: str) -> str:
+    """The part of a sentence about one medicine: from the clause where it is named to the next
+    medicine named. "Apixaban twice a day, diltiazem once a day" gives each its own frequency."""
+    marks = [(m.start(), m.end(), lexicon.canonical_drug(m.group(0))) for m in re.finditer(r"[A-Za-zÀ-ÿ]+", text)
+             if lexicon.canonical_drug(m.group(0))]
+    for i, (pos, _, d) in enumerate(marks):
+        if d == drug:
+            prev_end = max((e for _, e, other in marks[:i] if other != drug), default=0)
+            cut = max((m.end() for m in re.finditer(r"[.;,]", text[:pos])), default=0)
+            end = next((p for p, _, other in marks[i + 1:] if other != drug), len(text))
+            return text[max(prev_end, cut):end]
+    return text
+
+
 def prn_only(f: dict) -> bool:
     """The clinician says to take this medicine only when needed, with no fixed schedule first."""
     quote = f.get("source_quote") or ""
@@ -433,12 +452,13 @@ def sentence_meaning_checks(text: str, cited: list[dict]) -> list[dict]:
         drug = lexicon.canonical_drug(f.get("drug"))
         if drug not in named:
             continue
-        said, source = per_day(text), per_day(" ".join(str(f.get(k) or "") for k in ("frequency", "source_quote")))
+        part = _span_for(text, drug)
+        said, source = per_day(part), per_day(" ".join(str(f.get(k) or "") for k in ("frequency", "source_quote")))
         if said and source and not said <= source:
             out.append(check("frequency", "fail", f"Says {'/'.join(map(str, sorted(said)))} times a day; "
                                                   f"the source says {'/'.join(map(str, sorted(source)))}."))
-        if prn_only(f) and not lexicon.has_cue(text, "en", "prn") \
-                and not re.search(lexicon.LIMIT, text, re.I):  # "never more than 4 a day" is the limit, not the dose
+        if prn_only(f) and not lexicon.has_cue(part, "en", "prn") \
+                and not re.search(lexicon.LIMIT, part, re.I):  # "never more than 4 a day" is the limit, not the dose
             out.append(check("as_needed", "fail",
                              f"The source says {f.get('drug')} only when needed; this reads as a regular dose."))
 
@@ -484,10 +504,17 @@ def translation_meaning_checks(text: str, tl: str, lang: str, med_facts: list[di
     en_units: dict[str, set[str]] = {}
     for n, u in quantities(text):
         en_units.setdefault(n, set()).add(u)
+    tl_units: dict[str, set[str]] = {}
     for n, u in sorted(quantities(tl)):
+        tl_units.setdefault(n, set()).add(u)
         if n in en_units and u not in en_units[n]:
             out.append(check("translation_units", "fail",
                              f"{n} {'/'.join(sorted(en_units[n]))} becomes {n} {u} in the translation."))
+    lost = sorted(f"{n} {'/'.join(sorted(us))}" for n, us in en_units.items()
+                  if n not in tl_units and n in digits_in(tl) and us & {"mg", "mcg", "ml", "unit", "puff", "tablet", "lb", "kg"})
+    if lost:
+        out.append(check("translation_units", "warn",
+                         f"Could not find the unit for {', '.join(lost)} in the translation. Check it reads correctly."))
     en_steps, tl_steps = scale_steps(text), scale_steps(tl)
     for rng, dose in tl_steps.items():
         if rng in en_steps and en_steps[rng] != dose:

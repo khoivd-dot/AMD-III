@@ -96,7 +96,7 @@
    "tokens_per_second": 15.3
   },
   "wall_seconds": 138.7,
-  "rechecked_at": "2026-10-09 00:11 UTC"
+  "rechecked_at": "2026-10-09 00:36 UTC"
  },
  "_meta": {
   "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
@@ -108,18 +108,13 @@
   "language": "fr",
   "facts": 11,
   "sentences": 9,
-  "flagged_for_human": 4,
+  "flagged_for_human": 6,
   "by_status": {
-   "green": 9,
-   "amber": 0,
-   "red": 0
+   "green": 6,
+   "amber": 2,
+   "red": 1
   },
   "omissions": [
-   {
-    "fact_id": "F5",
-    "kind": "medication",
-    "message": "No sentence clearly tells the patient to stop Ipratropium."
-   },
    {
     "fact_id": "R1",
     "kind": "follow_up",
@@ -183,10 +178,41 @@
     ]
    }
   ],
-  "flagged_sentences": [],
+  "flagged_sentences": [
+   {
+    "id": "S3",
+    "status": "amber",
+    "text_en": "You must take Tiotropium 2 puffs once a day.",
+    "text_tl": "Vous devez prendre les Tiotropium à 2 pincettes une fois par jour.",
+    "back_en": "You must take Tiotropium at 2 puffs once a day.",
+    "problems": [
+     "Could not find the unit for 2 puff in the translation. Check it reads correctly."
+    ]
+   },
+   {
+    "id": "S4",
+    "status": "amber",
+    "text_en": "You must use Albuterol inhaler 2 puffs every 4 hours as needed for shortness of breath.",
+    "text_tl": "Vous devez utiliser l'inhalateur Albuterol à 2 pincettes à chaque 4 heures selon les besoins pour la difficultés d'inspiration.",
+    "back_en": "You must use Albuterol at 2 puffs every 4 hours as needed for shortness of breath.",
+    "problems": [
+     "Could not find the unit for 2 puff in the translation. Check it reads correctly."
+    ]
+   },
+   {
+    "id": "S8",
+    "status": "red",
+    "text_en": "You must follow-up with the pulmonary rehabilitation intake on November 4, 2026.",
+    "text_tl": "Vous devez suivre avec l'entrée de l'intervention de réhabilitation pulmonaire le 11/04/2026.",
+    "back_en": "You must follow with the pulmonary rehabilitation admission on 11/04/2026.",
+    "problems": [
+     "Dates differ after translation: 4 Nov 2026 vs 11 Apr 2026 as a French reader would read them. Write the month as a word."
+    ]
+   }
+  ],
   "grade": [
    8.3,
-   6.2
+   6.5
   ],
   "route": "standard",
   "model": {
@@ -197,7 +223,7 @@
    "tokens_per_second": 11.1
   },
   "wall_seconds": 242.6,
-  "rechecked_at": "2026-10-09 00:11 UTC"
+  "rechecked_at": "2026-10-09 00:36 UTC"
  },
  "dm-ana-es": {
   "id": "dm-ana-es",
@@ -305,7 +331,7 @@
   ],
   "grade": [
    8.3,
-   7.5
+   7.8
   ],
   "route": "standard",
   "model": {
@@ -316,7 +342,7 @@
    "tokens_per_second": 9.0
   },
   "wall_seconds": 271.7,
-  "rechecked_at": "2026-10-09 00:11 UTC"
+  "rechecked_at": "2026-10-09 00:36 UTC"
  },
  "hf-maria-es": {
   "id": "hf-maria-es",
@@ -424,7 +450,7 @@
   "flagged_sentences": [],
   "grade": [
    8.7,
-   7.0
+   7.3
   ],
   "route": "standard",
   "model": {
@@ -435,7 +461,7 @@
    "tokens_per_second": 9.2
   },
   "wall_seconds": 356.2,
-  "rechecked_at": "2026-10-09 00:11 UTC"
+  "rechecked_at": "2026-10-09 00:36 UTC"
  },
  "knee-giulia-it": {
   "id": "knee-giulia-it",

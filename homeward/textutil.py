@@ -6,6 +6,7 @@ from difflib import SequenceMatcher
 # ASCII-only lookbehind: in Chinese a digit sits right next to a character ("14单位"),
 # and \w would match that character and hide the number.
 _NUM = re.compile(r"(?<![0-9A-Za-z.])\d+(?:[.,]\d+)?")
+_PLACEHOLDER = re.compile(r"\[[A-Z_]+_\d+\]")
 _HOUR_H = re.compile(r"\b(\d{1,2})\s?h\s?(\d{2})\b")  # French "11h00", "11 h 00"
 _WORD_NUMBERS = {
     "once": "1", "twice": "2", "thrice": "3",
@@ -30,6 +31,7 @@ def numbers_in(text: str, words: bool = True) -> set[str]:
         return set()
     # Drop thousands separators like 1,000 before the decimal-comma logic.
     cleaned = re.sub(r"(?<=\d),(?=\d{3}\b)", "", text)
+    cleaned = _PLACEHOLDER.sub(" ", cleaned)  # [CLINICIAN_1] holds no number
     cleaned = _HOUR_H.sub(r"\1:\2", cleaned)
     found = {_norm(m) for m in _NUM.findall(cleaned)}
     if words:
