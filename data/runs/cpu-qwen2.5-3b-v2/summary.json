@@ -1,0 +1,349 @@
+{
+ "af-binh-vi": {
+  "id": "af-binh-vi",
+  "language": "vi",
+  "facts": 8,
+  "sentences": 8,
+  "flagged_for_human": 4,
+  "by_status": {
+   "green": 6,
+   "amber": 0,
+   "red": 2
+  },
+  "omissions": [
+   {
+    "fact_id": "F2",
+    "kind": "medication",
+    "message": "The dose of Apixaban (5 mg) is never stated."
+   },
+   {
+    "fact_id": "F3",
+    "kind": "medication",
+    "message": "The dose of Diltiazem (120 mg) is never stated."
+   },
+   {
+    "fact_id": "F5",
+    "kind": "medication",
+    "message": "The dose of Atorvastatin (40 mg) is never stated."
+   }
+  ],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [
+   {
+    "id": "F5",
+    "status": "red",
+    "text_en": "You need to see the Cardiology doctor in 2 weeks and the Primary care doctor in 1 week.",
+    "text_tl": "Bạn cần phải đi khám tim mạch trong hai tuần và khám bác sĩ chính trong một tuần.",
+    "back_en": "You need to see your cardiologist in two weeks and your primary doctor in one week.",
+    "problems": [
+     "Numbers differ after translation: {1, 2} vs none."
+    ]
+   },
+   {
+    "id": "F7",
+    "status": "red",
+    "text_en": "You should stop taking Aspirin. It raises the risk of bleeding, and Apixaban already protects against clots.",
+    "text_tl": "Bạn nên停止服用 Aspirin. Nó tăng nguy cơ chảy máu, và Apixaban đã bảo vệ chống lại cục máu đông.",
+    "back_en": "You should stop taking Aspirin. It increases the risk of bleeding, and Apixaban has protected against blood clots.",
+    "problems": [
+     "Translation contains text in another writing system (“停止服用”).",
+     "Safety model: unsupported. Sentence adds 'stop taking Aspirin' which is not in the facts."
+    ]
+   }
+  ],
+  "grade": [
+   8.8,
+   5.7
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 8,
+   "seconds": 337.82,
+   "prompt_tokens": 5238,
+   "completion_tokens": 2684,
+   "tokens_per_second": 7.9
+  },
+  "wall_seconds": 338.0
+ },
+ "_meta": {
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:43 UTC"
+ },
+ "copd-pierre-fr": {
+  "id": "copd-pierre-fr",
+  "language": "fr",
+  "facts": 7,
+  "sentences": 6,
+  "flagged_for_human": 6,
+  "by_status": {
+   "green": 4,
+   "amber": 0,
+   "red": 2
+  },
+  "omissions": [
+   {
+    "fact_id": "F4",
+    "kind": "medication",
+    "message": "Ipratropium inhaler is cited but never named for the patient."
+   }
+  ],
+  "medicine_cross_check": [],
+  "fact_problems": [
+   {
+    "id": "F5",
+    "problems": [
+     "Model labelled this 'other'; the text reads as follow up. Checked as that."
+    ]
+   }
+  ],
+  "flagged_sentences": [
+   {
+    "id": "F3",
+    "status": "red",
+    "text_en": "You will change Albuterol inhaler to 2 puffs every 4 hours as needed for shortness of breath. (F3, F5)",
+    "text_tl": "Vous changerez l'insuline Albuterol à 2 puffs toutes les 4 heures selon les besoins pour les difficultés respiratoires. (F3, F5)",
+    "back_en": "You will change Albuterol insulin to 2 puffs every 4 hours as needed for respiratory difficulties. (F3, F5)",
+    "problems": [
+     "“Only if needed” is lost in the translation."
+    ]
+   },
+   {
+    "id": "F4",
+    "status": "red",
+    "text_en": "Call 911 if you have severe shortness of breath, blue lips, or confusion. Call your doctor if you need albuterol more than every 4 hours or have a fever above 38.5 C. (F4, F6)",
+    "text_tl": "Appelez l'urgence si vous avez une difficultés respiratoire sévère, des lèvres bleues ou de la confusion. Appelez votre médecin si vous avez besoin d'Albuterol plus souvent toutes les 4 heures ou si vous avez une température supérieure à 38,5°C. (F4, F6)",
+    "back_en": "Call the emergency room if you have severe respiratory difficulties, blue lips, or confusion. Call your doctor if you need Albuterol more often every 4 hours or if your temperature is higher than 38.5°C. (F4, F6)",
+    "problems": [
+     "Numbers differ after translation: {38.5, 4, 911} vs {38.5, 4}.",
+     "“Only if needed” is lost in the translation.",
+     "Back-translation numbers differ: {38.5, 4, 911} vs {38.5, 4}."
+    ]
+   }
+  ],
+  "grade": [
+   8.3,
+   6.8
+  ],
+  "route": "interpreter",
+  "model": {
+   "calls": 6,
+   "seconds": 270.0,
+   "prompt_tokens": 4363,
+   "completion_tokens": 2184,
+   "tokens_per_second": 8.1
+  },
+  "wall_seconds": 270.2
+ },
+ "dm-ana-es": {
+  "id": "dm-ana-es",
+  "language": "es",
+  "facts": 9,
+  "sentences": 9,
+  "flagged_for_human": 8,
+  "by_status": {
+   "green": 8,
+   "amber": 0,
+   "red": 1
+  },
+  "omissions": [
+   {
+    "fact_id": "R1",
+    "kind": "medication",
+    "message": "No sentence clearly tells the patient to stop metformin."
+   }
+  ],
+  "medicine_cross_check": [],
+  "fact_problems": [
+   {
+    "id": "F6",
+    "problems": [
+     "Model labelled this 'activity'; the text reads as medication. Checked as that."
+    ]
+   },
+   {
+    "id": "R1",
+    "problems": [
+     "The model did not list this instruction; the rule check found it in the source."
+    ]
+   }
+  ],
+  "flagged_sentences": [
+   {
+    "id": "R1",
+    "status": "red",
+    "text_en": "Metformin 500 mg - type 1 diabetes does not respond to metformin.",
+    "text_tl": "¡Metformin 500 mg - el tipo 1 de diabetes no responde a metformin!",
+    "back_en": "Metformin 500 mg - type 1 diabetes does not respond to metformin!",
+    "problems": [
+     "Safety model: unsupported. Sentence adds information not in the facts."
+    ]
+   }
+  ],
+  "grade": [
+   8.3,
+   9.1
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 7,
+   "seconds": 432.34,
+   "prompt_tokens": 5803,
+   "completion_tokens": 6833,
+   "tokens_per_second": 15.8
+  },
+  "wall_seconds": 432.5
+ },
+ "hf-maria-es": {
+  "id": "hf-maria-es",
+  "language": "es",
+  "facts": 11,
+  "sentences": 11,
+  "flagged_for_human": 8,
+  "by_status": {
+   "green": 6,
+   "amber": 0,
+   "red": 5
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [
+   {
+    "id": "F1",
+    "status": "red",
+    "text_en": "You will start taking Spironolactone 25 mg once daily.",
+    "text_tl": "Tendrás que empezar a tomar Spironolactona 25 mg al día.",
+    "back_en": "You will have to start taking Spironolactona 25 mg a day.",
+    "problems": [
+     "spironolactone lost in translation."
+    ]
+   },
+   {
+    "id": "F2",
+    "status": "red",
+    "text_en": "You will increase furosemide to 40 mg twice daily, 8 AM and 2 PM.",
+    "text_tl": "Tendrás que aumentar el furosemida a 40 mg al día, por la mañana y a la tarde.",
+    "back_en": "You will have to increase Furosemida to 40 mg a day, in the morning and in the afternoon.",
+    "problems": [
+     "Times differ after translation: 2:00, 8:00 vs none.",
+     "Back-translation numbers differ: {2, 40, 8} vs {40}.",
+     "furosemide lost in translation."
+    ]
+   },
+   {
+    "id": "F3",
+    "status": "red",
+    "text_en": "Pause taking Ibuprofen until kidney function is rechecked by your cardiologist.",
+    "text_tl": "Pausa la ibuprofeno hasta que se revise la función renal por tu cardiologista.",
+    "back_en": "Pause Ibuprofeno until your cardiologist reviews your renal function.",
+    "problems": [
+     "ibuprofen lost in translation."
+    ]
+   },
+   {
+    "id": "F5",
+    "status": "red",
+    "text_en": "You will start taking Sacubitril/valsartan 24/26 mg twice daily, do not take within 36 hours of your last Lisinopril dose.",
+    "text_tl": "Tendrás que empezar a tomar Sacubitril/valsartan 24/26 mg al día, no tomar dentro de 36 horas de tu última dosis de Lisinopril.",
+    "back_en": "You will have to start taking Sacubitril/valsartan 24/26 mg a day, do not take within 36 hours of your last dose of Lisinopril.",
+    "problems": [
+     "Back-translation numbers differ: {2, 24, 26, 36} vs {24, 26, 36}."
+    ]
+   },
+   {
+    "id": "F8",
+    "status": "red",
+    "text_en": "Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens.",
+    "text_tl": "Llama al centro de cardiología de corazón si el peso aumenta más de 2 libras en un día o 5 libras en una semana, o si el hinchaje de las piernas empeora.",
+    "back_en": "Call the heart center of the heart if the weight increases more than 2 pounds in a day or 5 pounds in a week, or if the swelling of the legs worsens.",
+    "problems": [
+     "Numbers differ after translation: {1, 2, 5} vs {2, 5}.",
+     "A name or contact detail was lost in translation."
+    ]
+   }
+  ],
+  "grade": [
+   8.7,
+   8.3
+  ],
+  "route": "interpreter",
+  "model": {
+   "calls": 7,
+   "seconds": 1085.86,
+   "prompt_tokens": 7177,
+   "completion_tokens": 15649,
+   "tokens_per_second": 14.4
+  },
+  "wall_seconds": 1086.0
+ },
+ "knee-giulia-it": {
+  "id": "knee-giulia-it",
+  "language": "it",
+  "facts": 10,
+  "sentences": 10,
+  "flagged_for_human": 7,
+  "by_status": {
+   "green": 7,
+   "amber": 0,
+   "red": 3
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [
+   {
+    "id": "F8",
+    "problems": [
+     "Model labelled this 'activity'; the text reads as follow up. Checked as that."
+    ]
+   }
+  ],
+  "flagged_sentences": [
+   {
+    "id": "F1",
+    "status": "red",
+    "text_en": "You will start taking Enoxaparin 40 mg subcutaneous injection once daily for 14 days to prevent blood clots, last dose on October 26, 2026. (F1)",
+    "text_tl": "Inizierai a prendere Enoxaparin 40 mg in iniezione sotto pelle una volta al giorno per 14 giorni per prevenire i blocchi sanguigni, l'ultima dose il 21 ottobre 2026. (F1)",
+    "back_en": "You will start taking Enoxaparin 40 mg in subcutaneous injection once a day for 14 days to prevent blood clots, the last dose on October 21, 2026. (F1)",
+    "problems": [
+     "Dates differ after translation: 26 Oct 2026 vs 21 Oct 2026 as a Italian reader would read them. Write the month as a word."
+    ]
+   },
+   {
+    "id": "F2",
+    "status": "red",
+    "text_en": "You will start taking Oxycodone 5 mg by mouth every 6 hours only if needed for severe pain, maximum 4 tablets in 24 hours. (F2)",
+    "text_tl": "Inizierai a prendere Oxycodone 5 mg per via orale solo se necessario per il dolore molto intenso, massimo 4 farmaci in 24 ore. (F2)",
+    "back_en": "You will start taking Oxycodone 5 mg by oral route only if necessary for very intense pain, no more than 4 tablets in 24 hours. (F2)",
+    "problems": [
+     "Numbers differ after translation: {24, 4, 5, 6} vs {24, 4, 5}.",
+     "Back-translation numbers differ: {24, 4, 5, 6} vs {24, 4, 5}."
+    ]
+   },
+   {
+    "id": "F8",
+    "status": "red",
+    "text_en": "Use the walker at all times for 2 weeks. Do the home exercises from physiotherapy 3 times a day. (F8)",
+    "text_tl": "Usa la caviglia a tutti i tempi per 2 settimane. Fai gli esercizi da casa tre volte al giorno con il fisioterapista. (F8)",
+    "back_en": "Use the ankle continuously for 2 weeks. Do the home exercises three times a day with the physiotherapist. (F8)",
+    "problems": [
+     "Numbers differ after translation: {2, 3} vs {2}."
+    ]
+   }
+  ],
+  "grade": [
+   7.0,
+   7.7
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 5,
+   "seconds": 432.53,
+   "prompt_tokens": 5982,
+   "completion_tokens": 3477,
+   "tokens_per_second": 8.0
+  },
+  "wall_seconds": 432.7
+ }
+}
