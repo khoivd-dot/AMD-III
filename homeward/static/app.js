@@ -302,7 +302,10 @@ function renderReview() {
       } catch (err) { toast(err.message, true); }
       b.disabled = false; b.textContent = "Suggest wording with the model";
     };
-    $(".add", el).onclick = () => act(() => post(`/api/cases/${c.id}/sentences`, { reviewer: reviewer(), fact_id: fid, text_en: $(".add-en", el).value, text_tl: tl ? $(".add-tl", el).value : null }), `Added ${fid} to the packet`);
+    $(".add", el).onclick = () => {
+      if (tl && !$(".add-tl", el).value.trim()) { $(".add-tl", el).focus(); return toast(`Add the ${c.language_name} wording first, or use “Suggest wording”.`, true); }
+      act(() => post(`/api/cases/${c.id}/sentences`, { reviewer: reviewer(), fact_id: fid, text_en: $(".add-en", el).value, text_tl: tl ? $(".add-tl", el).value : null }), `Added ${fid} to the packet`);
+    };
     $(".dismiss", el).onclick = () => { $(".dismiss-box", el).classList.toggle("hidden"); $(".dismiss-reason", el).focus(); };
     $(".confirm-dismiss", el).onclick = () => {
       const reason = $(".dismiss-reason", el).value.trim();
