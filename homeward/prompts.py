@@ -134,6 +134,7 @@ def draft_messages(facts: list[dict], grade: int = 6) -> list[dict]:
     user = f"""Write discharge instructions for the patient using only these facts.
 
 Rules:
+- Keep "sodium" as sodium: a sodium limit is not a salt limit.
 - Reading level: grade {grade} or lower. Short sentences (under 15 words). Everyday words. Talk to the patient as "you".
 - Every sentence must list the fact ids it restates in fact_ids. Never write a sentence without a fact behind it.
 - Cover every fact in the list, including every medicine, warning sign and appointment. For each medicine say its name, the dose and how often, and clearly whether to start, change, keep taking, stop, or pause it.
@@ -152,8 +153,10 @@ def translate_messages(sentences: list[dict], language: str) -> list[dict]:
 
 Rules:
 - Plain, warm, everyday {language}. Keep the meaning exactly; add and drop nothing.
-- Keep drug names, all numbers (as digits) and placeholders like [CLINICIAN_1] exactly as written.
-- Keep stop / do not take / pause / keep taking unmistakable.
+- Keep drug names, all numbers (as digits), units and placeholders like [CLINICIAN_1] exactly as written. mg is not mcg, units are not mL, pounds are not kilograms, days are not weeks.
+- Write each date with the month as a word in {language} (for example "October 21, 2026" becomes the {language} for 21 October 2026). Never write a date as numbers only.
+- Keep AM and PM, "only if needed", "until", and stop / do not take / pause / keep taking unmistakable.
+- "Sodium" stays sodium; it is not salt.
 - Return the same ids.
 
 Sentences:
@@ -177,7 +180,7 @@ def judge_messages(rows: list[dict]) -> list[dict]:
 - unsupported: adds information that is not in the facts.
 - contradicts: says something opposite to the facts.
 
-If "back_translation" is present, judge that text too: the sentence is only supported if the back-translation also matches. Give a reason of at most 20 words.
+If "translation" is present, judge it too, in its own language: the row is only supported if the translation says exactly what the facts say (same dose, unit, date, time of day, stop or keep taking, "only if needed"). "back_translation" is a literal English rendering of it, for reference. Give a reason of at most 20 words.
 
 Rows:
 {json.dumps(rows, ensure_ascii=False, indent=1)}"""

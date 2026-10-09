@@ -286,7 +286,7 @@
    "items": [
     {
      "id": "S1",
-     "text": "Il 10/12/2026 ha fatto un intervento per sostituire il ginocchio destro."
+     "text": "Il 12 ottobre 2026 ha fatto un intervento per sostituire il ginocchio destro."
     },
     {
      "id": "S2",
@@ -294,7 +294,7 @@
     },
     {
      "id": "S3",
-     "text": "L'ultima iniezione di enoxaparin è il 10/26/2026."
+     "text": "L'ultima iniezione di enoxaparin è il 26 ottobre 2026."
     },
     {
      "id": "S4",
@@ -346,11 +346,11 @@
     },
     {
      "id": "S16",
-     "text": "Un fisioterapista verrà a casa sua il 10/15/2026."
+     "text": "Un fisioterapista verrà a casa sua il 15 ottobre 2026."
     },
     {
      "id": "S17",
-     "text": "Vada da [CLINICIAN_1] all'ambulatorio di ortopedia il 10/26/2026 per togliere i punti metallici."
+     "text": "Vada da [CLINICIAN_1] all'ambulatorio di ortopedia il 26 ottobre 2026 per togliere i punti metallici."
     }
    ]
   }
@@ -360,7 +360,7 @@
    "items": [
     {
      "id": "S1",
-     "text": "On 10/12/2026 you had an operation to replace the right knee."
+     "text": "On October 12, 2026 you had an operation to replace the right knee."
     },
     {
      "id": "S2",
@@ -368,7 +368,7 @@
     },
     {
      "id": "S3",
-     "text": "The last injection of enoxaparin is on 10/26/2026."
+     "text": "The last injection of enoxaparin is on October 26, 2026."
     },
     {
      "id": "S4",
@@ -420,11 +420,11 @@
     },
     {
      "id": "S16",
-     "text": "A physiotherapist will come to your home on 10/15/2026."
+     "text": "A physiotherapist will come to your home on October 15, 2026."
     },
     {
      "id": "S17",
-     "text": "Go to [CLINICIAN_1] at the orthopaedic clinic on 10/26/2026 to remove the metal stitches."
+     "text": "Go to [CLINICIAN_1] at the orthopaedic clinic on October 26, 2026 to remove the metal stitches."
     }
    ]
   }

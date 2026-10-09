@@ -355,11 +355,11 @@
     },
     {
      "id": "S15",
-     "text": "Vea a [CLINICIAN_1] en la clínica de insuficiencia cardíaca el 10/21/2026 a las 10:30 de la mañana."
+     "text": "Vea a [CLINICIAN_1] en la clínica de insuficiencia cardíaca el 21 de octubre de 2026 a las 10:30 de la mañana."
     },
     {
      "id": "S16",
-     "text": "Hágase un análisis de sangre en el laboratorio ambulatorio el 10/18/2026."
+     "text": "Hágase un análisis de sangre en el laboratorio ambulatorio el 18 de octubre de 2026."
     }
    ]
   }
@@ -425,11 +425,11 @@
     },
     {
      "id": "S15",
-     "text": "See [CLINICIAN_1] at the heart failure clinic on 10/21/2026 at 10:30 in the morning."
+     "text": "See [CLINICIAN_1] at the heart failure clinic on October 21, 2026 at 10:30 in the morning."
     },
     {
      "id": "S16",
-     "text": "Get a blood test at the outpatient laboratory on 10/18/2026."
+     "text": "Get a blood test at the outpatient laboratory on October 18, 2026."
     }
    ]
   }

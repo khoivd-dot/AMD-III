@@ -4,7 +4,7 @@ Cases: hf-maria-es, knee-giulia-it. Deterministic checks only (the safety model'
 
 | Injected error | Injected | Flagged by checks | Blocked (red) | Flag rate | Reaches a human anyway* |
 |---|---|---|---|---|---|
-| as needed dropped (blind spot) | 1 | 0 | 0 | 0% | 100% |
+| as needed dropped (blind spot) | 1 | 1 | 1 | 100% | 100% |
 | contact lost in translation | 4 | 4 | 4 | 100% | 100% |
 | emergency number dropped | 2 | 2 | 2 | 100% | 100% |
 | flip stop to keep | 3 | 3 | 3 | 100% | 100% |
@@ -16,12 +16,9 @@ Cases: hf-maria-es, knee-giulia-it. Deterministic checks only (the safety model'
 | translation number changed | 26 | 26 | 26 | 100% | 100% |
 | unsupported sentence | 33 | 33 | 33 | 100% | 100% |
 | wrong medicine named | 14 | 14 | 13 | 100% | 100% |
-| **all** | **162** | **161** | | **99.4%** | |
+| **all** | **162** | **162** | | **100.0%** | |
 
 False alarms on the clean, reviewed packets: 0 across 33 sentences.
-
-Missed:
-- knee-giulia-it S4: 'only if needed' removed
 
 Flagged means the sentence turned amber or red, or the packet raised an omission; either way it cannot reach the patient without a person deciding.
 
