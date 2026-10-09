@@ -9,7 +9,12 @@ const page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("dialog", (d) => d.accept(d.type() === "prompt" ? "Not relevant" : undefined));
-const shot = (n) => page.screenshot({ path: `${out}/${n}.png`, fullPage: true });
+// Full-page shots: unstick the header so it does not land mid-page in the image.
+const shot = async (n) => {
+  const tag = await page.addStyleTag({ content: ".top,.queue{position:static!important}.queue{max-height:none!important}.toast{display:none!important}" });
+  await page.screenshot({ path: `${out}/${n}.png`, fullPage: true });
+  await tag.evaluate((el) => el.remove());
+};
 
 await page.goto(base);
 await page.getByText("Heart failure, new and changed medicines").click();
@@ -58,19 +63,20 @@ await page.click("#signoff");
 await page.waitForSelector("#patient-body:not(.hidden)", { timeout: 5000 });
 await page.waitForTimeout(300);
 
-// Answer the quiz: first question wrong on purpose, the rest right.
-const qs = page.locator(".q");
-const n = await qs.count();
-for (let i = 0; i < n; i++) {
-  const q = qs.nth(i);
-  const opts = q.locator(".opt");
-  const texts = await opts.allTextContents();
-  const packet = await page.evaluate(async (id) => (await fetch(`/api/cases/${id}`)).json(), await page.evaluate(() => state.c.id));
-  const correct = packet.quiz[i].options.findIndex((o) => o.correct);
-  const pick = i === 0 ? (correct + 1) % texts.length : correct;
-  await opts.nth(pick).click();
-  await page.waitForTimeout(250);
+// Answer the quiz one question at a time: first question wrong on purpose, the rest right.
+const caseId = await page.evaluate(() => state.c.id);
+const quiz = (await page.evaluate(async (id) => (await fetch(`/api/cases/${id}`)).json(), caseId)).quiz;
+for (let i = 0; i < quiz.length; i++) {
+  const correct = quiz[i].options.findIndex((o) => o.correct);
+  const pick = i === 0 ? (correct + 1) % quiz[i].options.length : correct;
+  if (i === 0) await shot("4a-patient-question");
+  await page.locator(".q .opt").nth(pick).click();
+  await page.waitForSelector(".q-next");
+  if (i === 0) await shot("4b-patient-feedback");
+  await page.click(".q-next");
+  await page.waitForTimeout(150);
 }
+await page.waitForTimeout(300);
 await shot("4-patient");
 await page.click('#tabs button[data-view="impact"]');
 await page.waitForTimeout(300);
@@ -80,6 +86,8 @@ console.log("kpis:", kpis.join(" | "));
 console.log("alerts:", (await page.textContent("#alerts")).trim());
 await page.setViewportSize({ width: 390, height: 844 });
 await page.click('#tabs button[data-view="patient"]');
+await page.waitForTimeout(500);
+await page.addStyleTag({ content: ".toast{display:none!important}" });
 await page.screenshot({ path: `${out}/6-patient-mobile.png` });
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 console.log("mobile horizontal overflow:", overflow);
