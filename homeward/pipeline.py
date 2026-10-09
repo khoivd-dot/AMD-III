@@ -435,7 +435,7 @@ def public(case: dict) -> dict:
     """Case as sent to the browser: no mask map, no raw source."""
     out = {k: v for k, v in case.items() if not k.startswith("_") and k not in ("usage", "patient_token")}
     if case.get("signoff") and case.get("patient_token"):
-        out["patient_link"] = f"/api/patient/{case['patient_token']}"
+        out["patient_link"] = f"/p/{case['patient_token']}"
     # Staff see answers once given, never the key.
     out["quiz"] = [q | {"options": [{"text": o["text"]} for o in q["options"]]} for q in case["quiz"]]
     out["metrics"] = metrics(case)

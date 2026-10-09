@@ -74,7 +74,8 @@ def test_signed_packet_is_locked_and_reachable_by_patient_link():
             r = client.post(f"/api/cases/{cid}/{path}", json=body)
             assert r.status_code == 400 and "locked" in r.json()["detail"]
         assert all("correct" not in o for q in c["quiz"] for o in q["options"])  # staff view has no answer key
-        link = c["patient_link"]
+        assert client.get(c["patient_link"]).status_code == 200  # the patient's page
+        link = c["patient_link"].replace("/p/", "/api/patient/")
         p = client.get(link).json()
         assert p["signoff"]["by"] == "RN A"
         q = p["quiz"][0]["id"]
@@ -94,6 +95,8 @@ def test_staff_password(monkeypatch):
         assert client.get("/api/meta", auth=("nurse", "ward7")).status_code == 200
         assert client.get("/healthz").status_code == 200
         assert client.get("/api/patient/anything").status_code == 404  # patient links need no password
+        assert client.get("/p/anything").status_code == 200 and client.get("/static/app.js").status_code == 200
+        assert client.get("/").status_code == 401
 
 
 def test_errors_are_plain_and_bad_pdfs_are_refused():

@@ -27,7 +27,8 @@ CASES: dict[str, dict] = {}
 # Staff password. When set, every page and API call needs it (the browser asks once),
 # except the patient's own link. Unset for a local demo.
 STAFF_PASSWORD = os.environ.get("HOMEWARD_STAFF_PASSWORD", "")
-OPEN_PATHS = ("/healthz", "/api/patient/")
+# Static files hold no patient data; the patient page reads only its own packet.
+OPEN_PATHS = ("/healthz", "/api/patient/", "/p/", "/static/")
 
 
 @app.middleware("http")
@@ -282,4 +283,9 @@ app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
 @app.get("/")
 def index():
+    return FileResponse(ROOT / "static" / "index.html")
+
+
+@app.get("/p/{token}")
+def patient_page(token: str):
     return FileResponse(ROOT / "static" / "index.html")

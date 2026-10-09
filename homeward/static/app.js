@@ -3,7 +3,7 @@
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const PH = "(?:PATIENT|CLINICIAN|MRN|DATE_OF_BIRTH|EMAIL|PHONE|ADDRESS)_\\d+";
+const PH = "(?:PATIENT|CLINICIAN|CONTACT|MRN|ID|DATE_OF_BIRTH|DATE|EMAIL|PHONE|ADDRESS)_\\d+";
 const marked = (t) => esc(t).replace(new RegExp(`\\[${PH}\\]`, "g"), (m) => `<mark class="ph">${m}</mark>`);
 const icon = (id, cls = "") => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
 
@@ -38,7 +38,13 @@ const WHO = { model: "Model", rules: "Rules", human: "Person" };
 const SECTION_ORDER = ["why", "medicines", "warning_signs", "appointments", "daily_care"];
 const SECTION_ICON = { why: "hospital", medicines: "pill", warning_signs: "alert", appointments: "cal", daily_care: "heart" };
 const MED_ORDER = ["stop", "hold", "changed", "new", "continue", "other"];
-const CHECK_LABEL = { quote: "Fact found in source", numbers: "Numbers match the source", drug: "Medicine names match", meaning_polarity: "Stop vs keep taking", translation: "Translation present", translation_numbers: "Numbers kept in translation", back_numbers: "Back-translation numbers", back_drug: "Medicines kept in translation", back_translation: "Back-translation", translation_polarity: "Meaning kept in translation", model_check: "Safety model: wording", model_check_translation: "Safety model: translation", citation: "Cites a source fact", placeholder: "No invented names or contacts", cross_check: "Medicine list cross-check", translation_placeholder: "Contacts kept in translation", action: "Clear medicine action" };
+const CHECK_LABEL = { quote: "Fact found in source", numbers: "Numbers match the source", drug: "Medicine names match", meaning_polarity: "Stop vs keep taking", translation: "Translation present", translation_numbers: "Numbers kept in translation", back_numbers: "Back-translation numbers", back_drug: "Medicines kept in translation", back_translation: "Back-translation", translation_polarity: "Meaning kept in translation", model_check: "Safety model: wording", model_check_translation: "Safety model: translation", citation: "Cites a source fact", placeholder: "No invented names or contacts", cross_check: "Medicine list cross-check", translation_placeholder: "Contacts kept in translation", action: "Clear medicine action",
+  units: "Units match the source", dates: "Dates match the source", frequency: "Doses per day match", as_needed: "\u201cOnly if needed\u201d kept",
+  scale: "Dose scale matches", reassurance: "No added reassurance", salt_sodium: "Salt vs sodium", cited_fact: "Cited facts exist",
+  translation_units: "Units kept in translation", translation_dates: "Dates read the same in translation", translation_time: "Morning vs evening kept",
+  translation_scale: "Dose scale kept in translation", translation_as_needed: "\u201cOnly if needed\u201d kept in translation",
+  translation_salt_sodium: "Salt vs sodium in translation", translation_script: "One writing system", translation_stale: "Translation matches the edit",
+  classification: "Fact type matches the text", missed_by_model: "Found by rules, not the model" };
 
 const UI = {
   en: { why: "Why you were in hospital", medicines: "Your medicines", warning_signs: "Get help if…", appointments: "Your appointments", daily_care: "Taking care of yourself at home", title: "Your instructions for going home", read: "Read aloud", quiz: "Check your understanding", quizIntro: "A few quick questions. Wrong answers are fine: your nurse will go over them with you.", right: "Correct.", wrong: "Not quite. Your nurse has been asked to go over this with you.", checked: "Checked by", of: "Question {i} of {n}", next: "Next question", doneAll: "All done. You answered every question correctly.", doneSome: "All done. Your nurse will go over {n} item(s) with you before you leave.", emergency: "Emergency: act now", urgent: "Call your care team", med: { stop: "Stop taking", hold: "Pause for now", changed: "Changed", new: "New", continue: "Keep taking", other: "Other" } },
@@ -50,6 +56,8 @@ const UI = {
 };
 const SPEECH = { en: "en-US", es: "es-ES", it: "it-IT", vi: "vi-VN", zh: "zh-CN", fr: "fr-FR" };
 
+// Opened from the patient's own link (/p/<token>): show only the signed packet and its quiz.
+const PATIENT_TOKEN = (location.pathname.match(/^\/p\/([\w-]+)\/?$/) || [])[1];
 const state = { meta: null, caseId: null, c: null, sample: null, packet: null, pLang: "tl", poll: null, started: 0, focus: 0, quiz: { i: 0, answers: {} } };
 
 async function api(path, opts = {}) {
@@ -234,6 +242,9 @@ async function act(fn, msg) {
 function queueItems(c) {
   const live = c.sentences.filter((s) => !s.removed);
   const items = c.omissions.map((o) => ({ id: o.fact_id, anchor: `om-${o.fact_id}`, cls: "red", done: false, label: `Missing: ${c.facts.find((f) => f.id === o.fact_id)?.detail || o.message}` }));
+  c.med_issues.filter((m) => !m.resolved).forEach((m) => items.push({ id: m.drug, anchor: `mi-${m.drug}`, cls: "red", done: false, label: m.message }));
+  c.facts.filter((f) => f.status === "red" && !f.dismissed && !c.omissions.some((o) => o.fact_id === f.id))
+    .forEach((f) => items.push({ id: f.id, anchor: `rf-${f.id}`, cls: "red", done: false, label: `Not in source: ${f.detail}` }));
   SECTION_ORDER.flatMap((sec) => live.filter((s) => s.section === sec)).forEach((s) => {
     const reviewed = s.review && s.review.state;
     if (!s.needs_review && !reviewed) return;
@@ -270,7 +281,14 @@ function renderReview() {
   $("#signoff").disabled = !!signed || open > 0;
   $("#blockers").className = "blockers" + (open || signed ? "" : " ok");
   $("#blockers").innerHTML = signed ? `<span class="reviewed">${icon("check")} Signed off by ${esc(signed.by)}. The packet is with the patient.</span>`
+      + (c.patient_link ? ` <a class="plink" href="${esc(c.patient_link)}" target="_blank" rel="noopener">Open the patient's link</a> <button class="small ghost copy-link">Copy link</button>` : "")
     : open ? `${open} item${open > 1 ? "s" : ""} still need${open > 1 ? "" : "s"} a decision before sign-off.` : "Everything that needs a person has been reviewed. Ready to sign off.";
+
+  const cp = $("#blockers .copy-link");
+  if (cp) cp.onclick = async () => {
+    try { await navigator.clipboard.writeText(new URL(c.patient_link, location.href).href); toast("Patient link copied. Anyone with it can read this packet."); }
+    catch (e) { toast("Copy failed. Open the link and copy it from the address bar.", true); }
+  };
 
   const facts = Object.fromEntries(c.facts.map((f) => [f.id, f]));
   $("#omissions").innerHTML = c.omissions.map((o) => `
@@ -311,6 +329,37 @@ function renderReview() {
       const reason = $(".dismiss-reason", el).value.trim();
       if (!reason) return toast("Say why the patient does not need this.", true);
       act(() => post(`/api/cases/${c.id}/facts/${fid}/dismiss`, { reviewer: reviewer(), reason }), `Dismissed ${fid}`);
+    };
+  });
+
+  const unresolved = c.med_issues.filter((m) => !m.resolved);
+  const unsupported = c.facts.filter((f) => f.status === "red" && !f.dismissed && !c.omissions.some((o) => o.fact_id === f.id));
+  $("#omissions").insertAdjacentHTML("beforeend", unresolved.map((m) => `
+    <div class="card omission decision" id="mi-${esc(m.drug)}" data-drug="${esc(m.drug)}" tabindex="-1">
+      <div class="tag">${icon("x")} Medicine list check · ${esc(m.drug)}</div>
+      <p>${esc(m.message)} Fix the wording if the model got it wrong, then record what you checked.</p>
+      <div class="ev">${icon("quote")}<div><b>Source</b>“${marked(m.line)}”</div></div>
+      <div class="dismiss-box"><input class="resolve-note" placeholder="What did you check against the source? (goes in the audit trail)"><button class="small primary confirm-resolve">${icon("check")} Mark checked</button></div>
+    </div>`).join("") + unsupported.map((f) => `
+    <div class="card omission decision" id="rf-${f.id}" data-fact="${f.id}" tabindex="-1">
+      <div class="tag">${icon("x")} Fact not found in the source · ${f.id}</div>
+      <p>${marked(f.detail)}</p>
+      <div class="ev">${icon("quote")}<div><b>${f.id}</b>“${marked(f.source_quote)}”</div></div>
+      ${f.checks.filter((k) => k.status !== "pass").map((k) => `<p class="fine">${esc(k.message)}</p>`).join("")}
+      <div class="dismiss-box"><input class="dismiss-reason" placeholder="Why is it safe to drop this fact? (goes in the audit trail)"><button class="small confirm-drop">Dismiss this fact</button></div>
+    </div>`).join(""));
+  $$(".decision[data-drug]").forEach((el) => {
+    $(".confirm-resolve", el).onclick = () => {
+      const reason = $(".resolve-note", el).value.trim();
+      if (!reason) return toast("Say what you checked against the source.", true);
+      act(() => post(`/api/cases/${c.id}/med-issues/resolve`, { reviewer: reviewer(), drug: el.dataset.drug, reason }), `Medicine check for ${el.dataset.drug} recorded`);
+    };
+  });
+  $$(".decision[data-fact]").forEach((el) => {
+    $(".confirm-drop", el).onclick = () => {
+      const reason = $(".dismiss-reason", el).value.trim();
+      if (!reason) return toast("Say why it is safe to drop this fact.", true);
+      act(() => post(`/api/cases/${c.id}/facts/${el.dataset.fact}/dismiss`, { reviewer: reviewer(), reason }), `Dismissed ${el.dataset.fact}`);
     };
   });
 
@@ -408,8 +457,17 @@ async function signOff() {
 // ------------------------------------------------------------------ patient
 async function loadPacket() {
   const c = state.c;
-  if (!c || !c.signoff) return;
-  try { state.packet = await api(`/api/cases/${c.id}/packet`); } catch (e) { return; }
+  if (PATIENT_TOKEN) {
+    try { state.packet = await api(`/api/patient/${PATIENT_TOKEN}`); } catch (e) { $("#patient-empty p").textContent = e.message; return; }
+    // Coming back to the link: pick up where the patient left off.
+    const qz = state.quiz;
+    state.packet.quiz.forEach((q) => { if (q.answer) qz.answers[q.id] = q.answer.correct; });
+    qz.i = state.packet.quiz.findIndex((q) => !(q.id in qz.answers));
+    if (qz.i < 0) qz.i = state.packet.quiz.length;
+  } else {
+    if (!c || !c.signoff) return;
+    try { state.packet = await api(`/api/cases/${c.id}/packet`); } catch (e) { return; }
+  }
   $("#patient-empty").classList.add("hidden");
   $("#patient-body").classList.remove("hidden");
   renderPacket();
@@ -475,7 +533,7 @@ function renderQuiz() {
   $$(".opt", el).forEach((b) => b.onclick = async () => {
     $$(".opt", el).forEach((o) => o.disabled = true);
     let r;
-    try { r = await post(`/api/cases/${state.c.id}/quiz/${q.id}`, { choice: +b.dataset.i }); } catch (e) { toast(e.message, true); $$(".opt", el).forEach((o) => o.disabled = false); return; }
+    try { r = await post(PATIENT_TOKEN ? `/api/patient/${PATIENT_TOKEN}/quiz/${q.id}` : `/api/cases/${state.c.id}/quiz/${q.id}`, { choice: +b.dataset.i }); } catch (e) { toast(e.message, true); $$(".opt", el).forEach((o) => o.disabled = false); return; }
     qz.answers[q.id] = r.correct;
     b.classList.add(r.correct ? "right" : "wrong");
     const fb = $(".feedback", el);
@@ -524,10 +582,16 @@ function renderImpact() {
     <div class="track"><div class="fill" style="width:${pos(g || 0)};background:${color}"></div><div class="target" style="left:${pos(6)}"><span>Target 6</span></div></div></div>`;
   $("#grade").innerHTML = `<div class="gauge">${gaugeRow("Clinician's text", m.source_grade, "var(--amber)")}${gaugeRow("Patient packet (English)", m.output_grade, "var(--green)")}</div>
     <p class="fine">${m.source_words} words in, ${m.output_words} words out. The AMA recommends grade 6 for patient materials.</p>`;
-  const labels = { numbers: "Number not in source", drug: "Medicine not in source", meaning_polarity: "Stop vs keep taking", translation_numbers: "Number changed in translation", back_numbers: "Back-translation numbers", back_drug: "Medicine lost in translation", translation_polarity: "Meaning flipped in translation", model_check: "Safety model: wording", model_check_translation: "Safety model: translation", citation: "No source behind sentence", placeholder: "Invented contact or name", quote: "Fact not found in source", cross_check: "Medicine list disagreement", translation_placeholder: "Contact lost in translation" };
+  const labels = { numbers: "Number not in source", drug: "Medicine not in source", meaning_polarity: "Stop vs keep taking", translation_numbers: "Number changed in translation", back_numbers: "Back-translation numbers", back_drug: "Medicine lost in translation", translation_polarity: "Meaning flipped in translation", model_check: "Safety model: wording", model_check_translation: "Safety model: translation", citation: "No source behind sentence", placeholder: "Invented contact or name", quote: "Fact not found in source", cross_check: "Medicine list disagreement", translation_placeholder: "Contact lost in translation",
+    units: "Unit changed", dates: "Date changed", frequency: "Doses per day changed", as_needed: "\u201cOnly if needed\u201d lost", scale: "Dose scale changed",
+    reassurance: "Invented reassurance", salt_sodium: "Salt vs sodium mixed up", cited_fact: "Cites a missing fact",
+    translation_units: "Unit changed in translation", translation_dates: "Date reads differently in translation", translation_time: "Morning/evening flipped in translation",
+    translation_scale: "Dose scale changed in translation", translation_as_needed: "\u201cOnly if needed\u201d lost in translation",
+    translation_salt_sodium: "Salt vs sodium in translation", translation_script: "Mixed writing systems", translation_stale: "Translation out of date",
+    classification: "Fact mislabelled by the model", missed_by_model: "Instruction the model left out" };
   const rows = Object.entries(d.issues_caught).map(([k, v]) => [labels[k] || k, v]);
   if (d.omissions) rows.push(["Missing critical instruction", d.omissions]);
-  if (d.med_issues) rows.push(["Medicine missing from ledger", d.med_issues]);
+  if (d.med_issues) rows.push(["Medicine list disagreement", d.med_issues]);
   rows.sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...rows.map((r) => r[1]));
   $("#caught").innerHTML = rows.length ? rows.map(([l, v]) => `<div class="bar"><span>${esc(l)}</span><div class="tr"><i style="width:${100 * v / max}%"></i></div><b>${v}</b></div>`).join("") + `<p class="fine">Counted on the model's first draft. ${m.checks_run} checks ran on ${m.facts} facts and ${m.sentences} sentences.</p>` : "<p>No problems found.</p>";
@@ -543,9 +607,18 @@ function renderImpact() {
     <dt>Tokens</dt><dd>${u.prompt_tokens + u.completion_tokens || "–"}</dd>
     <dt>Throughput</dt><dd>${u.tokens_per_second ? u.tokens_per_second + " tokens/s" : "–"}</dd>
     <dt>GPU cost per packet</dt><dd>${m.gpu_cost_usd != null ? "$" + m.gpu_cost_usd.toFixed(4) + " at $1.99/h" : "–"}</dd>
-  </dl><p class="fine">The model runs on a single AMD Instinct MI300X through vLLM and ROCm, inside infrastructure the hospital controls, so patient text never goes to a third-party API.</p>`;
+  </dl><p class="fine">${replay ? "Homeward is built to run its model on a single AMD Instinct MI300X through vLLM and ROCm, on infrastructure the hospital controls. This case replays saved model output, so nothing above was measured on a GPU just now."
+      : "The model runs on the endpoint shown above. Identifiers are masked before any model call."}</p>`;
   $("#alerts").innerHTML = c.alerts.length ? c.alerts.map((a) => `<div class="alert-item">${icon("warn")}<span>${esc(a.message)}</span></div>`).join("") : '<p class="fine">No alerts yet. Wrong teach-back answers appear here so the nurse can re-explain before the patient leaves.</p>';
   $("#audit").innerHTML = c.audit.slice().reverse().map((a) => `<div><time>${new Date(a.at * 1000).toLocaleTimeString()}</time><span><b>${esc(a.actor)}</b> ${esc(a.action)} <span class="fine">${esc(a.detail)}</span></span></div>`).join("");
 }
 
-init().catch((e) => showError(e.message));
+async function patientInit() {
+  document.body.classList.add("patient-mode");
+  $("#p-print").onclick = () => window.print();
+  $("#p-size").onclick = (e) => { const on = $("#patient-body").classList.toggle("big"); e.currentTarget.setAttribute("aria-pressed", on); };
+  show("patient");
+}
+
+if (PATIENT_TOKEN) patientInit();
+else init().catch((e) => showError(e.message));

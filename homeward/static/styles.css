@@ -84,6 +84,8 @@ nav button:disabled { opacity: .5; cursor: not-allowed; }
   background: var(--brand-soft); color: var(--brand-strong); font-weight: 700; max-width: 380px; cursor: help; }
 .mode::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent); }
 .mode.replay { background: var(--amber-soft); color: var(--amber); }
+/* Opened from the patient's own link: their packet only, no staff workflow. */
+.patient-mode #tabs, .patient-mode #mode { display: none; }
 
 /* ---------- layout primitives */
 main { max-width: 1240px; margin: 0 auto; padding: 32px 28px; }
@@ -207,6 +209,7 @@ mark.diff { background: var(--solid-red); color: var(--on-solid); border-radius:
 .blockers { font-size: .84rem; color: var(--muted); }
 .blockers.ok { color: var(--green); font-weight: 700; }
 .reviewed { display: inline-flex; gap: 4px; align-items: center; font-size: .8rem; color: var(--green); font-weight: 700; }
+.blockers .plink { font-weight: 700; margin-left: 6px; } .blockers .copy-link { margin-left: 4px; }
 
 .sentence { border-left: 5px solid var(--line); scroll-margin-top: 100px; transition: box-shadow .2s, opacity .2s; }
 .sentence.red { border-left-color: var(--red); } .sentence.amber { border-left-color: var(--amber); } .sentence.green { border-left-color: var(--green); }

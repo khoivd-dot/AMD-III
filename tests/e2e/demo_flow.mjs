@@ -1,4 +1,4 @@
-// End-to-end walk through the hero demo: nurse -> review -> sign-off -> patient quiz -> impact.
+// End-to-end walk through the hero demo: nurse -> review -> sign-off -> patient quiz -> impact -> patient's link.
 // Usage: node tests/e2e/demo_flow.mjs [baseUrl] [screenshotDir]
 import { chromium } from "playwright";
 
@@ -64,10 +64,14 @@ await page.waitForSelector("#patient-body:not(.hidden)", { timeout: 5000 });
 await page.waitForTimeout(300);
 
 // Answer the quiz one question at a time: first question wrong on purpose, the rest right.
+// The answer key never leaves the server; the right option is the packet sentence the question quotes.
 const caseId = await page.evaluate(() => state.c.id);
-const quiz = (await page.evaluate(async (id) => (await fetch(`/api/cases/${id}`)).json(), caseId)).quiz;
+const pk = await page.evaluate(async (id) => (await fetch(`/api/cases/${id}/packet`)).json(), caseId);
+const said = Object.fromEntries(Object.values(pk.sections).flat().map((s) => [s.id, s.text_tl || s.text_en]));
+const quiz = pk.quiz;
 for (let i = 0; i < quiz.length; i++) {
-  const correct = quiz[i].options.findIndex((o) => o.correct);
+  const correct = quiz[i].options.findIndex((o) => o.text === said[quiz[i].sentence_id]);
+  if (correct < 0) throw new Error(`No packet sentence matches question ${quiz[i].id}`);
   const pick = i === 0 ? (correct + 1) % quiz[i].options.length : correct;
   if (i === 0) await shot("4a-patient-question");
   await page.locator(".q .opt").nth(pick).click();
@@ -91,6 +95,17 @@ await page.addStyleTag({ content: ".toast{display:none!important}" });
 await page.screenshot({ path: `${out}/6-patient-mobile.png` });
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 console.log("mobile horizontal overflow:", overflow);
+
+// The patient's own link, on a phone: their packet only, answers already given are kept.
+const link = await page.getAttribute("#blockers .plink", "href");
+const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
+phone.on("pageerror", (e) => errors.push(e.message));
+await phone.goto(new URL(link, base).href);
+await phone.waitForSelector("#patient-body:not(.hidden)", { timeout: 5000 });
+await phone.waitForTimeout(300);
+await phone.screenshot({ path: `${out}/7-patient-link.png` });
+console.log("patient link:", link.replace(/[\w-]{12,}$/, "<token>"), "| staff tabs shown:", await phone.isVisible("#tabs"),
+  "| quiz:", (await phone.textContent("#quiz")).trim().slice(0, 60));
 console.log("page errors:", errors.length ? errors : "none");
 await browser.close();
 if (errors.length) process.exit(1);
