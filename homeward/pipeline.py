@@ -8,7 +8,7 @@ from .lexicon import LANGUAGES
 from .llm import LLMError, Usage
 from .phi import mask
 from .textutil import fk_grade, word_count
-from .verify import coverage, cross_check_meds, verify_facts, verify_sentence
+from .verify import coverage, cross_check_meds, uncovered_instructions, verify_facts, verify_sentence
 
 GPU_DOLLARS_PER_HOUR = 1.99  # AMD Developer Cloud, 1x MI300X
 INTERPRETER_RED_SHARE = 0.3  # above this share of blocked sentences, call an interpreter
@@ -53,6 +53,12 @@ async def run(case: dict, client) -> dict:
                                          prompts.FACTS_SCHEMA, usage, cid)
         facts = _norm_facts(out)
         verify_facts(facts, case["source_masked"])
+        # Instructions the model left out become rule-found facts, so the draft must cover them.
+        missed = uncovered_instructions(facts, case["source_masked"])
+        facts += missed
+        if missed:
+            audit(case, "system", "rule check found instructions the model missed",
+                  "; ".join(f["source_quote"] for f in missed))
         case["facts"] = facts
         case["med_issues"] = cross_check_meds(facts, case["source_masked"])
 

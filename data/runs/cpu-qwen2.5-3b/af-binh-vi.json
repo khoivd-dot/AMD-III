@@ -1,0 +1,250 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-08 23:55 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Apixaban",
+     "dose": "5 mg",
+     "frequency": "twice daily",
+     "detail": "Patient must take Apixaban 5 mg by mouth twice daily, about 12 hours apart. Do not skip doses. Do not stop without talking to your cardiologist.",
+     "source_quote": "Apixaban 5 mg by mouth twice daily, about 12 hours apart. Do not skip doses. Do not stop without talking to your cardiologist."
+    },
+    {
+     "id": "F2",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Diltiazem",
+     "dose": "120 mg",
+     "frequency": "once daily",
+     "detail": "Patient must take Diltiazem 120 mg by mouth once daily.",
+     "source_quote": "Diltiazem extended-release 120 mg by mouth once daily."
+    },
+    {
+     "id": "F3",
+     "kind": "diagnosis",
+     "med_action": "stop",
+     "drug": "Aspirin",
+     "dose": "81 mg",
+     "frequency": null,
+     "detail": "Patient must stop taking Aspirin 81 mg because apixaban already protects against clots and both together raise bleeding risk.",
+     "source_quote": "Aspirin 81 mg - stop, because apixaban already protects against clots and both together raise bleeding risk."
+    },
+    {
+     "id": "F4",
+     "kind": "diagnosis",
+     "med_action": "continue",
+     "drug": "Atorvastatin",
+     "dose": "40 mg",
+     "frequency": "at bedtime",
+     "detail": "Patient must continue taking Atorvastatin 40 mg by mouth at bedtime.",
+     "source_quote": "Atorvastatin 40 mg by mouth at bedtime."
+    },
+    {
+     "id": "F5",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must use a soft toothbrush and an electric razor. Avoid ibuprofen and naproxen; use acetaminophen for pain.",
+     "source_quote": "Use a soft toothbrush and an electric razor. Avoid ibuprofen and naproxen; use acetaminophen for pain."
+    },
+    {
+     "id": "F6",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must call 911 for sudden weakness on one side, trouble speaking, chest pain, or fainting. Go to the Emergency Department for black or bloody stools, vomiting blood, or a head injury.",
+     "source_quote": "Call 911 for sudden weakness on one side, trouble speaking, chest pain, or fainting. Go to the Emergency Department for black or bloody stools, vomiting blood, or a head injury."
+    },
+    {
+     "id": "F7",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must follow-up with Cardiology clinic with [CLINICIAN_1] in 2 weeks. Primary care in 1 week.",
+     "source_quote": "Follow-up: Cardiology clinic with [CLINIC_1] in 2 weeks. Primary care in 1 week."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 48.953558042,
+   "prompt_tokens": 555,
+   "completion_tokens": 831
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 29.322993175000022,
+   "prompt_tokens": 849,
+   "completion_tokens": 421
+  },
+  "translate:vi": {
+   "stage": "translate",
+   "seconds": 21.390659215000028,
+   "prompt_tokens": 473,
+   "completion_tokens": 360
+  },
+  "back_translate:vi": {
+   "stage": "back_translate",
+   "seconds": 19.55909021100001,
+   "prompt_tokens": 482,
+   "completion_tokens": 324
+  },
+  "judge:vi": {
+   "stage": "judge",
+   "seconds": 19.422749642999975,
+   "prompt_tokens": 1103,
+   "completion_tokens": 181
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "S1",
+     "section": "why",
+     "text": "You need to take these medicines to help you feel better. You will take Apixaban 5 mg twice a day, Diltiazem 120 mg once a day, and Atorvastatin 40 mg at bedtime.",
+     "fact_ids": [
+      "F1",
+      "F2",
+      "F4"
+     ]
+    },
+    {
+     "id": "S2",
+     "section": "medicines",
+     "text": "You must take Apixaban 5 mg twice a day, Diltiazem 120 mg once a day, and Atorvastatin 40 mg at bedtime.",
+     "fact_ids": [
+      "F1",
+      "F2",
+      "F4"
+     ]
+    },
+    {
+     "id": "S3",
+     "section": "warning_signs",
+     "text": "You must use a soft toothbrush and an electric razor. Avoid ibuprofen and naproxen; use acetaminophen for pain. Call 911 for sudden weakness, trouble speaking, chest pain, or fainting. Go to the Emergency Department for black or bloody stools, vomiting blood, or a head injury.",
+     "fact_ids": [
+      "F5",
+      "F6"
+     ]
+    },
+    {
+     "id": "S4",
+     "section": "appointments",
+     "text": "You must follow-up with Cardiology clinic with [CLINICIAN_1] in 2 weeks. Primary care in 1 week.",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "S5",
+     "section": "daily_care",
+     "text": "You must not stop taking Aspirin 81 mg without talking to your doctor. Do not hold Aspirin until your doctor says to restart.",
+     "fact_ids": [
+      "F3"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "vi": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "Bạn cần phải uống các loại thuốc này để giúp bạn cảm thấy tốt hơn. Bạn sẽ uống Apixaban 5 mg hai lần mỗi ngày, Diltiazem 120 mg một lần mỗi ngày, và Atorvastatin 40 mg trước khi đi ngủ."
+    },
+    {
+     "id": "S2",
+     "text": "Bạn cần phải uống Apixaban 5 mg hai lần mỗi ngày, Diltiazem 120 mg một lần mỗi ngày, và Atorvastatin 40 mg trước khi đi ngủ."
+    },
+    {
+     "id": "S3",
+     "text": "Bạn cần phải sử dụng bàn chải đánh răng mềm và máy cạo râu điện. Không sử dụng ibuprofen và naproxen; sử dụng acetaminophen để giảm đau. Gọi 911 nếu bạn cảm thấy yếu đột ngột, khó nói, đau ngực hoặc晕倒. Đi đến Trung tâm Khẩn cấp nếu có phân đen hoặc máu trong phân, nôn máu hoặc chấn thương đầu."
+    },
+    {
+     "id": "S4",
+     "text": "Bạn cần phải theo dõi với Trung tâm Tim mạch với [CLINICIAN_1] trong hai tuần tới. Tim mạch trong một tuần tới."
+    },
+    {
+     "id": "S5",
+     "text": "Bạn không được停止服用Aspirin 81 mg mà không nói chuyện với bác sĩ của bạn. Không ngưng Aspirin cho đến khi bác sĩ nói bắt đầu lại."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "vi": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "You need to take these medications to help you feel better. You will take Apixaban 5 mg twice a day, Diltiazem 120 mg once a day, and Atorvastatin 40 mg before bed."
+    },
+    {
+     "id": "S2",
+     "text": "You need to take Apixaban 5 mg twice a day, Diltiazem 120 mg once a day, and Atorvastatin 40 mg before bed."
+    },
+    {
+     "id": "S3",
+     "text": "You need to use a soft toothbrush and electric shaver. Do not use ibuprofen and naproxen; use acetaminophen to reduce pain. Call 911 if you feel faint, unable to speak, chest pain, or faint. Go to the Emergency Center if you have black stools or blood in stools, bloody vomit, or head trauma."
+    },
+    {
+     "id": "S4",
+     "text": "You need to follow up with the Heart Center with [CLINICIAN_1] in the next two weeks. Heart in one week."
+    },
+    {
+     "id": "S5",
+     "text": "You are not to stop taking Aspirin 81 mg without talking to your doctor. Do not stop Aspirin until your doctor says to start again."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "vi": {
+   "verdicts": [
+    {
+     "id": "S1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S5",
+     "verdict": "contradicts",
+     "reason": "Sentence contradicts the facts."
+    }
+   ]
+  }
+ }
+}

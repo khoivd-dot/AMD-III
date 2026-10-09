@@ -62,6 +62,10 @@ def parse_json(text: str):
         return json.loads(text[start:])
 
 
+RETRY_NUDGE = ("\n\nYour last reply was not complete, valid JSON. Reply with valid JSON only. "
+               "Keep every field short and list each item once.")
+
+
 class OpenAICompatClient:
     mode = "live"
 
@@ -91,7 +95,7 @@ class OpenAICompatClient:
         }
         last_error = None
         async with httpx.AsyncClient(timeout=self.timeout, transport=self.transport) as client:
-            for attempt in range(2):
+            for attempt in range(3):
                 started = time.perf_counter()
                 try:
                     resp = await client.post(f"{self.base_url}/chat/completions",
@@ -112,6 +116,11 @@ class OpenAICompatClient:
                     return parse_json(content)
                 except (json.JSONDecodeError, ValueError) as exc:
                     last_error = exc
+                    # Small models sometimes run past the token limit or repeat themselves.
+                    # At temperature 0 a plain retry would repeat the same output, so give
+                    # room to finish, a little variation, and a nudge to stay compact.
+                    body["max_tokens"], body["temperature"] = 8192, 0.2
+                    body["messages"] = messages[:-1] + [{**messages[-1], "content": messages[-1]["content"] + RETRY_NUDGE}]
         raise LLMError(f"{stage}: model call failed ({last_error})")
 
 

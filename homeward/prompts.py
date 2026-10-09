@@ -13,18 +13,20 @@ FACTS_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
+                # The quote comes before the labels: with constrained decoding the model
+                # writes fields in this order, so it reads the text before it labels it.
                 "properties": {
                     "id": {"type": "string"},
+                    "source_quote": {"type": "string"},
                     "kind": {"type": "string", "enum": FACT_KINDS},
                     "med_action": {"type": ["string", "null"], "enum": MED_ACTIONS + [None]},
                     "drug": {"type": ["string", "null"]},
                     "dose": {"type": ["string", "null"]},
                     "frequency": {"type": ["string", "null"]},
                     "detail": {"type": "string"},
-                    "source_quote": {"type": "string"},
                 },
-                "required": ["id", "kind", "med_action", "drug", "dose", "frequency",
-                             "detail", "source_quote"],
+                "required": ["id", "source_quote", "kind", "med_action", "drug", "dose", "frequency",
+                             "detail"],
             },
         }
     },
@@ -100,13 +102,24 @@ def facts_messages(source: str) -> list[dict]:
     user = f"""Extract every instruction the patient must know from the discharge text below as atomic facts.
 
 Rules:
+- source_quote: copy the exact words from the text, including any label such as "NEW:" or "STOP:".
+- kind: medication (any medicine line), warning_sign (when to call or go to hospital), follow_up (appointments, tests, classes), activity, diet, wound_care, pending_result, diagnosis (only why the patient was in hospital), other.
 - One fact per medicine. med_action is: new (started in hospital), changed (dose or timing changed), stop (stop permanently), hold (pause until told to restart), continue (unchanged). Use null for non-medicine facts.
 - Copy drug, dose and frequency exactly as written. Use null when the text does not say.
-- One fact per warning sign or group of signs that share the same action, one per appointment or pending test, one per activity, diet or wound-care rule. Use kind "diagnosis" for why the patient was in hospital.
+- One fact per warning sign or group of signs that share the same action, one per appointment or pending test, one per activity, diet, monitoring or wound-care rule. Every instruction line must appear in some fact.
 - detail: one short plain-English sentence stating the fact, including what to do.
-- source_quote: copy the exact words from the text that support the fact.
 - ids: F1, F2, ... in order of appearance.
 - Do not infer anything that is not written.
+
+Example. Text:
+STOP: Ibuprofen - do not take while on apixaban.
+Fluid restriction 1.5 L/day.
+Call 911 for chest pain.
+Facts:
+{{"facts": [
+ {{"id": "F1", "source_quote": "STOP: Ibuprofen - do not take while on apixaban.", "kind": "medication", "med_action": "stop", "drug": "Ibuprofen", "dose": null, "frequency": null, "detail": "Stop taking ibuprofen while you take apixaban."}},
+ {{"id": "F2", "source_quote": "Fluid restriction 1.5 L/day.", "kind": "diet", "med_action": null, "drug": null, "dose": null, "frequency": null, "detail": "Drink no more than 1.5 litres of fluid a day."}},
+ {{"id": "F3", "source_quote": "Call 911 for chest pain.", "kind": "warning_sign", "med_action": null, "drug": null, "dose": null, "frequency": null, "detail": "Call 911 if you have chest pain."}}]}}
 
 Discharge text:
 <<<
@@ -123,7 +136,7 @@ def draft_messages(facts: list[dict], grade: int = 6) -> list[dict]:
 Rules:
 - Reading level: grade {grade} or lower. Short sentences (under 15 words). Everyday words. Talk to the patient as "you".
 - Every sentence must list the fact ids it restates in fact_ids. Never write a sentence without a fact behind it.
-- Cover every medicine, warning sign and appointment. For each medicine say its name, the dose and how often, and clearly whether to start, change, keep taking, stop, or pause it.
+- Cover every fact in the list, including every medicine, warning sign and appointment. For each medicine say its name, the dose and how often, and clearly whether to start, change, keep taking, stop, or pause it.
 - A "hold" means pause until a clinician says to restart; say that, do not say stop forever.
 - Keep drug names, numbers and placeholders exactly as given.
 - Sections: why, medicines, warning_signs, appointments, daily_care. ids: S1, S2, ...
