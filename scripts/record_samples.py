@@ -9,6 +9,10 @@
 With the default --out (data/replay) scripted sample runs are moved to
 data/replay/scripted/ so nothing is lost. A summary of each run, including what
 the checks flagged, is written to <out>/summary.json.
+
+    python scripts/record_samples.py --recheck --out data/runs/<label>
+
+re-runs today's checks over outputs recorded earlier, without calling a model.
 """
 import argparse
 import asyncio
@@ -21,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from homeward import pipeline  # noqa: E402
-from homeward.llm import REPLAY_DIR, RecordingClient  # noqa: E402
+from homeward.llm import REPLAY_DIR, RecordingClient, ReplayClient  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -36,9 +40,12 @@ def flagged(case: dict) -> list[dict]:
     return out
 
 
-async def record(sample: dict, client: RecordingClient) -> dict:
+async def record(sample: dict, client) -> dict:
     path = client.directory / f"{sample['id']}.json"
-    if path.exists():
+    if client.mode == "replay":
+        if not path.exists():
+            return {}
+    elif path.exists():
         old = json.loads(path.read_text())
         if old.get("_meta", {}).get("source") == "scripted":
             (client.directory / "scripted").mkdir(exist_ok=True)
@@ -71,28 +78,42 @@ async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("ids", nargs="*")
     ap.add_argument("--out", default=str(REPLAY_DIR))
+    ap.add_argument("--recheck", action="store_true", help="re-run the checks on outputs already in --out")
     a = ap.parse_args()
-    if not os.environ.get("HOMEWARD_LLM_BASE_URL"):
+    summary = Path(a.out) / "summary.json"
+    old = json.loads(summary.read_text()) if summary.exists() else {}
+    if a.recheck:
+        client = ReplayClient(Path(a.out))
+        meta = old.get("_meta", {})
+        client.model, client.hardware = meta.get("model"), meta.get("hardware")
+    elif not os.environ.get("HOMEWARD_LLM_BASE_URL"):
         raise SystemExit("Set HOMEWARD_LLM_BASE_URL to the model endpoint first.")
-    client = RecordingClient(os.environ["HOMEWARD_LLM_BASE_URL"],
+    else:
+        client = RecordingClient(os.environ["HOMEWARD_LLM_BASE_URL"],
                              os.environ.get("HOMEWARD_LLM_MODEL", "Qwen/Qwen2.5-72B-Instruct"),
                              os.environ.get("HOMEWARD_LLM_API_KEY", ""), os.environ.get("HOMEWARD_HARDWARE", ""),
-                             timeout=float(os.environ.get("HOMEWARD_LLM_TIMEOUT", "1800")))
-    client.directory = Path(a.out)
+                                 timeout=float(os.environ.get("HOMEWARD_LLM_TIMEOUT", "1800")))
+        client.directory = Path(a.out)
     samples = [json.loads(p.read_text()) for p in sorted((ROOT / "data" / "samples").glob("*.json"))]
     rows = []
     for s in samples:
         if a.ids and s["id"] not in a.ids:
             continue
         row = await record(s, client)
+        if not row:
+            continue
         print(json.dumps({k: row.get(k) for k in ("id", "error", "sentences", "flagged_for_human", "by_status", "wall_seconds")}), flush=True)
         rows.append(row)
     client.directory.mkdir(parents=True, exist_ok=True)
-    summary = client.directory / "summary.json"
-    old = json.loads(summary.read_text()) if summary.exists() else {}
+    if a.recheck:
+        for r in rows:  # keep the model timings measured when the run was recorded
+            prev = old.get(r["id"], {})
+            r["wall_seconds"] = prev.get("wall_seconds", r["wall_seconds"])
+            r["rechecked_at"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
     old.update({r["id"]: r for r in rows})
-    old["_meta"] = {"model": client.model, "hardware": client.hardware,
-                    "recorded_at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())}
+    if not a.recheck:
+        old["_meta"] = {"model": client.model, "hardware": client.hardware,
+                        "recorded_at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())}
     summary.write_text(json.dumps(old, ensure_ascii=False, indent=1))
 
 

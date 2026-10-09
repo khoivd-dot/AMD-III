@@ -13,6 +13,18 @@ from .textutil import digits_in, numbers_in, quote_in_source
 CRITICAL_KINDS = ("medication", "warning_sign", "follow_up")
 EMERGENCY_NUMBERS = {"911", "999", "112", "000", "111"}
 DATE_OR_TIME = re.compile(r"\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b|\b\d{1,2}:\d{2}\b")
+
+
+
+
+def date_numbers(text: str) -> set[str]:
+    """Numbers that belong to dates, which have their own coverage rule."""
+    out = set()
+    for d in re.findall(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b", text):
+        out |= numbers_in(d, words=False)
+    return out
+
+
 ACTION_WORDS = {
     "stop": ["stop", "discontinue", "discontinued", "do not resume", "no longer take"],
     "hold": ["hold", "pause", "do not take until", "until told", "until your"],
@@ -60,9 +72,80 @@ def fact_risk(fact: dict) -> str:
     return "normal"
 
 
+LABEL_ACTION = re.compile(r"^\W*(NEW|START|STARTED|CHANGED?|INCREASED?|DECREASED?|HOLD|PAUSE|STOP|DISCONTINUED?|CONTINUE|RESUME)\b")
+LABEL_TO_ACTION = {"NEW": "new", "START": "new", "STARTED": "new", "CHANGE": "changed", "CHANGED": "changed",
+                   "INCREASE": "changed", "INCREASED": "changed", "DECREASE": "changed", "DECREASED": "changed",
+                   "HOLD": "hold", "PAUSE": "hold", "STOP": "stop", "DISCONTINUE": "stop", "DISCONTINUED": "stop",
+                   "CONTINUE": "continue", "RESUME": "continue"}
+DOSE = re.compile(r"\b\d+(?:[.,/]\d+)?\s*(?:mg|mcg|g|units?|puffs?|tablets?|capsules?|ml|mL)\b", re.I)
+WARNING_CUES = re.compile(r"\b(?:911|999|112|emergency|return to|go to the|call (?:your|the)|get help|urgent)", re.I)
+FOLLOW_CUES = re.compile(r"\b(?:follow-?up|appointment|clinic|class|lab|blood test|panel|intake|physiotherapy)\b", re.I)
+SAFETY_ORDER = {"stop": 0, "hold": 1, "changed": 2, "new": 3, "continue": 4}
+
+
+def _text_action(quote: str) -> str | None:
+    m = LABEL_ACTION.match(quote)
+    if m:
+        return LABEL_TO_ACTION[m.group(1).upper()]
+    lowered = quote.lower()
+    if lexicon.polarity(lowered)["continue"]:  # "never skip", "do not stop"
+        return "continue"
+    for name, words in ACTION_WORDS.items():
+        if any(re.search(rf"\b{re.escape(w)}\b", lowered) for w in words):
+            return name
+    return None
+
+
+def source_line(quote: str, source: str) -> str:
+    """The full source line a quote came from, so a dropped "NEW:" label is still seen."""
+    head = re.sub(r"\s+", " ", quote.strip())[:40].lower()
+    if head:
+        for raw in source.splitlines():
+            if head in re.sub(r"\s+", " ", raw).lower():
+                return raw.strip()
+    return quote
+
+
+def classify(f: dict, source: str = "") -> list[dict]:
+    """Re-derive kind and medicine action from the source text instead of trusting
+    the model's labels. Real small-model runs labelled every fact "diagnosis",
+    which silently switched off coverage, stop/keep and risk checks."""
+    notes = []
+    quote = f.get("source_quote") or ""
+    line = source_line(quote, source) if source else quote
+    model_kind, model_action = f.get("kind"), f.get("med_action")
+    if f.get("kind") not in CRITICAL_KINDS:
+        quote_drugs = lexicon.drugs_in(quote)
+        named = lexicon.canonical_drug(f.get("drug"))
+        if (named or quote_drugs) and (DOSE.search(quote) or _text_action(line)):
+            f["kind"] = "medication"
+            if not named:
+                f["drug"] = sorted(quote_drugs)[0]
+        elif WARNING_CUES.search(quote):
+            f["kind"] = "warning_sign"
+        elif FOLLOW_CUES.search(quote) and f.get("kind") != "medication":
+            f["kind"] = "follow_up"
+    if f["kind"] == "medication":
+        text_action = _text_action(line if LABEL_ACTION.match(line) else quote)
+        if text_action and model_action != text_action:
+            # The clinician's own label wins; keep the more cautious reading for risk.
+            f["med_action"] = text_action
+            if model_action:
+                notes.append(check("cross_check", "warn",
+                                   f"Model read this as '{model_action}'; the text says '{text_action}'."))
+    if f["kind"] != model_kind:
+        notes.append(check("classification", "warn",
+                           f"Model labelled this '{model_kind}'; the text reads as {f['kind'].replace('_', ' ')}. "
+                           "Checked as that."))
+        f["model_kind"] = model_kind
+    if f.get("med_action") != model_action:
+        f["model_action"] = model_action
+    return notes
+
+
 def verify_facts(facts: list[dict], source: str) -> None:
     for f in facts:
-        checks = []
+        checks = classify(f, source)
         quote = f.get("source_quote") or ""
         if quote_in_source(quote, source):
             checks.append(check("quote", "pass"))
@@ -92,17 +175,14 @@ def parse_med_lines(source: str) -> list[dict]:
         if not line:
             context = None
             continue
-        lowered = line.lower()
-        action = None
-        for name, words in ACTION_WORDS.items():
-            if any(re.search(rf"\b{re.escape(w)}\b", lowered) for w in words):
-                action = name
-                break
-        drugs = lexicon.drugs_in(line)
+        action = _text_action(line)
+        drugs = lexicon.drugs_in_order(line)
         if not drugs:
             if action and line.endswith(":"):
                 context = action
             continue
+        if LABEL_ACTION.match(line):
+            drugs = drugs[:1]  # "STOP: Aspirin ... because apixaban ..." is about aspirin only
         for d in drugs:
             meds.append({"drug": d, "action": action or context, "line": line})
     return meds
@@ -129,9 +209,7 @@ def cross_check_meds(facts: list[dict], source: str) -> list[dict]:
             entry["actions"].add(med["action"])
     for d, entry in parsed.items():
         if d not in any_fact_drugs:
-            issues.append({"type": "missing_fact", "drug": d, "line": entry["line"],
-                           "message": f"{d.title()} is in the clinician's text but the model did not list it."})
-            continue
+            continue  # reported by uncovered_instructions(), which adds the missing fact
         if not entry["actions"] or d not in by_drug:
             continue
         model_actions = {f.get("med_action") for f in by_drug[d]}
@@ -146,6 +224,63 @@ def cross_check_meds(facts: list[dict], source: str) -> list[dict]:
                            "message": f"{d.title()}: text reads as '{text_actions}', model says "
                                       f"'{'/'.join(sorted(a or '?' for a in model_actions))}'."})
     return issues
+
+
+SKIP_LABELS = re.compile(r"^\W*(?:patient|name|mrn|dob|date of birth|attending|surgeon|discharge date|"
+                         r"principal diagnosis|diagnosis|hospital course|procedure|discharge summary|"
+                         r"discharge instructions)\b", re.I)
+INSTRUCTION_CUES = re.compile(r"\b(?:take|do not|don't|never|call|return|go to|weigh|walk|avoid|check|use|keep|"
+                              r"restriction|follow-?up|appointment|clinic|shower|lift|drive|smoke|exercise|eat|"
+                              r"drink|sodium|fluid|injection|inhaled|record|recheck|until)\b", re.I)
+STOPWORDS = set("the and for with your you any from that this are was were will have has into each per "
+                "after before about only then than more less not but all when what who".split())
+
+
+def _tokens(text: str) -> set[str]:
+    words = {w for w in re.findall(r"[a-z]{3,}", text.lower()) if w not in STOPWORDS}
+    return words | numbers_in(text, words=False)
+
+
+def instruction_units(source: str) -> list[str]:
+    units = []
+    for raw in source.splitlines():
+        line = raw.strip()
+        if not line or SKIP_LABELS.match(line) or line.isupper():
+            continue
+        line = re.sub(r"^[A-Z][A-Za-z -]{2,25}:\s*", "", line)  # drop "Diet:", "Wound care:" labels
+        for part in re.split(r"(?<=[.;])\s+(?=[A-Z(])|;\s*", line):
+            part = part.strip(" .;")
+            if len(part) > 8 and (INSTRUCTION_CUES.search(part) or lexicon.drugs_in(part)):
+                units.append(part)
+    return units
+
+
+def uncovered_instructions(facts: list[dict], source: str, threshold: float = 0.6) -> list[dict]:
+    """Instructions in the clinician's text that no fact covers. Each becomes a
+    rule-found fact so it flows through drafting, coverage and review like any other."""
+    fact_tokens = [_tokens((f.get("source_quote") or "") + " " + (f.get("detail") or "")) for f in facts]
+    added = []
+    for unit in instruction_units(source):
+        toks = _tokens(unit)
+        if not toks:
+            continue
+        best = max((len(toks & ft) / len(toks) for ft in fact_tokens), default=0)
+        if best >= threshold:
+            continue
+        drugs = sorted(lexicon.drugs_in(unit))
+        dose = DOSE.search(unit)
+        f = {"id": f"R{len(added) + 1}", "kind": "other", "med_action": None,
+             "drug": drugs[0] if drugs else None, "dose": dose.group(0) if dose else None, "frequency": None,
+             "detail": unit, "source_quote": unit, "origin": "rule", "must_cover": True}
+        notes = classify(f, source)
+        f["checks"] = [check("missed_by_model", "warn",
+                             "The model did not list this instruction; the rule check found it in the source.")] + \
+            [n for n in notes if n["name"] != "classification"]
+        f["risk"] = fact_risk(f)
+        f["status"] = "amber"
+        added.append(f)
+        fact_tokens.append(toks)
+    return added
 
 
 # ------------------------------------------------------------ sentences
@@ -185,7 +320,8 @@ def polarity_checks(text: str, med_facts: list[dict]) -> list[dict]:
                                  f"Source says pause {name} until told to restart; this may read as stopping for good."))
         elif action == "continue" and pol["stop"]:
             out.append(check("meaning_polarity", "fail", f"Source says keep taking {name}; this reads as stop."))
-        elif action in ("new", "changed") and pol["stop"] and not pol["continue"]:
+        elif action in ("new", "changed") and pol["stop"] and not pol["continue"] \
+                and not lexicon.polarity(f.get("source_quote") or "")["stop"]:
             out.append(check("meaning_polarity", "warn",
                              f"Source says take {name}; this sentence contains a stop instruction."))
     return out
@@ -215,6 +351,22 @@ def clearly_instructs(f: dict, sentences: list[dict]) -> bool:
             if pol["stop"] and not pol["continue"]:
                 return True
     return False
+
+
+SCRIPTS = {"han": r"[\u3400-\u9fff\uf900-\ufaff]", "kana": r"[\u3040-\u30ff]", "hangul": r"[\uac00-\ud7af]",
+           "cyrillic": r"[\u0400-\u04ff]", "arabic": r"[\u0600-\u06ff]", "thai": r"[\u0e00-\u0e7f]"}
+EXPECTED_SCRIPTS = {"zh": {"han"}}
+
+
+def foreign_script(text: str, lang: str) -> str:
+    """A run of characters from a writing system the target language does not use."""
+    for name, chars in SCRIPTS.items():
+        if name in EXPECTED_SCRIPTS.get(lang, set()):
+            continue
+        m = re.search(chars + "+", text)
+        if m:
+            return m.group(0)
+    return ""
 
 
 def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict],
@@ -268,6 +420,10 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
                                     f"Numbers differ after translation: {_fmt(digits_in(text))} vs {_fmt(digits_in(tl))}."))
             if placeholders_in(tl) != placeholders_in(text):
                 checks.append(check("translation_placeholder", "fail", "A name or contact detail was lost in translation."))
+            foreign = foreign_script(tl, target_lang)
+            if foreign:
+                checks.append(check("translation_script", "fail",
+                                    f"Translation contains text in another writing system (\u201c{foreign}\u201d)."))
         if back:
             if numbers_in(back) - {"1"} != numbers_in(text) - {"1"}:
                 checks.append(check("back_numbers", "fail",
@@ -305,7 +461,7 @@ def coverage(facts: list[dict], sentences: list[dict]) -> list[dict]:
     """Critical facts that no sentence restates. Each one blocks release."""
     omissions = []
     for f in facts:
-        if f.get("kind") not in CRITICAL_KINDS or f.get("dismissed"):
+        if (f.get("kind") not in CRITICAL_KINDS and not f.get("must_cover")) or f.get("dismissed"):
             continue
         citing = [s for s in sentences if f["id"] in s.get("fact_ids", []) and not s.get("removed")]
         if not citing:
@@ -320,6 +476,16 @@ def coverage(facts: list[dict], sentences: list[dict]) -> list[dict]:
             if lost:
                 omissions.append({"fact_id": f["id"], "kind": f["kind"],
                                   "message": f"The dose of {f.get('drug')} ({f.get('dose')}) is never stated."})
+            else:
+                # Timing and limits in the clinician's words ("12 hours apart", "within 36 hours",
+                # "maximum 4 tablets") must reach the patient too. Old doses ("from 20 mg") need not.
+                current = re.sub(r"\b(?:from|was|previously)\s+(?:[a-z]+\s+){0,2}?\d+(?:[.,]\d+)?", "", quote, flags=re.I)
+                quoted = numbers_in(current, words=False)
+                lost = sorted(quoted - said - date_numbers(quote))
+                if lost:
+                    omissions.append({"fact_id": f["id"], "kind": f["kind"],
+                                      "message": f"{f.get('drug')}: the clinician's {', '.join(lost)} "
+                                                 f"(\u201c{quote}\u201d) is never stated."})
         elif f["kind"] == "follow_up":
             lost = DATE_OR_TIME.findall(quote)
             lost = [d for d in lost if not numbers_in(d, words=False) <= said]

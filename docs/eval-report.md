@@ -11,12 +11,12 @@ Cases: hf-maria-es, knee-giulia-it. Deterministic checks only (the safety model'
 | hallucinated medicine | 33 | 33 | 33 | 100% | 100% |
 | hold as permanent stop | 1 | 1 | 0 | 100% | 100% |
 | number changed | 26 | 26 | 26 | 100% | 100% |
-| omission | 15 | 15 | 15 | 100% | 100% |
+| omission | 16 | 16 | 16 | 100% | 100% |
 | translation flip | 3 | 3 | 3 | 100% | 100% |
 | translation number changed | 26 | 26 | 26 | 100% | 100% |
 | unsupported sentence | 33 | 33 | 33 | 100% | 100% |
 | wrong medicine named | 14 | 14 | 13 | 100% | 100% |
-| **all** | **161** | **160** | | **99.4%** | |
+| **all** | **162** | **161** | | **99.4%** | |
 
 False alarms on the clean, reviewed packets: 0 across 33 sentences.
 

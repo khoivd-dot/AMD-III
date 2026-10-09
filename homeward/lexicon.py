@@ -77,19 +77,32 @@ def drugs_in(text: str) -> set[str]:
     return found
 
 
+def drugs_in_order(text: str) -> list[str]:
+    found = []
+    for token in _WORD.findall(text.lower()):
+        token = BRANDS.get(token, token)
+        if token in DRUGS or token in BRANDS.values():
+            token = SYNONYMS.get(token, token)
+            if token not in found:
+                found.append(token)
+    return found
+
+
 def is_high_alert(drug: str | None) -> bool:
     return canonical_drug(drug) in HIGH_ALERT if drug else False
 
 
 # Polarity cues are checked on English text (the draft, or the back-translation).
 CONTINUE_CUES = [
-    r"\bkeep taking\b", r"\bcontinue\b", r"\bcontinuing\b", r"\bdo not stop\b",
-    r"\bdon'?t stop\b", r"\bsame as before\b", r"\bas usual\b", r"\bstill take\b",
+    r"\bkeep taking\b", r"\bcontinue\b", r"\bcontinuing\b", r"\bsame as before\b",
+    r"\bas usual\b", r"\bstill take\b",
+    # Negated stops: "do not stop", "must not stop", "never stop", "do not hold", "don't pause".
+    r"\b(?:not|never|n't)\s+(?:\w+\s+){0,2}?(?:stop|hold|pause|quit|skip)\b",
 ]
 STOP_CUES = [
     r"\bstop\b", r"\bstopped\b", r"\bdo not take\b", r"\bdon'?t take\b", r"\bno longer\b",
     r"\bhold\b", r"\bpause\b", r"\bavoid\b", r"\bdo not use\b", r"\bdon'?t use\b",
-    r"\bnot take\b", r"\bnot to take\b", r"\bquit\b",
+    r"\bnot take\b", r"\bnot to take\b", r"\bnot use\b", r"\bquit\b",
 ]
 TEMPORARY_CUES = [
     r"\buntil\b", r"\bfor now\b", r"\bagain\b", r"\bfor the next\b", r"\bfor \d+ days\b",

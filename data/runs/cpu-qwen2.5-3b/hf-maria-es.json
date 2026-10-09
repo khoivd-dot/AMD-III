@@ -1,0 +1,381 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-08 23:59 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Spironolactone",
+     "dose": "25 mg",
+     "frequency": "by mouth once daily",
+     "detail": "Patient must take Spironolactone 25 mg by mouth once daily.",
+     "source_quote": "NEW: Spironolactone 25 mg by mouth once daily"
+    },
+    {
+     "id": "F2",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Furosemide",
+     "dose": "40 mg",
+     "frequency": "twice daily (8 AM and 2 PM)",
+     "detail": "Patient must take Furosemide 40 mg twice daily (8 AM and 2 PM).",
+     "source_quote": "CHANGED: Furosemide increased from 20 mg to 40 mg by mouth twice daily (8 AM and 2 PM)"
+    },
+    {
+     "id": "F3",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Ibuprofen",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must not take Ibuprofen until kidney function is rechecked by their cardiologist.",
+     "source_quote": "HOLD: Ibuprofen - do not take until kidney function is rechecked by your cardiologist"
+    },
+    {
+     "id": "F4",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Lisinopril",
+     "dose": "10 mg",
+     "frequency": "daily",
+     "detail": "Patient must stop taking Lisinopril 10 mg daily.",
+     "source_quote": "STOP: Lisinopril 10 mg daily - discontinued"
+    },
+    {
+     "id": "F5",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Sacubitril/valsartan",
+     "dose": "24/26 mg",
+     "frequency": "twice daily",
+     "detail": "Patient must take Sacubitril/valsartan 24/26 mg twice daily.",
+     "source_quote": "NEW: Sacubitril/valsartan 24/26 mg by mouth twice daily. Do not take within 36 hours of your last lisinopril dose."
+    },
+    {
+     "id": "F6",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Metoprolol succinate",
+     "dose": "50 mg",
+     "frequency": "once daily",
+     "detail": "Patient must continue taking Metoprolol succinate 50 mg by mouth once daily.",
+     "source_quote": "CONTINUE: Metoprolol succinate 50 mg by mouth once daily"
+    },
+    {
+     "id": "F7",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting.",
+     "source_quote": "Return precautions: Return to the Emergency Department or call 911 for chest pain, shortness of breath at rest, or fainting."
+    },
+    {
+     "id": "F8",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens.",
+     "source_quote": "Return precautions: Call the heart failure clinic at [PHONE_1] if weight increases by more than 2 lb in one day or 5 lb in one week, or if leg swelling worsens."
+    },
+    {
+     "id": "F9",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must weigh themselves every morning after urinating and before breakfast and record daily weights.",
+     "source_quote": "Activity: Weigh yourself every morning after urinating and before breakfast and record daily weights."
+    },
+    {
+     "id": "F10",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must walk as tolerated; no lifting > 10 lb for 2 weeks.",
+     "source_quote": "Activity: Walk as tolerated; no lifting > 10 lb for 2 weeks."
+    },
+    {
+     "id": "F11",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must follow up with the heart failure clinic with [CLINICIAN_1] on 10/21/2026 at 10:30 AM.",
+     "source_quote": "Follow-up: Heart failure clinic with [CLINICIAN_1] on 10/21/2026 at 10:30 AM."
+    },
+    {
+     "id": "F12",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must have a basic metabolic panel (blood test) on 10/18/2026 at the outpatient lab.",
+     "source_quote": "Follow-up: Basic metabolic panel (blood test) on 10/18/2026 at the outpatient lab."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 122.19415007600003,
+   "prompt_tokens": 791,
+   "completion_tokens": 1358
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 80.08027255399998,
+   "prompt_tokens": 1212,
+   "completion_tokens": 637
+  },
+  "translate:es": {
+   "stage": "translate",
+   "seconds": 48.806816771,
+   "prompt_tokens": 592,
+   "completion_tokens": 515
+  },
+  "back_translate:es": {
+   "stage": "back_translate",
+   "seconds": 46.326477097000065,
+   "prompt_tokens": 629,
+   "completion_tokens": 458
+  },
+  "judge:es": {
+   "stage": "judge",
+   "seconds": 58.51030937500002,
+   "prompt_tokens": 1332,
+   "completion_tokens": 291
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "S1",
+     "section": "why",
+     "text": "You need to take these medicines to get better. You must take Spironolactone 25 mg by mouth once daily.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "S2",
+     "section": "why",
+     "text": "You must take Furosemide 40 mg twice daily (8 AM and 2 PM). You must not take Ibuprofen until your kidney function is rechecked by your cardiologist.",
+     "fact_ids": [
+      "F2",
+      "F3"
+     ]
+    },
+    {
+     "id": "S3",
+     "section": "why",
+     "text": "You must stop taking Lisinopril 10 mg daily. You must continue taking Metoprolol succinate 50 mg by mouth once daily.",
+     "fact_ids": [
+      "F4",
+      "F6"
+     ]
+    },
+    {
+     "id": "S4",
+     "section": "warning_signs",
+     "text": "If you have chest pain, shortness of breath at rest, or fainting, you must return to the Emergency Department or call 911.",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "S5",
+     "section": "warning_signs",
+     "text": "If your weight increases by more than 2 lb in one day or 5 lb in one week, or if your leg swelling worsens, you must call the heart failure clinic at [PHONE_1].",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "S6",
+     "section": "warning_signs",
+     "text": "You must weigh yourself every morning after urinating and before breakfast and record daily weights.",
+     "fact_ids": [
+      "F9"
+     ]
+    },
+    {
+     "id": "S7",
+     "section": "daily_care",
+     "text": "You must walk as tolerated; no lifting > 10 lb for 2 weeks.",
+     "fact_ids": [
+      "F10"
+     ]
+    },
+    {
+     "id": "S8",
+     "section": "appointments",
+     "text": "You must follow up with the heart failure clinic with [CLINICIAN_1] on 10/21/2026 at 10:30 AM.",
+     "fact_ids": [
+      "F11"
+     ]
+    },
+    {
+     "id": "S9",
+     "section": "appointments",
+     "text": "You must have a basic metabolic panel (blood test) on 10/18/2026 at the outpatient lab.",
+     "fact_ids": [
+      "F12"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "Tienes que tomar estos medicamentos para que te sientas mejor. Tienes que tomar Spironolactone 25 mg por vía oral una vez al día."
+    },
+    {
+     "id": "S2",
+     "text": "Tienes que no tomar Ibuprofen hasta que se reevalúen tus funciones renales por tu cardiologo. Tienes que tomar Furosemide 40 mg dos veces al día (8 AM y 2 PM)."
+    },
+    {
+     "id": "S3",
+     "text": "Tienes que dejar de tomar Lisinopril 10 mg al día. Tienes que seguir tomando Metoprolol succinate 50 mg por vía oral una vez al día."
+    },
+    {
+     "id": "S4",
+     "text": "Si tienes dolor en el pecho, dificultad para respirar al reposo o te caes, tienes que regresar al Servicio de Urgencias o llamar a 911."
+    },
+    {
+     "id": "S5",
+     "text": "Si tu peso aumenta en más de 2 libras en un día o 5 libras en una semana, o si tu hinchazón en las piernas empeora, tienes que llamar al servicio de atención al paciente del corazón en [PHONE_1]."
+    },
+    {
+     "id": "S6",
+     "text": "Tienes que pesarte cada mañana después de orinar y antes de la comida y registrar los pesos diarios."
+    },
+    {
+     "id": "S7",
+     "text": "Tienes que caminar lo que puedas; no levantar más de 10 libras durante 2 semanas."
+    },
+    {
+     "id": "S8",
+     "text": "Tienes que seguir con el servicio de atención al paciente del corazón con [CLINICIAN_1] el 10/21/2026 a las 10:30 AM."
+    },
+    {
+     "id": "S9",
+     "text": "Tienes que tener un panel metabólico básico el 10/18/2026 en el laboratorio ambulatorio."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "You have to take these medications so that you feel better. You have to take Spironolactone 25 mg by mouth once a day."
+    },
+    {
+     "id": "S2",
+     "text": "You have to not take Ibuprofen until your renal functions are reevaluated by your cardiologist. You have to take Furosemide 40 mg twice a day (8 AM and 2 PM)."
+    },
+    {
+     "id": "S3",
+     "text": "You have to stop taking Lisinopril 10 mg a day. You have to continue taking Metoprolol succinate 50 mg by mouth once a day."
+    },
+    {
+     "id": "S4",
+     "text": "If you have chest pain, difficulty breathing at rest, or you fall, you have to return to the Emergency Service or call 911."
+    },
+    {
+     "id": "S5",
+     "text": "If your weight increases more than 2 pounds in a day or 5 pounds in a week, or if your leg swelling worsens, you have to call the heart patient care service at [PHONE_1]."
+    },
+    {
+     "id": "S6",
+     "text": "You have to weigh yourself every morning after urinating and before eating and record the daily weights."
+    },
+    {
+     "id": "S7",
+     "text": "You have to walk as much as you can; do not lift more than 10 pounds for 2 weeks."
+    },
+    {
+     "id": "S8",
+     "text": "You have to continue with the heart patient care service with [CLINICIAN_1] on 10/21/2026 at 10:30 AM."
+    },
+    {
+     "id": "S9",
+     "text": "You have to have a basic metabolic panel on 10/18/2026 at the outpatient laboratory."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "es": {
+   "verdicts": [
+    {
+     "id": "S1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S7",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S8",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S9",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    }
+   ]
+  }
+ }
+}
