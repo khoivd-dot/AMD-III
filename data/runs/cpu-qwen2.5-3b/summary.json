@@ -1,0 +1,162 @@
+{
+ "af-binh-vi": {
+  "id": "af-binh-vi",
+  "language": "vi",
+  "facts": 7,
+  "sentences": 5,
+  "flagged_for_human": 3,
+  "by_status": {
+   "green": 3,
+   "amber": 0,
+   "red": 2
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [
+   {
+    "id": "S4",
+    "status": "red",
+    "text_en": "You must follow-up with Cardiology clinic with [CLINICIAN_1] in 2 weeks. Primary care in 1 week.",
+    "text_tl": "Bạn cần phải theo dõi với Trung tâm Tim mạch với [CLINICIAN_1] trong hai tuần tới. Tim mạch trong một tuần tới.",
+    "back_en": "You need to follow up with the Heart Center with [CLINICIAN_1] in the next two weeks. Heart in one week.",
+    "problems": [
+     "Numbers differ after translation: {1, 2} vs none."
+    ]
+   },
+   {
+    "id": "S5",
+    "status": "red",
+    "text_en": "You must not stop taking Aspirin 81 mg without talking to your doctor. Do not hold Aspirin until your doctor says to restart.",
+    "text_tl": "Bạn không được停止服用Aspirin 81 mg mà không nói chuyện với bác sĩ của bạn. Không ngưng Aspirin cho đến khi bác sĩ nói bắt đầu lại.",
+    "back_en": "You are not to stop taking Aspirin 81 mg without talking to your doctor. Do not stop Aspirin until your doctor says to start again.",
+    "problems": [
+     "Safety model: contradicts. Sentence contradicts the facts."
+    ]
+   }
+  ],
+  "grade": [
+   8.8,
+   7.6
+  ],
+  "route": "interpreter",
+  "model": {
+   "calls": 5,
+   "seconds": 138.65,
+   "prompt_tokens": 3462,
+   "completion_tokens": 2117,
+   "tokens_per_second": 15.3
+  },
+  "wall_seconds": 138.7
+ },
+ "_meta": {
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:04 UTC"
+ },
+ "copd-pierre-fr": {
+  "id": "copd-pierre-fr",
+  "language": "fr",
+  "facts": 10,
+  "sentences": 9,
+  "flagged_for_human": 0,
+  "by_status": {
+   "green": 9,
+   "amber": 0,
+   "red": 0
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [],
+  "grade": [
+   8.3,
+   6.2
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 5,
+   "seconds": 242.49,
+   "prompt_tokens": 3744,
+   "completion_tokens": 2690,
+   "tokens_per_second": 11.1
+  },
+  "wall_seconds": 242.6
+ },
+ "dm-ana-es": {
+  "id": "dm-ana-es",
+  "language": "es",
+  "facts": 8,
+  "sentences": 5,
+  "flagged_for_human": 1,
+  "by_status": {
+   "green": 4,
+   "amber": 0,
+   "red": 1
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [
+   {
+    "id": "S5",
+    "status": "red",
+    "text_en": "You should check your glucose levels at least 4 times a day. You should eat a balanced diet and avoid skipping meals. You should stay hydrated and get regular exercise.",
+    "text_tl": "Deberás chequear tus niveles de glucosa al menos cuatro veces al día. Deberás comer una dieta equilibrada y evitar pasar por alto las comidas. Deberás mantener hidratado y hacer ejercicio regularmente.",
+    "back_en": "You will have to check your glucose levels at least four times a day. You will have to eat a balanced diet and avoid missing meals. You will have to stay hydrated and exercise regularly.",
+    "problems": [
+     "Number 4 is not in the cited source.",
+     "Numbers differ after translation: {4} vs none.",
+     "Safety model: unsupported. Adds information about new diagnoses not in the facts."
+    ]
+   }
+  ],
+  "grade": [
+   8.3,
+   7.5
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 5,
+   "seconds": 271.52,
+   "prompt_tokens": 3793,
+   "completion_tokens": 2438,
+   "tokens_per_second": 9.0
+  },
+  "wall_seconds": 271.7
+ },
+ "hf-maria-es": {
+  "id": "hf-maria-es",
+  "language": "es",
+  "facts": 12,
+  "sentences": 9,
+  "flagged_for_human": 0,
+  "by_status": {
+   "green": 9,
+   "amber": 0,
+   "red": 0
+  },
+  "omissions": [],
+  "medicine_cross_check": [],
+  "fact_problems": [],
+  "flagged_sentences": [],
+  "grade": [
+   8.7,
+   7.0
+  ],
+  "route": "standard",
+  "model": {
+   "calls": 5,
+   "seconds": 355.92,
+   "prompt_tokens": 4556,
+   "completion_tokens": 3259,
+   "tokens_per_second": 9.2
+  },
+  "wall_seconds": 356.2
+ },
+ "knee-giulia-it": {
+  "id": "knee-giulia-it",
+  "error": "facts: model call failed (Unterminated string starting at: line 419 column 20 (char 12749))",
+  "wall_seconds": 676.2
+ }
+}
