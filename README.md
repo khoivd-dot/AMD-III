@@ -23,7 +23,7 @@ Rewriting and translating is easy now. Making the result **trustworthy enough to
 2. Homeward **masks identifiers**, has the model build a **fact ledger** (every instruction tied to an exact quote), writes a **grade-6 draft** where every sentence cites its facts, **translates** it, and **back-translates** it for checking.
 3. **Deterministic checks** run on every sentence and a **safety model** reviews it; each sentence comes out green (verified), amber (uncertain) or red (blocked), with the reason in plain words.
 4. **Reviewer** sees only what needs a human: red and amber sentences, every high-risk instruction, and anything missing. They fix, approve or remove, then sign off by name.
-5. **Patient** gets a bilingual packet with read-aloud and a short **teach-back quiz**. A wrong answer alerts the nurse to re-explain that item before the patient leaves.
+5. **Patient** gets a bilingual packet with read-aloud and a short **teach-back quiz**, on the ward screen or through their own private link on a phone. A wrong answer alerts the nurse to re-explain that item before the patient leaves. Once signed, the packet is locked: nothing can change it without a new sign-off.
 
 ```
  clinician text ─► mask IDs ─► fact ledger ─► plain draft ─► translate ─► back-translate
@@ -58,7 +58,7 @@ Rewriting and translating is easy now. Making the result **trustworthy enough to
 |---|---|---|
 | Reading grade (Flesch-Kincaid), source → packet | 8.7 → 4.1 | 7.0 → 4.4 |
 | Sentences | 16 | 17 |
-| Verified with no human needed | 10 (62%) | 9 (53%) |
+| Verified with no human needed | 10 of 16 (63%) | 9 of 17 (53%) |
 | Problems stopped | 15 L instead of 1.5 L in Spanish; ibuprofen "hold" written as "stop"; weight-gain warning left out | ibuprofen invented (patient is on enoxaparin); vague opioid wording |
 
 These two cases replay hand-written model outputs (see below), so treat their numbers as a demonstration, not a measurement. Flesch-Kincaid understates how hard clinical shorthand is, so the source grades above are generous to the source.
@@ -67,9 +67,9 @@ These two cases replay hand-written model outputs (see below), so treat their nu
 
 **Red-team test** ([`docs/redteam-report.md`](docs/redteam-report.md)): an independent tester wrote five new cases (Vietnamese, Chinese, French, Spanish) and 20 subtler errors: units, AM/PM, dates, "only if needed", omitted warnings, invented reassurance, swapped insulin scales. The first version of Homeward caught 7 and flagged 23 of 92 honest sentences. The current checks flag all 20 and 1 honest sentence. They were fixed after seeing these errors, so this is now a regression suite; a fresh held-out set is the next test.
 
-**Real model output** ([`docs/real-runs.md`](docs/real-runs.md)): an open 3B model on a GitHub CPU runner (not AMD) dropped medicines and diet limits, labelled every fact "diagnosis", turned a STOP into "must not stop", and mixed Chinese into Vietnamese. Each of those is now flagged.
+**Real model output** ([`docs/real-runs.md`](docs/real-runs.md)): an open 3B model on a GitHub CPU runner (not AMD) dropped medicines and diet limits, labelled every fact "diagnosis", turned a STOP into "must not stop", and mixed Chinese into Vietnamese. Each of those is now flagged. A second run with the improved prompts finished all five cases; its errors (a last injection date moved from 26 to 21 October, "twice a day" translated as "a day", a dropped emergency number) are all flagged too.
 
-**Sample runs:** the two cases above currently replay hand-written model outputs that reproduce error types from the studies, so the demo works without a GPU, and the app says so on screen. `scripts/record_samples.py` replaces them with recorded runs from the MI300X, and `scripts/benchmark.py` measures latency, throughput and cost per packet.
+**Sample runs:** the two cases above replay hand-written model outputs that reproduce error types from the studies, so the demo works without a GPU, and the app says so on screen. The Vietnamese, French and Spanish diabetes cases replay the second real 3B run, labelled "Recorded on GitHub Actions CPU runner (not AMD)", so you can review real, unscripted model output in the app. `scripts/record_samples.py` replaces them with recorded runs from the MI300X, and `scripts/benchmark.py` measures latency, throughput and cost per packet.
 
 ## AMD
 
@@ -84,8 +84,9 @@ These two cases replay hand-written model outputs (see below), so treat their nu
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 uvicorn homeward.app:app --port 8000     # replay mode, no GPU needed
-pytest                                    # 24 tests
+pytest                                    # 48 tests
 python -m eval.mutation_eval              # error-injection report
+python -m eval.redteam_eval               # red-team regression (20 injected errors on 5 new cases)
 ```
 
 With the AMD endpoint:
@@ -99,6 +100,8 @@ uvicorn homeward.app:app --port 8000
 
 Docker: `docker build -t homeward . && docker run -p 8080:8080 homeward`.
 
+Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD`: every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open.
+
 Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://localhost:8000` (needs Playwright).
 
 ## Layout
@@ -106,7 +109,7 @@ Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://loca
 ```
 homeward/   app.py (API) · pipeline.py · verify.py (checks) · phi.py (masking) · quiz.py
             llm.py (vLLM client, replay) · prompts.py · lexicon.py · textutil.py · static/ (UI)
-data/       samples/ (5 synthetic cases) · replay/ (saved model outputs)
+data/       samples/ (5 synthetic cases) · replay/ (saved model outputs) · runs/ (real model runs and their reports)
 eval/       mutation_eval.py · gold_fixes.json
 scripts/    record_samples.py · benchmark.py · author_*.py (scripted sample runs)
 deploy/amd/ start_vllm.sh · run_app.sh

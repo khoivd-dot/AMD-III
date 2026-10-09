@@ -109,6 +109,8 @@ async def main():
         for r in rows:  # keep the model timings measured when the run was recorded
             prev = old.get(r["id"], {})
             r["wall_seconds"] = prev.get("wall_seconds", r["wall_seconds"])
+            if prev.get("model"):  # replay only sees the final outputs, not retries or their time
+                r["model"] = prev["model"]
             r["rechecked_at"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
     old.update({r["id"]: r for r in rows})
     if not a.recheck:

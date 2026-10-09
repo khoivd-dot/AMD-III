@@ -310,6 +310,31 @@ def test_translation_in_the_wrong_writing_system_blocked():
     assert not any(c["name"] == "translation_script" for c in ok["checks"])
 
 
+def test_local_drug_spelling_is_a_warning_not_a_loss():
+    # Seen on the second real run: "furosemida" for furosemide is the same medicine, written the Spanish way.
+    s = checked("Take furosemide 40 mg twice a day.", ["F2"], "es",
+                tl="Tome furosemida 40 mg dos veces al día.", back="Take furosemida 40 mg twice a day.")
+    drug = [c for c in s["checks"] if c["name"] == "back_drug"]
+    assert [c["status"] for c in drug] == ["warn"] and "furosemida" in drug[0]["message"]
+    gone = checked("Take furosemide 40 mg twice a day.", ["F2"], "es",
+                   tl="Tome torsemida 40 mg dos veces al día.", back="Take torsemide 40 mg twice a day.")
+    assert any(c["name"] == "back_drug" and c["status"] == "fail" for c in gone["checks"])
+
+
+def test_if_you_need_is_kept_in_french():
+    s = checked("Call 911 for chest pain. Call your doctor if you need albuterol more than every 4 hours.", ["F3"], "fr",
+                tl="Appelez le 911 en cas de douleur thoracique. Appelez votre médecin si vous avez besoin "
+                   "d'albuterol plus souvent que toutes les 4 heures.",
+                back="Call 911 for chest pain. Call your doctor if you need albuterol more often than every 4 hours.")
+    assert not any(c["name"] == "translation_as_needed" for c in s["checks"])
+
+
+def test_real_runs_replay_as_labelled_samples():
+    cases = ReplayClient().available()
+    real = {k: v for k, v in cases.items() if v.get("source") == "recorded"}
+    assert real and all(v.get("model") and v.get("hardware") for v in real.values())  # shown on the sample card
+
+
 # ---------------------------------------------------------------- failure modes found in simulated user testing
 
 def test_numbers_next_to_chinese_characters():

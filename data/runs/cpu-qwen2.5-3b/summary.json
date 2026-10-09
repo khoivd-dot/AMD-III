@@ -96,7 +96,7 @@
    "tokens_per_second": 15.3
   },
   "wall_seconds": 138.7,
-  "rechecked_at": "2026-10-09 00:36 UTC"
+  "rechecked_at": "2026-10-09 00:55 UTC"
  },
  "_meta": {
   "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
@@ -223,7 +223,7 @@
    "tokens_per_second": 11.1
   },
   "wall_seconds": 242.6,
-  "rechecked_at": "2026-10-09 00:36 UTC"
+  "rechecked_at": "2026-10-09 00:55 UTC"
  },
  "dm-ana-es": {
   "id": "dm-ana-es",
@@ -342,7 +342,7 @@
    "tokens_per_second": 9.0
   },
   "wall_seconds": 271.7,
-  "rechecked_at": "2026-10-09 00:36 UTC"
+  "rechecked_at": "2026-10-09 00:55 UTC"
  },
  "hf-maria-es": {
   "id": "hf-maria-es",
@@ -461,7 +461,7 @@
    "tokens_per_second": 9.2
   },
   "wall_seconds": 356.2,
-  "rechecked_at": "2026-10-09 00:36 UTC"
+  "rechecked_at": "2026-10-09 00:55 UTC"
  },
  "knee-giulia-it": {
   "id": "knee-giulia-it",

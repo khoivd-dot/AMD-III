@@ -362,6 +362,19 @@ SCRIPTS = {"han": r"[\u3400-\u9fff\uf900-\ufaff]", "kana": r"[\u3040-\u30ff]", "
 EXPECTED_SCRIPTS = {"zh": {"han"}}
 
 
+def local_spelling(drug: str, text: str) -> str | None:
+    """The drug written with a local ending ("furosemida", "ibuprofeno"): same stem, last letters changed.
+    Only the ending may differ, so look-alike medicines with a different stem never match."""
+    if " " in drug or "/" in drug or len(drug) < 7:
+        return None
+    stem = drug[:-1]
+    for w in re.findall(r"\w+", text or ""):
+        lw = w.lower()
+        if lw != drug and lw.startswith(stem) and len(lw) - len(drug) <= 2:
+            return w
+    return None
+
+
 def foreign_script(text: str, lang: str) -> str:
     """A run of characters from a writing system the target language does not use."""
     for name, chars in SCRIPTS.items():
@@ -615,8 +628,14 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
                 checks.append(check("back_numbers", "fail",
                                     f"Back-translation numbers differ: {_fmt(numbers_in(text))} vs {_fmt(numbers_in(back))}."))
             lost = lexicon.drugs_in(text) - lexicon.drugs_in(back)
-            if lost:
-                checks.append(check("back_drug", "fail", f"{', '.join(sorted(lost))} lost in translation."))
+            local = {d: local_spelling(d, back) for d in lost}
+            gone = sorted(d for d in lost if not local[d])
+            if gone:
+                checks.append(check("back_drug", "fail", f"{', '.join(gone)} lost in translation."))
+            if len(gone) < len(lost):
+                checks.append(check("back_drug", "warn", "Medicine name changed to the local spelling ("
+                                    + ", ".join(f"{d} → {local[d]}" for d in sorted(lost) if local[d])
+                                    + "). Check it matches the label on the box."))
             checks += translation_polarity(text, back, med_facts)
         elif tl:
             checks.append(check("back_translation", "warn", "Could not back-translate to check meaning."))
