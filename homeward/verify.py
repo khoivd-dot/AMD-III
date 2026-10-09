@@ -8,11 +8,10 @@ import re
 
 from . import lexicon
 from .phi import placeholders_in
-from .textutil import digits_in, numbers_in, quote_in_source
+from .textutil import (dates_in, digits_in, numbers_in, quantities, quote_in_source, scale_steps, strip_dates,
+                       strip_times, times_in)
 
 CRITICAL_KINDS = ("medication", "warning_sign", "follow_up")
-EMERGENCY_NUMBERS = {"911", "999", "112", "000", "111"}
-DATE_OR_TIME = re.compile(r"\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b|\b\d{1,2}:\d{2}\b")
 
 
 
@@ -62,13 +61,13 @@ def fact_drugs(fact: dict) -> set[str]:
 
 
 def fact_risk(fact: dict) -> str:
-    if fact.get("kind") == "warning_sign":
+    if fact.get("kind") in ("warning_sign", "follow_up"):
         return "high"
-    if fact.get("kind") == "medication":
-        if fact.get("med_action") in ("stop", "hold", "changed"):
-            return "high"
-        if lexicon.is_high_alert(fact.get("drug")):
-            return "high"
+    if fact.get("kind") == "medication" and fact.get("med_action") in ("stop", "hold", "changed"):
+        return "high"
+    # A high-alert medicine is high risk whatever kind the model gave the fact.
+    if any(lexicon.is_high_alert(d) for d in fact_drugs(fact)):
+        return "high"
     return "normal"
 
 
@@ -369,6 +368,157 @@ def foreign_script(text: str, lang: str) -> str:
     return ""
 
 
+_COUNT_WORDS = {"once": 1, "one": 1, "twice": 2, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def per_day(text: str) -> set[int]:
+    """How many doses a day a text states: 'twice daily' -> {2}, 'every 8 hours' -> {3}."""
+    t = (text or "").lower()
+    out = set()
+    for m in re.finditer(r"\b(once|twice|one|two|three|four|five|six|\d)\s*(?:times?\s*)?(?:a|per|each|every)\s+day\b|"
+                         r"\b(once|twice|three times|four times|\d times)\s+(?:daily|a day)\b", t):
+        word = (m.group(1) or m.group(2)).split()[0]
+        n = _COUNT_WORDS.get(word) or (int(word) if word.isdigit() else None)
+        if n:
+            out.add(n)
+    for m in re.finditer(r"\bevery\s+(\d{1,2})\s*(?:hours?|hrs?|h)\b", t):
+        h = int(m.group(1))
+        if h and 24 % h == 0 and "as needed" not in t:
+            out.add(24 // h)
+    for word, n in (("bid", 2), ("tid", 3), ("qid", 4)):
+        if re.search(rf"\b{word}\b", t):
+            out.add(n)
+    if not out and re.search(r"\b(?:daily|every day|each day|once a day|every morning|every night|nightly|at bedtime)\b", t):
+        out.add(1)
+    return out
+
+
+def prn_only(f: dict) -> bool:
+    """The clinician says to take this medicine only when needed, with no fixed schedule first."""
+    quote = f.get("source_quote") or ""
+    m = next((re.search(p, quote, re.I) for p in lexicon.TL_CUES["en"]["prn"] if re.search(p, quote, re.I)), None)
+    return bool(m) and not re.search(r"\bthen\b", quote[:m.start()], re.I)
+
+
+def _fact_text(f: dict) -> str:
+    return " ".join(str(f.get(k) or "") for k in ("dose", "frequency", "detail", "source_quote"))
+
+
+def sentence_meaning_checks(text: str, cited: list[dict]) -> list[dict]:
+    """Units, dates, doses a day, 'only if needed', reassurance and salt vs sodium."""
+    out = []
+    fact_text = " ".join(_fact_text(f) for f in cited)
+    quotes = " ".join(f.get("source_quote") or "" for f in cited)
+
+    have: dict[str, set[str]] = {}
+    for n, u in quantities(fact_text):
+        have.setdefault(n, set()).add(u)
+    for n, u in sorted(quantities(text)):
+        if n in have and u not in have[n]:
+            out.append(check("units", "fail", f"Says {n} {u}; the source says {n} {'/'.join(sorted(have[n]))}."))
+
+    source_steps = scale_steps(quotes)
+    for rng, dose in scale_steps(text).items():
+        if rng in source_steps and source_steps[rng] != dose:
+            out.append(check("scale", "fail", f"For {rng[0]}-{rng[1]} the source says {source_steps[rng]} units; "
+                                              f"this says {dose}."))
+
+    wrong_dates = dates_in(text) - dates_in(quotes)
+    if wrong_dates:
+        out.append(check("dates", "fail", f"Date {_fmt_dates(wrong_dates)} is not in the cited source."))
+
+    named = lexicon.drugs_in(text)
+    meds = [f for f in cited if f.get("kind") == "medication"]
+    for f in meds:
+        drug = lexicon.canonical_drug(f.get("drug"))
+        if drug not in named:
+            continue
+        said, source = per_day(text), per_day(" ".join(str(f.get(k) or "") for k in ("frequency", "source_quote")))
+        if said and source and not said <= source:
+            out.append(check("frequency", "fail", f"Says {'/'.join(map(str, sorted(said)))} times a day; "
+                                                  f"the source says {'/'.join(map(str, sorted(source)))}."))
+        if prn_only(f) and not lexicon.has_cue(text, "en", "prn") \
+                and not re.search(lexicon.LIMIT, text, re.I):  # "never more than 4 a day" is the limit, not the dose
+            out.append(check("as_needed", "fail",
+                             f"The source says {f.get('drug')} only when needed; this reads as a regular dose."))
+
+    for pattern in lexicon.REASSURANCE:
+        m = re.search(pattern, text, re.I)
+        if m and not re.search(pattern, quotes, re.I):
+            out.append(check("reassurance", "warn", f"\u201c{m.group(0)}\u201d is not in the clinician's text."))
+            break
+
+    if lexicon.has_cue(text, "en", "salt") and lexicon.has_cue(fact_text, "en", "sodium") \
+            and not lexicon.has_cue(fact_text, "en", "salt"):
+        out.append(check("salt_sodium", "fail",
+                         "The source limits sodium, not salt. 2 g of sodium is about 5 g of salt."))
+
+    for f in cited:
+        if f.get("status") == "red":
+            out.append(check("cited_fact", "warn", f"Cites {f['id']}, which could not be found in the clinician's text."))
+        elif any(c["name"] == "cross_check" and c["status"] != "pass" for c in f.get("checks", [])):
+            out.append(check("cited_fact", "warn", f"The medicine list and {f['id']} disagree on what to do with "
+                                                   f"{f.get('drug')}; check this line against the source."))
+    return out
+
+
+def translation_meaning_checks(text: str, tl: str, lang: str, med_facts: list[dict]) -> list[dict]:
+    """Checks on the forward translation itself, which a back-translation can smooth over."""
+    out = []
+    name = lexicon.LANGUAGES.get(lang, lang)
+    en_dates, tl_dates = dates_in(text), dates_in(tl, lang)
+    if en_dates != tl_dates:
+        out.append(check("translation_dates", "fail",
+                         f"Dates differ after translation: {_fmt_dates(en_dates)} vs {_fmt_dates(tl_dates)} "
+                         f"as a {name} reader would read them. Write the month as a word."))
+    en_times, tl_times = times_in(text), times_in(tl, lang)
+    if {x[:2] for x in en_times} != {x[:2] for x in tl_times}:
+        fmt = lambda ts: ", ".join(f"{h or 12}:{m:02d}" for h, m, _ in sorted(ts)) or "none"  # noqa: E731
+        out.append(check("translation_time", "fail", f"Times differ after translation: {fmt(en_times)} vs {fmt(tl_times)}."))
+    else:
+        for h, m, period in en_times:
+            other = next((p for hh, mm, p in tl_times if (hh, mm) == (h, m)), "?")
+            if period != "?" and other != "?" and other != period:
+                out.append(check("translation_time", "fail",
+                                 f"{h or 12}:{m:02d} {period.upper()} becomes {other.upper()} in the translation."))
+    en_units: dict[str, set[str]] = {}
+    for n, u in quantities(text):
+        en_units.setdefault(n, set()).add(u)
+    for n, u in sorted(quantities(tl)):
+        if n in en_units and u not in en_units[n]:
+            out.append(check("translation_units", "fail",
+                             f"{n} {'/'.join(sorted(en_units[n]))} becomes {n} {u} in the translation."))
+    en_steps, tl_steps = scale_steps(text), scale_steps(tl)
+    for rng, dose in tl_steps.items():
+        if rng in en_steps and en_steps[rng] != dose:
+            out.append(check("translation_scale", "fail",
+                             f"For {rng[0]}-{rng[1]} the English says {en_steps[rng]} units; the translation says {dose}."))
+    if med_facts and lang in lexicon.TL_CUES:
+        en, tr = lexicon.polarity(text), lexicon.polarity_tl(tl, lang)
+        if en["stop"] and not en["continue"] and tr["continue"] and not tr["stop"]:
+            out.append(check("translation_polarity", "fail", "The English says stop or pause; the translation says keep taking."))
+        elif en["continue"] and not en["stop"] and tr["stop"] and not tr["continue"]:
+            out.append(check("translation_polarity", "fail", "The English says keep taking; the translation says stop."))
+        if lexicon.has_cue(text, "en", "prn") and not lexicon.has_cue(tl, lang, "prn"):
+            out.append(check("translation_as_needed", "fail", "\u201cOnly if needed\u201d is lost in the translation."))
+    if lexicon.has_cue(text, "en", "sodium") and lexicon.has_cue(tl, lang, "salt") and not lexicon.has_cue(tl, lang, "sodium"):
+        out.append(check("translation_salt_sodium", "fail", "The English says sodium; the translation says salt."))
+    return out
+
+
+def _fmt_dates(dates: set[tuple]) -> str:
+    if not dates:
+        return "none"
+    names = []
+    for d in sorted(dates, key=lambda x: x[-2:]):
+        y, m, day = (d if len(d) == 3 else (None, *d))
+        names.append(f"{day} {MONTH_NAMES[m - 1]}" + (f" {y}" if y else ""))
+    return ", ".join(names)
+
+
+MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
 def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict],
                     target_lang: str) -> None:
     checks = []
@@ -403,6 +553,7 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
 
     med_facts = [f for f in cited if f.get("kind") == "medication"]
     checks += polarity_checks(text, med_facts)
+    checks += sentence_meaning_checks(text, cited)
 
     allowed_ph = set().union(*[placeholders_in((f.get("detail") or "") + " " + (f.get("source_quote") or ""))
                                for f in cited]) if cited else set()
@@ -410,14 +561,22 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
     if invented:
         checks.append(check("placeholder", "fail", f"Refers to {', '.join(sorted(invented))}, not in the cited source."))
 
+    if s.get("tl_stale"):
+        checks.append(check("translation_stale", "fail",
+                            "The English was edited but the translation still has the old wording. Update it too."))
     if target_lang != "en":
         tl, back = s.get("text_tl") or "", s.get("back_en") or ""
         if not tl:
             checks.append(check("translation", "fail", "Translation is missing."))
         else:
-            if digits_in(tl) != digits_in(text):
+            # Dates and clock times are compared as dates and times below; "ngày 21 tháng 10"
+            # and "October 21" hold different digits but say the same thing.
+            en_digits = digits_in(strip_times(strip_dates(text)))
+            tl_digits = digits_in(strip_times(strip_dates(tl, target_lang)))
+            if tl_digits != en_digits:
                 checks.append(check("translation_numbers", "fail",
-                                    f"Numbers differ after translation: {_fmt(digits_in(text))} vs {_fmt(digits_in(tl))}."))
+                                    f"Numbers differ after translation: {_fmt(en_digits)} vs {_fmt(tl_digits)}."))
+            checks += translation_meaning_checks(text, tl, target_lang, med_facts)
             if placeholders_in(tl) != placeholders_in(text):
                 checks.append(check("translation_placeholder", "fail", "A name or contact detail was lost in translation."))
             foreign = foreign_script(tl, target_lang)
@@ -425,7 +584,7 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
                 checks.append(check("translation_script", "fail",
                                     f"Translation contains text in another writing system (\u201c{foreign}\u201d)."))
         if back:
-            if numbers_in(back) - {"1"} != numbers_in(text) - {"1"}:
+            if numbers_in(strip_dates(back)) - {"1"} != numbers_in(strip_dates(text)) - {"1"}:
                 checks.append(check("back_numbers", "fail",
                                     f"Back-translation numbers differ: {_fmt(numbers_in(text))} vs {_fmt(numbers_in(back))}."))
             lost = lexicon.drugs_in(text) - lexicon.drugs_in(back)
@@ -435,17 +594,18 @@ def verify_sentence(s: dict, facts_by_id: dict[str, dict], all_facts: list[dict]
         elif tl:
             checks.append(check("back_translation", "warn", "Could not back-translate to check meaning."))
 
-    for key, label in (("judge_en", "model_check"), ("judge_back", "model_check_translation")):
-        j = s.get(key)
-        if not j:
-            continue
-        v = j.get("verdict")
-        if v in ("unsupported", "contradicts"):
-            checks.append(check(label, "fail", f"Safety model: {v.replace('_', ' ')}. {j.get('reason', '')}".strip()))
-        elif v == "partially_supported":
-            checks.append(check(label, "warn", f"Safety model: partly supported. {j.get('reason', '')}".strip()))
-        else:
-            checks.append(check(label, "pass"))
+    j = s.get("judge_en")
+    v = j.get("verdict") if isinstance(j, dict) else None
+    if v in ("unsupported", "contradicts"):
+        checks.append(check("model_check", "fail", f"Safety model: {v.replace('_', ' ')}. {j.get('reason', '')}".strip()))
+    elif v == "partially_supported":
+        checks.append(check("model_check", "warn", f"Safety model: partly supported. {j.get('reason', '')}".strip()))
+    elif v == "supported":
+        checks.append(check("model_check", "pass"))
+    elif "judge_en" in s and not s.get("review"):
+        # A missing or unknown verdict is not a pass. (After a human edit the reviewer's
+        # own reading replaces the model's, and the edit stays in review.)
+        checks.append(check("model_check", "warn", "The safety model did not review this sentence."))
 
     s["checks"] = checks
     s["status"] = status_of(checks)
@@ -487,23 +647,32 @@ def coverage(facts: list[dict], sentences: list[dict]) -> list[dict]:
                                       "message": f"{f.get('drug')}: the clinician's {', '.join(lost)} "
                                                  f"(\u201c{quote}\u201d) is never stated."})
         elif f["kind"] == "follow_up":
-            lost = DATE_OR_TIME.findall(quote)
-            lost = [d for d in lost if not numbers_in(d, words=False) <= said]
+            said_dates = set().union(*[dates_in(s.get("text_en") or "") for s in citing])
+            said_days = {d[-2:] for d in said_dates}
+            said_times = {x[:2] for s in citing for x in times_in(s.get("text_en") or "")}
+            lost = [_fmt_dates({d}) for d in dates_in(quote) if d[-2:] not in said_days]
+            lost += [f"{h or 12}:{m:02d}" for h, m, _ in times_in(quote) if (h, m) not in said_times]
             if lost:
                 omissions.append({"fact_id": f["id"], "kind": f["kind"],
                                   "message": f"Appointment date or time ({', '.join(lost)}) is never stated."})
         elif f["kind"] == "warning_sign":
-            lost = sorted((numbers_in(quote, words=False) & EMERGENCY_NUMBERS) - said)
+            # Who to call, and every threshold ("fever above 38.5", "2 lb in a day").
+            lost = sorted((numbers_in(strip_times(strip_dates(quote)), words=False) - said) - {"1"})
             lost += sorted(placeholders_in(quote) - said_ph)
             if lost:
                 omissions.append({"fact_id": f["id"], "kind": f["kind"],
-                                  "message": f"Who to call ({', '.join(lost)}) is never stated."})
+                                  "message": f"Never stated for the patient: {', '.join(lost)} "
+                                             f"(\u201c{quote}\u201d)."})
         canon = lexicon.canonical_drug(f.get("drug"))
         if f.get("kind") == "medication" and canon:
             naming = [s for s in citing if canon in lexicon.drugs_in(s.get("text_en") or "")]
             if not naming:
                 omissions.append({"fact_id": f["id"], "kind": f["kind"],
                                   "message": f"{f.get('drug')} is cited but never named for the patient."})
+            elif lexicon.has_cue(f.get("source_quote") or "", "en", "prn") and f.get("med_action") not in ("stop", "hold") \
+                    and not any(lexicon.has_cue(s.get("text_en") or "", "en", "prn") for s in naming):
+                omissions.append({"fact_id": f["id"], "kind": f["kind"],
+                                  "message": f"No sentence tells the patient to take {f.get('drug')} only when needed."})
             elif f.get("med_action") in ("stop", "hold") and not clearly_instructs(f, naming):
                 verb = "stop" if f["med_action"] == "stop" else "pause"
                 omissions.append({"fact_id": f["id"], "kind": f["kind"],
