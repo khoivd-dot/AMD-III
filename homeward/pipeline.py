@@ -20,7 +20,7 @@ STAGES = ["masking", "facts", "draft", "translate", "back_translate", "judge", "
 def new_case(source: str, language: str, patient_name: str = "", sample_id: str | None = None) -> dict:
     masked = mask(source, [patient_name] if patient_name else None)
     return {
-        "id": uuid.uuid4().hex[:10],
+        "id": uuid.uuid4().hex,  # staff-only, but not guessable either
         "sample_id": sample_id,
         "created_at": time.time(),
         "language": language,

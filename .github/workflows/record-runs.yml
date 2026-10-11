@@ -31,12 +31,13 @@ on:
         description: "JSON list of sample ids"
         default: '["hf-maria-es","knee-giulia-it","af-binh-vi","dm-ana-es","copd-pierre-fr"]'
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   record:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 240
     strategy:
       fail-fast: false
@@ -112,6 +113,8 @@ jobs:
     needs: record
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
