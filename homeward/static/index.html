@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Homeward</title>
 <meta name="description" content="Verified, multilingual discharge instructions with human review and teach-back.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230b6e66'/%3E%3Cpath d='M8 17l8-7 8 7v8h-5v-5h-6v5H8z' fill='white'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0B3B37">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/static/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
-<!-- Inline icon set: one stroke style everywhere, prints cleanly, no emoji. -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<!-- Inline icon set: one stroke style everywhere, prints cleanly, no emoji, nothing loaded from elsewhere. -->
+<svg class="sprite" width="0" height="0" aria-hidden="true">
   <defs>
     <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
     <symbol id="i-hospital" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v6M9 10h6M9 21v-4h6v4"/></symbol>
@@ -28,17 +29,25 @@
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
     <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/></symbol>
     <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></symbol>
     <symbol id="i-quote" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
     <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 18L9 6l5 12M5.8 14h6.4M15 18l3-7 3 7M15.9 16h4.2"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1-1"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v15H6a2 2 0 00-2 2z"/><path d="M4 20a2 2 0 002 1h13v-3M8 7h7M8 11h5"/></symbol>
   </defs>
 </svg>
 
 <header class="top">
   <div class="brand">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M8 17l8-7 8 7v8h-5v-5h-6v5H8z"/></svg>
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="m-bg" width="32" height="32" rx="9"/><path class="m-house" d="M7.5 16.5 16 9l8.5 7.5V25h-17z"/><rect class="m-win" x="13.75" y="17.5" width="4.5" height="4.5" rx="1"/></svg>
     <div><strong>Homeward</strong><span>Discharge instructions patients can follow</span></div>
   </div>
   <nav id="tabs" role="tablist" aria-label="Workflow">
@@ -53,45 +62,100 @@
 <main id="main">
   <!-- PREPARE -->
   <section id="view-nurse" class="view active" role="tabpanel">
-    <div class="intro">
-      <p class="eyebrow">Step 1 · Nurse</p>
-      <h1>Turn discharge instructions into a packet the patient can follow</h1>
-      <p>Homeward rewrites the clinician's text in plain language and the patient's own language, checks every sentence against the source, and sends only the risky lines to a person. It never diagnoses or adds medical advice.</p>
+    <div class="hero">
+      <div class="intro">
+        <p class="eyebrow">Step 1 · Nurse</p>
+        <h1>Turn discharge instructions into a packet the patient can follow</h1>
+        <p>Homeward rewrites the clinician's text in plain language and the patient's own language, checks every sentence against the source, and sends only the risky lines to a person. It never diagnoses or adds medical advice.</p>
+      </div>
+      <!-- "The way home": hospital, a path, a house with the porch light on. Drawn here, no image requests. -->
+      <svg class="scene way-home" viewBox="0 0 400 200" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="hw-glow"><stop offset="0" stop-color="#F7C873" stop-opacity=".6"/><stop offset="1" stop-color="#F7C873" stop-opacity="0"/></radialGradient>
+          <linearGradient id="hw-fade-x"><stop offset="0" stop-color="#000"/><stop offset=".14" stop-color="#fff"/><stop offset=".86" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+          <linearGradient id="hw-fade-y" x2="0" y2="1"><stop offset=".7" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+          <mask id="hw-fade-h" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="200"><rect width="400" height="200" fill="url(#hw-fade-x)"/></mask>
+          <mask id="hw-fade-v" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="200"><rect width="400" height="200" fill="url(#hw-fade-y)"/></mask>
+        </defs>
+        <circle class="sun" cx="338" cy="44" r="18"/>
+        <g mask="url(#hw-fade-h)"><g mask="url(#hw-fade-v)">
+          <path class="hill-back" d="M0 142C70 118 150 146 222 128 290 112 350 112 400 124V200H0Z"/>
+          <path class="hill-front" d="M0 170C110 154 250 180 400 162V200H0Z"/>
+        </g></g>
+        <g class="hospital">
+          <rect class="bld" x="52" y="50" width="36" height="28" rx="6"/>
+          <rect class="bld" x="28" y="72" width="84" height="94" rx="8"/>
+          <path class="cross" d="M70 56v16M62 64h16"/>
+          <rect class="win" x="40" y="86" width="12" height="10" rx="2"/><rect class="win" x="64" y="86" width="12" height="10" rx="2"/><rect class="win" x="88" y="86" width="12" height="10" rx="2"/>
+          <rect class="win" x="40" y="106" width="12" height="10" rx="2"/><rect class="win" x="64" y="106" width="12" height="10" rx="2"/><rect class="win" x="88" y="106" width="12" height="10" rx="2"/>
+          <rect class="win" x="40" y="126" width="12" height="10" rx="2"/><rect class="win" x="88" y="126" width="12" height="10" rx="2"/>
+          <rect class="door-h" x="60" y="136" width="20" height="30" rx="3"/>
+        </g>
+        <g class="tree t1"><path class="trunk" d="M128 166v-14"/><circle class="crown" cx="128" cy="144" r="11"/></g>
+        <path id="hw-way" class="road" pathLength="1" d="M70 167C112 188 150 142 200 152 248 162 276 178 329 164"/>
+        <path class="steps" d="M70 167C112 188 150 142 200 152 248 162 276 178 329 164"/>
+        <g class="house">
+          <circle class="glow" cx="318" cy="140" r="54" fill="url(#hw-glow)"/>
+          <rect class="chimney" x="336" y="100" width="9" height="18" rx="1.5"/>
+          <path class="roof" d="M282 128L318 96 354 128Z"/>
+          <rect class="walls" x="290" y="124" width="56" height="42" rx="2"/>
+          <rect class="window" x="298" y="134" width="15" height="13" rx="2"/>
+          <path class="mullion" d="M305.5 134v13M298 140.5h15"/>
+          <rect class="door" x="322" y="140" width="14" height="26" rx="2"/>
+        </g>
+        <g class="tree t2"><path class="trunk" d="M262 162v-12"/><circle class="crown" cx="262" cy="143" r="10"/></g>
+        <g class="tree t3"><path class="trunk" d="M376 166v-16"/><circle class="crown" cx="376" cy="140" r="13"/></g>
+        <circle class="walker" r="6.5" visibility="hidden"><animateMotion dur="2.6s" begin="indefinite" fill="freeze" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".45 0 .25 1"><mpath href="#hw-way"/></animateMotion></circle>
+      </svg>
     </div>
     <div class="grid2">
-      <div class="card">
-        <div class="card-h"><h2>Discharge text</h2><span class="fine">Pick a sample or paste your own</span></div>
+      <div class="card form-card">
+        <div class="card-h"><h2><span class="step-n">1</span>Choose the instructions</h2><span class="fine">Pick a sample or paste your own</span></div>
         <div id="samples" class="samples" role="list"></div>
         <label for="source">Clinician's discharge instructions</label>
-        <textarea id="source" rows="13" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
+        <textarea id="source" rows="12" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
+        <label class="file"><input type="file" id="file" accept=".txt,.pdf"><svg class="i"><use href="#i-upload"/></svg><span>Or upload a .txt or .pdf</span><em id="file-name"></em></label>
+        <div class="card-h sub"><h2><span class="step-n">2</span>About the patient</h2></div>
         <div class="row">
           <label>Patient's language <select id="language"></select></label>
           <label>Patient name <span class="hint">masked before any model call</span><input id="pname" placeholder="optional" autocomplete="off"></label>
         </div>
-        <div class="row between">
-          <label class="file"><input type="file" id="file" accept=".txt,.pdf"><span>Upload .txt or .pdf</span><em id="file-name"></em></label>
-          <button id="run" class="primary lg">Create packet <svg class="i"><use href="#i-arrow"/></svg></button>
+        <div class="row between go">
+          <p class="fine note"><svg class="i"><use href="#i-lock"/></svg> Use synthetic or de-identified text. This is a demo, not a medical device.</p>
+          <button id="run" class="primary lg"><span class="run-label">Create packet</span> <svg class="i"><use href="#i-arrow"/></svg></button>
         </div>
-        <p class="fine note"><svg class="i"><use href="#i-lock"/></svg> Use synthetic or de-identified text. This is a demo, not a medical device.</p>
       </div>
       <div class="card" id="progress-card" aria-live="polite">
-        <div class="card-h"><h2>What happens</h2><span class="fine" id="elapsed"></span></div>
+        <div class="card-h"><h2><span class="step-n">3</span>What happens next</h2><span class="fine" id="elapsed"></span></div>
         <ol id="stages" class="stages"></ol>
         <div id="run-error" class="error hidden" role="alert"></div>
         <div id="run-summary"></div>
       </div>
     </div>
-    <div class="card hidden" id="ledger-card">
-      <div class="card-h"><h2>Fact ledger</h2><span class="fine">Every instruction the model found, each tied to an exact quote from the source</span></div>
+    <details class="card hidden ledger" id="ledger-card">
+      <summary><span class="ledger-h">
+        <svg class="i"><use href="#i-book"/></svg>
+        <span><h2>Fact ledger</h2><span class="fine" id="ledger-sum">Every instruction the model found, each tied to an exact quote from the source</span></span>
+      </span><span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></summary>
       <div id="med-issues"></div>
       <div class="table-wrap"><table id="ledger"></table></div>
-      <details><summary>Source as the model saw it (identifiers masked)</summary><pre id="masked"></pre></details>
-    </div>
+      <details class="masked"><summary>Source as the model saw it (identifiers masked)</summary><pre id="masked"></pre></details>
+    </details>
   </section>
 
   <!-- REVIEW -->
   <section id="view-review" class="view" role="tabpanel">
-    <div class="empty" id="review-empty"><svg class="i xl"><use href="#i-shield"/></svg><p>Create a packet first. The lines that need a person will appear here.</p></div>
+    <div class="empty" id="review-empty">
+      <svg class="scene spot" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
+        <ellipse class="ground" cx="60" cy="90" rx="46" ry="6"/>
+        <rect class="paper" x="32" y="14" width="54" height="70" rx="7"/>
+        <rect class="clip" x="47" y="8" width="24" height="12" rx="4"/>
+        <path class="ln" d="M43 36h32M43 47h24M43 58h28"/>
+        <g class="badge"><circle cx="84" cy="72" r="14"/><path d="M78 72.5l4 4 8-8.5"/></g>
+      </svg>
+      <h2>Nothing to review yet</h2>
+      <p>Create a packet first. Only the lines that need a person will appear here.</p>
+    </div>
     <div id="review-body" class="hidden review">
       <aside class="queue card" aria-label="Review queue">
         <p class="eyebrow">Step 2 · Reviewer</p>
@@ -103,34 +167,64 @@
         <p class="fine kbd-hint">Keys: <kbd>J</kbd>/<kbd>K</kbd> next or previous, <kbd>A</kbd> approve, <kbd>E</kbd> edit</p>
         <div class="signbox">
           <label>Reviewer name <input id="reviewer" placeholder="e.g. RN Sam Lee" autocomplete="name"></label>
-          <div id="blockers" class="blockers"></div>
+          <div id="blockers" class="blockers" aria-live="polite"></div>
           <button id="signoff" class="primary lg block"><svg class="i"><use href="#i-shield"/></svg> Sign off and release</button>
         </div>
       </aside>
       <div class="review-main">
-        <div id="omissions"></div>
-        <div id="sentences"></div>
+        <div id="omissions" class="stagger"></div>
+        <div id="sentences" class="stagger"></div>
       </div>
     </div>
   </section>
 
   <!-- PATIENT -->
   <section id="view-patient" class="view" role="tabpanel">
-    <div class="empty" id="patient-empty"><svg class="i xl"><use href="#i-lock"/></svg><p>The patient's packet appears here only after a named reviewer signs it off.</p></div>
+    <div class="empty" id="patient-empty">
+      <svg class="scene spot" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
+        <ellipse class="ground" cx="60" cy="90" rx="46" ry="6"/>
+        <path class="roof-s" d="M28 52L60 26 92 52Z"/>
+        <rect class="paper" x="35" y="48" width="50" height="38" rx="2"/>
+        <rect class="win-off" x="43" y="57" width="13" height="11" rx="2"/>
+        <rect class="door-s" x="64" y="62" width="12" height="24" rx="2"/>
+        <g class="badge lock"><circle cx="86" cy="74" r="13"/><rect x="80.5" y="73" width="11" height="8" rx="1.5"/><path d="M82.5 73v-2.5a3.5 3.5 0 017 0V73"/></g>
+      </svg>
+      <h2>The packet is not ready yet</h2>
+      <p>The patient's packet appears here only after a named reviewer signs it off.</p>
+    </div>
     <div id="patient-body" class="hidden patient">
       <div class="patient-hero">
-        <div class="hero-icon"><svg class="i"><use href="#i-home"/></svg></div>
         <div class="hero-text">
+          <p class="p-brand"><svg class="i"><use href="#i-home"/></svg> Homeward</p>
           <h1 id="p-title">Your instructions for going home</h1>
-          <p class="signed" id="p-signed"></p>
         </div>
-        <div class="p-tools">
-          <div class="seg" id="p-lang" role="group" aria-label="Language"></div>
-          <button id="p-size" class="icon-btn" aria-pressed="false" title="Larger text"><svg class="i"><use href="#i-text"/></svg><span>Larger text</span></button>
-          <button id="p-print" class="icon-btn" title="Print"><svg class="i"><use href="#i-print"/></svg><span>Print</span></button>
-        </div>
+        <p class="signed" id="p-signed"></p>
+        <!-- The porch light comes on when a signed packet arrives. -->
+        <svg class="scene p-art" viewBox="0 0 240 150" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="p-glow"><stop offset="0" stop-color="#F7C873" stop-opacity=".55"/><stop offset="1" stop-color="#F7C873" stop-opacity="0"/></radialGradient>
+          </defs>
+          <circle class="star" cx="28" cy="22" r="1.6"/><circle class="star" cx="70" cy="12" r="1.2"/><circle class="star" cx="150" cy="18" r="1.4"/><circle class="star" cx="226" cy="54" r="1.2"/><circle class="star" cx="104" cy="34" r="1"/>
+          <circle class="moon" cx="198" cy="28" r="11"/>
+          <path class="p-hill" d="M0 124C60 104 150 118 240 98V150H0Z"/>
+          <circle class="glow" cx="120" cy="100" r="62" fill="url(#p-glow)"/>
+          <g class="tree"><path class="trunk" d="M36 130v-16"/><circle class="crown" cx="36" cy="106" r="13"/></g>
+          <g class="tree"><path class="trunk" d="M206 118v-14"/><circle class="crown" cx="206" cy="96" r="11"/></g>
+          <rect class="chimney" x="143" y="62" width="10" height="20" rx="1.5"/>
+          <path class="roof" d="M74 94L120 56 166 94Z"/>
+          <rect class="walls" x="85" y="89" width="70" height="46" rx="2"/>
+          <rect class="window" x="95" y="101" width="19" height="16" rx="2"/>
+          <path class="mullion" d="M104.5 101v16M95 109h19"/>
+          <rect class="door" x="126" y="105" width="18" height="30" rx="2"/>
+          <path class="p-path" d="M135 135C132 142 122 146 108 150"/>
+        </svg>
       </div>
-      <div id="p-sections"></div>
+      <div class="p-tools">
+        <div class="seg" id="p-lang" role="group" aria-label="Language"></div>
+        <button id="p-size" class="icon-btn" aria-pressed="false" title="Larger text"><svg class="i"><use href="#i-text"/></svg><span>Larger text</span></button>
+        <button id="p-print" class="icon-btn" title="Print"><svg class="i"><use href="#i-print"/></svg><span>Print</span></button>
+      </div>
+      <div id="p-sections" class="stagger"></div>
       <div class="card quiz">
         <div class="quiz-head">
           <div><h2 id="q-title">Check your understanding</h2><p id="q-intro" class="fine"></p></div>
@@ -144,16 +238,25 @@
 
   <!-- IMPACT -->
   <section id="view-impact" class="view" role="tabpanel">
-    <div class="empty" id="impact-empty"><svg class="i xl"><use href="#i-cpu"/></svg><p>Create a packet first. Results for that case appear here.</p></div>
+    <div class="empty" id="impact-empty">
+      <svg class="scene spot" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
+        <ellipse class="ground" cx="60" cy="90" rx="46" ry="6"/>
+        <rect class="paper" x="24" y="16" width="72" height="66" rx="7"/>
+        <rect class="bar-s" x="36" y="52" width="10" height="20" rx="2"/><rect class="bar-s" x="52" y="40" width="10" height="32" rx="2"/><rect class="bar-s hi" x="68" y="30" width="10" height="42" rx="2"/>
+        <path class="ln" d="M34 72h52"/>
+      </svg>
+      <h2>No results yet</h2>
+      <p>Create a packet first. Results for that case appear here.</p>
+    </div>
     <div id="impact-body" class="hidden">
       <div class="intro"><p class="eyebrow">Step 4 · Results for this case</p><h1>What Homeward did for this patient</h1></div>
-      <div id="kpis" class="kpis"></div>
+      <div id="kpis" class="kpis stagger"></div>
       <div class="grid2">
         <div class="card"><div class="card-h"><h2>Reading level</h2><span class="fine">Flesch-Kincaid grade, lower is easier</span></div><div id="grade"></div></div>
         <div class="card"><div class="card-h"><h2>What the checks caught</h2></div><div id="caught"></div></div>
       </div>
       <div class="grid2">
-        <div class="card"><div class="card-h"><h2>Nurse alerts from teach-back</h2></div><div id="alerts"></div></div>
+        <div class="card"><div class="card-h"><h2>Nurse alerts from teach-back</h2><span class="fine" id="alerts-sum"></span></div><div id="alerts"></div></div>
         <div class="card"><div class="card-h"><h2>Model on AMD</h2></div><div id="model"></div></div>
       </div>
       <div class="card"><div class="card-h"><h2>Audit trail</h2><span class="fine">Every action, by whom</span></div><div id="audit" class="audit"></div></div>

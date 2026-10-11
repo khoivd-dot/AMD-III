@@ -6,6 +6,12 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const PH = "(?:PATIENT|CLINICIAN|CONTACT|MRN|ID|DATE_OF_BIRTH|DATE|EMAIL|PHONE|ADDRESS)_\\d+";
 const marked = (t) => esc(t).replace(new RegExp(`\\[${PH}\\]`, "g"), (m) => `<mark class="ph">${m}</mark>`);
 const icon = (id, cls = "") => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Widths are set through the CSSOM, never as style attributes, so the page works under a strict CSP.
+function applySizes(root = document) {
+  $$("[data-w]", root).forEach((el) => { el.style.width = `${el.dataset.w}%`; });
+  $$("[data-left]", root).forEach((el) => { el.style.left = `${el.dataset.left}%`; });
+}
 
 // Numbers in a sentence, normalised so "1,5" and "1.5" compare equal. Placeholders are skipped.
 const NUM = new RegExp(`(\\[${PH}\\])|(\\d+(?:[.,]\\d+)?)`, "g");
@@ -71,17 +77,37 @@ const post = (path, body) => api(path, { method: "POST", body: JSON.stringify(bo
 let toastTimer;
 function toast(msg, err = false) {
   const t = $("#toast");
-  t.textContent = msg;
+  t.innerHTML = `${icon(err ? "warn" : "check")}<span>${esc(msg)}</span>`;
   t.className = `toast on${err ? " err" : ""}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("on"), 3200);
 }
 
-function show(view) {
+const VIEWS = ["nurse", "review", "patient", "impact"];
+let enterTimer;
+function activate(view) {
   $$("#tabs button").forEach((b) => { const on = b.dataset.view === view; b.classList.toggle("active", on); b.setAttribute("aria-selected", on); });
   $$(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${view}`));
-  if (view === "patient") loadPacket();
+  // Lists animate in only while the view is opening, not every time they re-render.
+  const el = $(`#view-${view}`);
+  $$(".view.entering").forEach((v) => v.classList.remove("entering"));
+  el.classList.add("entering");
+  clearTimeout(enterTimer);
+  enterTimer = setTimeout(() => el.classList.remove("entering"), 1000);
   window.scrollTo({ top: 0 });
+  if (view === "impact") countUp(el);
+}
+
+// Views slide in the direction of the workflow where the browser supports View Transitions.
+function show(view) {
+  const from = VIEWS.indexOf(($(".view.active") || {}).id?.replace("view-", ""));
+  if (view === "patient") loadPacket();
+  if (!document.startViewTransition || calm() || from === VIEWS.indexOf(view) || from < 0) return activate(view);
+  const html = document.documentElement;
+  html.dataset.dir = VIEWS.indexOf(view) < from ? "back" : "fwd";
+  html.classList.add("vt");
+  const t = document.startViewTransition(() => activate(view));
+  t.finished.finally(() => html.classList.remove("vt"));
 }
 
 // The stepper shows where the case is: later steps unlock as the case moves forward.
@@ -91,9 +117,47 @@ function updateTabs() {
   tab("nurse").classList.toggle("done", !!ready);
   tab("review").classList.toggle("done", !!signed);
   tab("patient").classList.toggle("done", !!(signed && c.quiz && c.quiz.length && c.quiz.every((q) => q.answer != null)));
-  $$("#tabs button").forEach((b, i) => { $(".n", b).innerHTML = b.classList.contains("done") ? icon("check") : String(i + 1); });
+  $$("#tabs button").forEach((b, i) => {
+    const done = b.classList.contains("done");
+    // Only touch the number when it changes, so the check pops in once rather than on every poll.
+    if (b.dataset.done !== String(done)) { $(".n", b).innerHTML = done ? icon("check") : String(i + 1); b.dataset.done = done; }
+    if (i) b.classList.toggle("trail", $$("#tabs button")[i - 1].classList.contains("done"));
+  });
   tab("review").title = ready ? "" : "Create a packet first";
   tab("patient").title = signed ? "" : "Unlocks after sign-off";
+}
+
+// Results count up when the Impact view opens. Screen readers get the final value straight away.
+function countUp(root) {
+  if (calm()) return;
+  $$("[data-n]", root).forEach((el) => {
+    const to = parseFloat(el.dataset.n), dp = (el.dataset.n.split(".")[1] || "").length, t0 = performance.now(), dur = 800;
+    if (!Number.isFinite(to)) return;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = (to * e).toFixed(dp);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// Run a scene's entrance once, then leave it in its final state.
+function playOnce(el, ms) {
+  if (!el || calm()) return;
+  el.classList.add("play");
+  setTimeout(() => el.classList.remove("play"), ms);
+}
+
+// The person on the illustration walks home once, when the page first opens.
+function walkHome() {
+  const w = $(".way-home .walker");
+  if (!w) return;
+  playOnce($(".way-home"), 3800);
+  w.removeAttribute("visibility");
+  const m = $("animateMotion", w);
+  if (calm() || !m.beginElement) { m.remove(); w.setAttribute("transform", "translate(329 164)"); return; }
+  m.beginElement();
 }
 
 // ------------------------------------------------------------------ setup
@@ -119,12 +183,13 @@ async function init() {
     b.setAttribute("role", "listitem");
     b.disabled = !s.available;
     const tag = s.replay ? (s.replay.source === "recorded" ? `Recorded on ${s.replay.hardware || "AMD"}` : "Scripted sample run") : (s.available ? "" : "Needs the AMD endpoint");
-    b.innerHTML = `<b>${esc(state.meta.languages[s.language])}</b>${esc(s.title.replace(/, [A-Z][a-z]+$/, ""))}<span class="tag">${esc(tag)}</span>`;
+    b.innerHTML = `<span class="ok">${icon("check")}</span><b>${esc(state.meta.languages[s.language])}</b>${esc(s.title.replace(/, [A-Z][a-z]+$/, ""))}<span class="tag">${esc(tag)}</span>`;
     b.onclick = () => pickSample(s.id, b);
     box.appendChild(b);
   });
   renderStages(null);
   updateTabs();
+  walkHome();
   $("#run").onclick = start;
   $("#signoff").onclick = signOff;
   $("#only-flagged").onchange = renderReview;
@@ -150,7 +215,7 @@ async function start() {
   const language = $("#language").value;
   const file = $("#file").files[0];
   $("#run-error").classList.add("hidden");
-  $("#run").disabled = true;
+  busy(true);
   try {
     let r;
     if (file) {
@@ -167,8 +232,15 @@ async function start() {
     refresh();
   } catch (e) {
     showError(e.message);
-    $("#run").disabled = false;
+    busy(false);
   }
+}
+
+function busy(on) {
+  const b = $("#run");
+  b.disabled = on;
+  b.classList.toggle("busy", on);
+  $(".run-label", b).textContent = on ? "Working" : "Create packet";
 }
 
 function showError(msg) { const el = $("#run-error"); el.textContent = msg; el.classList.remove("hidden"); }
@@ -177,7 +249,7 @@ async function refresh() {
   if (!state.caseId) return;
   const c = await api(`/api/cases/${state.caseId}`);
   setCase(c);
-  if (["ready", "error"].includes(c.stage)) { clearInterval(state.poll); $("#run").disabled = false; }
+  if (["ready", "error"].includes(c.stage)) { clearInterval(state.poll); busy(false); }
 }
 
 function setCase(c) {
@@ -193,31 +265,44 @@ function renderStages(c) {
   const order = STAGES.map((s) => s[0]);
   const skip = c && c.language === "en" ? ["translate", "back_translate"] : [];
   const idx = c ? order.indexOf(c.stage) : -1;
-  $("#stages").innerHTML = STAGES.filter((s) => !skip.includes(s[0])).map(([k, t, d, who]) => {
-    const i = order.indexOf(k);
-    const cls = !c ? "" : c.stage === "ready" || i < idx ? "done" : i === idx ? "now" : "";
-    return `<li class="${cls}"><span class="dot">${icon("check")}</span><div>${esc(t)}<span class="who ${who}">${WHO[who]}</span><small>${esc(d)}</small></div></li>`;
-  }).join("");
+  const list = STAGES.filter((s) => !skip.includes(s[0]));
+  const ol = $("#stages");
+  // Build the list once per shape, then only switch classes, so each step fills in with a transition.
+  const shape = list.map((s) => s[0]).join();
+  if (ol.dataset.shape !== shape) {
+    ol.dataset.shape = shape;
+    ol.innerHTML = list.map(([k, t, d, who]) => `<li data-k="${k}"><span class="link"></span><span class="dot">${icon("check")}</span><div>${esc(t)}<span class="who ${who}">${WHO[who]}</span><small>${esc(d)}</small></div></li>`).join("");
+  }
+  $$("li", ol).forEach((li) => {
+    const i = order.indexOf(li.dataset.k);
+    li.className = !c ? "" : c.stage === "ready" || i < idx ? "done" : i === idx ? "now" : "";
+  });
   $("#elapsed").textContent = c && state.started ? `${((Date.now() - state.started) / 1000).toFixed(1)} s` : "";
   const sum = $("#run-summary");
   if (c && c.stage === "ready") {
     const m = c.metrics;
     const red = m.by_status.red, amber = m.by_status.amber, high = Math.max(0, m.sentences_flagged - red - amber), auto = m.sentences - m.sentences_flagged;
-    const pct = (n) => `${(100 * n / Math.max(1, m.sentences)).toFixed(1)}%`;
+    const pct = (n) => (100 * n / Math.max(1, m.sentences)).toFixed(1);
     const route = c.route === "interpreter" ? `<div class="error">Routed to a professional interpreter: ${c.language_name in state.meta.languages ? "too many sentences failed checks" : "this language is not supported for automatic translation"}. The English packet and fact ledger are still ready.</div>` : "";
+    const key = [route, auto, high, amber, red, m.omissions, m.sentences_flagged].join("|");
+    if (sum.dataset.key === key) return;
+    sum.dataset.key = key;
     sum.innerHTML = `${route}<div class="triage">
       <h3>${m.sentences_flagged + m.omissions} items need a person, ${auto} sentences verified</h3>
       <div class="stack" role="img" aria-label="${auto} verified, ${high} high risk, ${amber} uncertain, ${red} blocked">
-        <i class="g" style="width:${pct(auto)}"></i><i class="h" style="width:${pct(high)}"></i><i class="a" style="width:${pct(amber)}"></i><i class="r" style="width:${pct(red)}"></i></div>
-      <div class="legend"><span style="--c:var(--green)">${auto} verified</span><span style="--c:var(--violet)">${high} high risk</span><span style="--c:var(--amber)">${amber} uncertain</span><span style="--c:var(--red)">${red} blocked</span>${m.omissions ? `<span style="--c:var(--red-deep)">${m.omissions} missing</span>` : ""}</div>
+        <i class="g" data-w="${pct(auto)}"></i><i class="h" data-w="${pct(high)}"></i><i class="a" data-w="${pct(amber)}"></i><i class="r" data-w="${pct(red)}"></i></div>
+      <div class="legend"><span class="g">${auto} verified</span><span class="h">${high} high risk</span><span class="a">${amber} uncertain</span><span class="r">${red} blocked</span>${m.omissions ? `<span class="m">${m.omissions} missing</span>` : ""}</div>
       <button class="primary lg block" id="go-review">Open review ${icon("arrow")}</button></div>`;
+    applySizes(sum);
     $("#go-review").onclick = () => show("review");
-  } else sum.innerHTML = "";
+  } else { sum.innerHTML = ""; delete sum.dataset.key; }
 }
 
 function renderLedger() {
   const c = state.c;
   $("#ledger-card").classList.remove("hidden");
+  const quoted = c.facts.filter((f) => f.status === "green").length, high = c.facts.filter((f) => f.risk === "high").length;
+  $("#ledger-sum").textContent = `${c.facts.length} instructions found, ${quoted} quoted word for word from the source, ${high} high risk. Open to see each one.`;
   $("#masked").innerHTML = marked(c.source_masked);
   $("#med-issues").innerHTML = c.med_issues.map((m) => `<div class="error">${esc(m.message)} <span class="fine">Line: ${esc(m.line)}</span></div>`).join("");
   $("#ledger").innerHTML = `<tr><th>ID</th><th>Kind</th><th>Instruction</th><th>Risk</th><th>Check</th></tr>` + c.facts.map((f) => `
@@ -235,8 +320,10 @@ function reviewer() {
   return v;
 }
 
-async function act(fn, msg) {
-  try { setCase(await fn()); if (msg) toast(msg); } catch (e) { toast(e.message, true); }
+// `done` names the card that was just resolved, so it can confirm with a short flash after the re-render.
+async function act(fn, msg, done) {
+  try { state.justDone = done; setCase(await fn()); if (msg) toast(msg); } catch (e) { toast(e.message, true); }
+  state.justDone = null;
 }
 
 function queueItems(c) {
@@ -266,22 +353,22 @@ function renderReview() {
   const total = done + open;
   $("#q-bar").style.width = `${total ? 100 * done / total : 100}%`;
   $("#q-count").textContent = `${done} of ${total} resolved`;
-  $("#review-stats").innerHTML = `
-    <div class="red"><b>${m.by_status.red}</b>blocked</div>
-    <div class="amber"><b>${m.by_status.amber}</b>uncertain</div>
-    <div class="high"><b>${m.high_risk}</b>high risk</div>
-    <div class="red"><b>${m.omissions}</b>missing</div>
-    <div class="green"><b>${m.sentences - m.sentences_flagged}</b>auto-verified</div>
-    <div><b>${m.sentences}</b>sentences</div>`;
+  $(".queue .progress").classList.toggle("complete", !open);
+  const chip = (cls, n, l) => `<span class="${cls}${n ? "" : " zero"}"><b>${n}</b>${l}</span>`;
+  $("#review-stats").innerHTML = chip("red", m.by_status.red, "blocked") + chip("amber", m.by_status.amber, "uncertain")
+    + chip("high", m.high_risk, "high risk") + chip("red", m.omissions, "missing")
+    + `<p class="fine tally-note">${m.sentences - m.sentences_flagged} of ${m.sentences} sentences passed every check and need no one.</p>`;
   const qIcon = { red: "x", amber: "warn", high: "shield", done: "check" };
-  $("#queue").innerHTML = items.map((i) => `<li class="${i.cls}"><a href="#${i.anchor}" data-anchor="${i.anchor}"><span class="ic">${icon(qIcon[i.cls] || "warn")}</span><span class="lbl">${esc(i.label)}</span><span class="id">${esc(i.id)}</span></a></li>`).join("");
+  $("#queue").innerHTML = items.map((i) => `<li class="${i.cls}${i.anchor === `s-${state.justDone}` ? " just-done" : ""}"><a href="#${i.anchor}" data-anchor="${i.anchor}"><span class="ic">${icon(qIcon[i.cls] || "warn")}</span><span class="lbl">${esc(i.label)}</span><span class="id">${esc(i.id)}</span></a></li>`).join("");
   $$("#queue a").forEach((a) => a.onclick = (e) => { e.preventDefault(); focusCard(document.getElementById(a.dataset.anchor)); });
 
   const signed = c.signoff;
   $("#signoff").disabled = !!signed || open > 0;
+  $("#signoff").classList.toggle("hidden", !!signed);
   $("#blockers").className = "blockers" + (open || signed ? "" : " ok");
-  $("#blockers").innerHTML = signed ? `<span class="reviewed">${icon("check")} Signed off by ${esc(signed.by)}. The packet is with the patient.</span>`
-      + (c.patient_link ? ` <a class="plink" href="${esc(c.patient_link)}" target="_blank" rel="noopener">Open the patient's link</a> <button class="small ghost copy-link">Copy link</button>` : "")
+  const seal = `<svg class="seal" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18"/><path pathLength="1" d="M12.5 20.5l5 5 10-11"/></svg>`;
+  $("#blockers").innerHTML = signed ? `<div class="seal-row">${seal}<span class="reviewed">Signed off by ${esc(signed.by)}. The packet is with the patient.</span></div>`
+      + (c.patient_link ? `<div class="links"><a class="plink" href="${esc(c.patient_link)}" target="_blank" rel="noopener">${icon("link")} Open the patient's link</a> <button class="small ghost copy-link">${icon("copy")} Copy link</button></div>` : "")
     : open ? `${open} item${open > 1 ? "s" : ""} still need${open > 1 ? "" : "s"} a decision before sign-off.` : "Everything that needs a person has been reviewed. Ready to sign off.";
 
   const cp = $("#blockers .copy-link");
@@ -302,7 +389,7 @@ function renderReview() {
       </div>
       <div class="actions">
         <button class="small primary add">${icon("check")} Add to packet</button>
-        <button class="small suggest">Suggest wording with the model</button>
+        <button class="small suggest">${icon("sparkle")} Suggest wording with the model</button>
         <span class="spacer"></span>
         <button class="small ghost dismiss">Not needed for this patient</button>
       </div>
@@ -311,14 +398,14 @@ function renderReview() {
   $$(".omission").forEach((el) => {
     const fid = el.dataset.fact;
     $(".suggest", el).onclick = async (e) => {
-      const b = e.currentTarget; b.disabled = true; b.textContent = "Asking the model…";
+      const b = e.currentTarget; b.disabled = true; b.classList.add("busy"); b.lastChild.textContent = " Asking the model…";
       try {
         const s = await post(`/api/cases/${c.id}/suggest/${fid}`);
         $(".add-en", el).value = s.text_en;
         if (tl && $(".add-tl", el)) $(".add-tl", el).value = s.text_tl || "";
         toast("Suggested wording filled in. It is re-checked when you add it.");
       } catch (err) { toast(err.message, true); }
-      b.disabled = false; b.textContent = "Suggest wording with the model";
+      b.disabled = false; b.classList.remove("busy"); b.lastChild.textContent = " Suggest wording with the model";
     };
     $(".add", el).onclick = () => {
       if (tl && !$(".add-tl", el).value.trim()) { $(".add-tl", el).focus(); return toast(`Add the ${c.language_name} wording first, or use “Suggest wording”.`, true); }
@@ -372,10 +459,10 @@ function renderReview() {
   $$(".sentence").forEach((el) => {
     const sid = el.dataset.id;
     const btn = (cls, fn) => { const b = $(cls, el); if (b) b.onclick = fn; };
-    btn(".approve", () => act(() => post(`/api/cases/${c.id}/sentences/${sid}/approve`, { reviewer: reviewer() }), `${sid} approved`));
+    btn(".approve", () => act(() => post(`/api/cases/${c.id}/sentences/${sid}/approve`, { reviewer: reviewer() }), `${sid} approved`, sid));
     btn(".remove", () => { if (confirm("Remove this sentence from the packet?")) act(() => post(`/api/cases/${c.id}/sentences/${sid}/remove`, { reviewer: reviewer() }), `${sid} removed`); });
     btn(".edit", () => { const ed = $(".editor", el); ed.classList.toggle("hidden"); if (!ed.classList.contains("hidden")) $("textarea", ed).focus(); });
-    btn(".save", () => act(() => post(`/api/cases/${c.id}/sentences/${sid}/edit`, { reviewer: reviewer(), text_en: $(".ed-en", el).value, text_tl: tl ? $(".ed-tl", el).value : null }), `${sid} saved and re-checked`));
+    btn(".save", () => act(() => post(`/api/cases/${c.id}/sentences/${sid}/edit`, { reviewer: reviewer(), text_en: $(".ed-en", el).value, text_tl: tl ? $(".ed-tl", el).value : null }), `${sid} saved and re-checked`, sid));
   });
 }
 
@@ -397,7 +484,7 @@ function sentenceCard(s, facts, tl) {
   const evidence = s.fact_ids.map((id) => facts[id]
     ? `<div class="ev">${icon("quote")}<div><b>${id}</b>“${marked(facts[id].source_quote)}”</div></div>`
     : `<div class="ev">${icon("warn")}<div><b>${esc(id)}</b>Cites a fact that does not exist.</div></div>`).join("");
-  return `<div class="card sentence ${s.status} ${s.review && s.review.state && !s.needs_review ? "done" : ""}" id="s-${s.id}" data-id="${s.id}" tabindex="-1">
+  return `<div class="card sentence ${s.status} ${s.review && s.review.state && !s.needs_review ? "done" : ""} ${state.justDone === s.id ? "just-done" : ""}" id="s-${s.id}" data-id="${s.id}" tabindex="-1">
     <div class="s-head"><span class="pill ${s.status}">${icon(sIcon)}${label}</span>${s.risk === "high" ? `<span class="pill high">${icon("shield")}High risk</span>` : ""}
       <span class="id">${s.id}</span>${reviewed}<span class="sec">${esc(UI.en[s.section] || s.section)}</span></div>
     ${why}
@@ -469,8 +556,11 @@ async function loadPacket() {
     try { state.packet = await api(`/api/cases/${c.id}/packet`); } catch (e) { return; }
   }
   $("#patient-empty").classList.add("hidden");
+  const first = $("#patient-body").classList.contains("hidden");
   $("#patient-body").classList.remove("hidden");
   renderPacket();
+  // The porch light comes on when the signed packet first arrives.
+  if (first) playOnce($(".p-art"), 2400);
 }
 
 function renderPacket() {
@@ -504,9 +594,9 @@ function renderPacket() {
     return `<ul>${list.map(li).join("")}</ul>`;
   };
   $("#p-sections").innerHTML = SECTION_ORDER.filter((k) => p.sections[k]).map((k) => `
-    <section class="card p-sec ${k}"><h2><span class="ico">${icon(SECTION_ICON[k])}</span>${esc(ui[k])}<button class="small speak" data-sec="${k}" aria-label="${esc(ui.read)}">${icon("speaker")}<span>${esc(ui.read)}</span></button></h2>
+    <section class="card p-sec ${k}"><h2><span class="ico">${icon(SECTION_ICON[k])}</span>${esc(ui[k])}<button class="small speak" data-sec="${k}" aria-label="${esc(ui.read)}" aria-pressed="false">${icon("speaker")}<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span>${esc(ui.read)}</span></button></h2>
     ${body(k, p.sections[k])}</section>`).join("");
-  $$(".speak").forEach((b) => b.onclick = () => speak(b.dataset.sec));
+  $$(".speak").forEach((b) => b.onclick = () => speak(b.dataset.sec, b));
   renderQuiz();
 }
 
@@ -517,11 +607,16 @@ function renderQuiz() {
   const n = p.quiz.length;
   $("#q-title").textContent = qui.quiz;
   $("#q-intro").textContent = qui.quizIntro;
-  const dots = `<div class="dots">${p.quiz.map((q, i) => `<i class="${q.id in qz.answers ? (qz.answers[q.id] ? "right" : "wrong") : i === qz.i ? "cur" : ""}"></i>`).join("")}</div>`;
+  // Stepping stones on the way home: green for right, amber where the nurse will go over it. The house lights up at the end.
+  const stone = (q, i) => {
+    const a = q.id in qz.answers ? (qz.answers[q.id] ? "right" : "wrong") : i === qz.i ? "cur" : "";
+    return `${i ? `<span class="seg-line${i <= qz.i ? " walked" : ""}"></span>` : ""}<span class="stone ${a}${a && i === qz.i - 1 ? " new" : ""}">${a === "right" ? icon("check") : a === "wrong" ? icon("heart") : i + 1}</span>`;
+  };
+  const dots = `<div class="trail" aria-hidden="true">${p.quiz.map(stone).join("")}<span class="seg-line${qz.i >= n ? " walked" : ""}"></span><span class="stone home${qz.i >= n ? " lit" : ""}">${icon("home")}</span></div>`;
   if (qz.i >= n) {
     const missed = Object.values(qz.answers).filter((v) => !v).length;
     $("#q-step").textContent = "";
-    $("#quiz").innerHTML = `${dots}<div class="done-msg">${icon(missed ? "heart" : "check")}<p><b>${esc(missed ? qui.doneSome.replace("{n}", missed) : qui.doneAll)}</b></p></div>`;
+    $("#quiz").innerHTML = `${dots}<div class="done-msg"><p><b>${esc(missed ? qui.doneSome.replace("{n}", missed) : qui.doneAll)}</b></p></div>`;
     return;
   }
   const q = p.quiz[qz.i];
@@ -549,14 +644,22 @@ function renderQuiz() {
   });
 }
 
-function speak(sec) {
+// Read a section aloud; pressing the same button again stops it.
+function speak(sec, btn) {
   if (!("speechSynthesis" in window)) return toast("This browser cannot read aloud.", true);
+  const was = btn && btn.classList.contains("speaking");
+  speechSynthesis.cancel();
+  $$(".speak.speaking").forEach((b) => { b.classList.remove("speaking"); b.setAttribute("aria-pressed", "false"); });
+  if (was) return;
   const p = state.packet;
   const useTl = p.language !== "en" && state.pLang !== "en";
   const u = new SpeechSynthesisUtterance(p.sections[sec].map((s) => useTl ? s.text_tl : s.text_en).join(" "));
   u.lang = SPEECH[useTl ? p.language : "en"] || "en-US";
   u.rate = 0.9;
-  speechSynthesis.cancel();
+  if (btn) {
+    btn.classList.add("speaking"); btn.setAttribute("aria-pressed", "true");
+    u.onend = u.onerror = () => { btn.classList.remove("speaking"); btn.setAttribute("aria-pressed", "false"); };
+  }
   speechSynthesis.speak(u);
 }
 
@@ -570,17 +673,19 @@ function renderImpact() {
   const share = d.sentences ? Math.round(100 * (d.sentences - d.sentences_flagged) / d.sentences) : 0;
   const alertsTotal = Object.values(d.issues_caught).reduce((a, b) => a + b, 0);
   const caughtTotal = d.by_status.red + d.by_status.amber + d.omissions + d.med_issues;
+  // Numbers sit in [data-n] spans so they can count up; the final value is what is written.
+  const n = (v) => v == null ? "–" : `<span data-n="${esc(v)}">${esc(v)}</span>`;
   $("#kpis").innerHTML = [
-    [`${m.source_grade} → ${m.output_grade ?? "–"}`, "Reading grade, source to packet. Target is 6 or lower."],
-    [`${d.sentences - d.sentences_flagged}<small> / ${d.sentences}</small>`, `Draft sentences verified with no person needed (${share}%). The reviewer reads only the rest.`],
-    [`${caughtTotal}`, `Problems in the model's draft stopped before the patient saw them (${alertsTotal} check alerts)`],
-    [`${Object.values(m.phi_masked).reduce((a, b) => a + b, 0)}`, "Identifiers masked before any model call"],
-    [m.seconds_to_signoff ? `${Math.round(m.seconds_to_signoff)}<small> s</small>` : "–", "From paste to signed-off packet"],
-  ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`).join("");
-  const scale = 14, pos = (g) => `${Math.min(100, 100 * Math.max(0, g) / scale)}%`;
-  const gaugeRow = (label, g, color) => `<div><div class="gl"><span>${label}</span><span>Grade ${g ?? "–"}</span></div>
-    <div class="track"><div class="fill" style="width:${pos(g || 0)};background:${color}"></div><div class="target" style="left:${pos(6)}"><span>Target 6</span></div></div></div>`;
-  $("#grade").innerHTML = `<div class="gauge">${gaugeRow("Clinician's text", m.source_grade, "var(--amber)")}${gaugeRow("Patient packet (English)", m.output_grade, "var(--green)")}</div>
+    ["text", `${n(m.source_grade)} → ${n(m.output_grade)}`, "Reading grade, source to packet. Target is 6 or lower."],
+    ["check", `${n(d.sentences - d.sentences_flagged)}<small> / ${d.sentences}</small>`, `Draft sentences verified with no person needed (${share}%). The reviewer reads only the rest.`],
+    ["shield", n(caughtTotal), `Problems in the model's draft stopped before the patient saw them (${alertsTotal} check alerts)`],
+    ["lock", n(Object.values(m.phi_masked).reduce((a, b) => a + b, 0)), "Identifiers masked before any model call"],
+    ["cal", m.seconds_to_signoff ? `${n(Math.round(m.seconds_to_signoff))}<small> s</small>` : "–", "From paste to signed-off packet"],
+  ].map(([ic, v, l]) => `<div class="kpi"><span class="ki">${icon(ic)}</span><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`).join("");
+  const scale = 14, pos = (g) => Math.min(100, 100 * Math.max(0, g) / scale).toFixed(1);
+  const gaugeRow = (label, g, cls) => `<div><div class="gl"><span>${label}</span><span>Grade ${g ?? "–"}</span></div>
+    <div class="track"><div class="fill ${cls}" data-w="${pos(g || 0)}"></div><div class="target" data-left="${pos(6)}"><span>Target 6</span></div></div></div>`;
+  $("#grade").innerHTML = `<div class="gauge">${gaugeRow("Clinician's text", m.source_grade, "src")}${gaugeRow("Patient packet (English)", m.output_grade, "out")}</div>
     <p class="fine">${m.source_words} words in, ${m.output_words} words out. The AMA recommends grade 6 for patient materials.</p>`;
   const labels = { numbers: "Number not in source", drug: "Medicine not in source", meaning_polarity: "Stop vs keep taking", translation_numbers: "Number changed in translation", back_numbers: "Back-translation numbers", back_drug: "Medicine lost in translation", translation_polarity: "Meaning flipped in translation", model_check: "Safety model: wording", model_check_translation: "Safety model: translation", citation: "No source behind sentence", placeholder: "Invented contact or name", quote: "Fact not found in source", cross_check: "Medicine list disagreement", translation_placeholder: "Contact lost in translation",
     units: "Unit changed", dates: "Date changed", frequency: "Doses per day changed", as_needed: "\u201cOnly if needed\u201d lost", scale: "Dose scale changed",
@@ -594,7 +699,7 @@ function renderImpact() {
   if (d.med_issues) rows.push(["Medicine list disagreement", d.med_issues]);
   rows.sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...rows.map((r) => r[1]));
-  $("#caught").innerHTML = rows.length ? rows.map(([l, v]) => `<div class="bar"><span>${esc(l)}</span><div class="tr"><i style="width:${100 * v / max}%"></i></div><b>${v}</b></div>`).join("") + `<p class="fine">Counted on the model's first draft. ${m.checks_run} checks ran on ${m.facts} facts and ${m.sentences} sentences.</p>` : "<p>No problems found.</p>";
+  $("#caught").innerHTML = rows.length ? rows.map(([l, v]) => `<div class="bar"><span>${esc(l)}</span><div class="tr"><i data-w="${(100 * v / max).toFixed(1)}"></i></div><b>${v}</b></div>`).join("") + `<p class="fine">Counted on the model's first draft. ${m.checks_run} checks ran on ${m.facts} facts and ${m.sentences} sentences.</p>` : "<p>No problems found.</p>";
   const u = m.model, llm = state.meta.llm;
   const replay = llm.mode !== "live";
   const meta = (llm.cases || {})[c.sample_id] || {};
@@ -609,15 +714,43 @@ function renderImpact() {
     <dt>GPU cost per packet</dt><dd>${m.gpu_cost_usd != null ? "$" + m.gpu_cost_usd.toFixed(4) + " at $1.99/h" : "–"}</dd>
   </dl><p class="fine">${replay ? "Homeward is built to run its model on a single AMD Instinct MI300X through vLLM and ROCm, on infrastructure the hospital controls. This case replays saved model output, so nothing above was measured on a GPU just now."
       : "The model runs on the endpoint shown above. Identifiers are masked before any model call."}</p>`;
-  $("#alerts").innerHTML = c.alerts.length ? c.alerts.map((a) => `<div class="alert-item">${icon("warn")}<span>${esc(a.message)}</span></div>`).join("") : '<p class="fine">No alerts yet. Wrong teach-back answers appear here so the nurse can re-explain before the patient leaves.</p>';
-  $("#audit").innerHTML = c.audit.slice().reverse().map((a) => `<div><time>${new Date(a.at * 1000).toLocaleTimeString()}</time><span><b>${esc(a.actor)}</b> ${esc(a.action)} <span class="fine">${esc(a.detail)}</span></span></div>`).join("");
+  renderAlerts(c);
+  const initials = (who) => who === "patient" ? "P" : who.replace(/^(RN|MD|Dr\.?|NP|PA)\s+/i, "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+  const kind = (who) => who === "patient" ? "patient" : /^(system|homeward)$/i.test(who) ? "system" : "";
+  $("#audit").innerHTML = c.audit.slice().reverse().map((a) => `<div><span class="who-dot ${kind(a.actor)}" aria-hidden="true">${esc(initials(a.actor))}</span><time>${new Date(a.at * 1000).toLocaleTimeString()}</time><span><b>${esc(a.actor)}</b> ${esc(a.action)} <span class="fine">${esc(a.detail)}</span></span></div>`).join("");
+  applySizes($("#view-impact"));
+}
+
+// A wrong teach-back answer becomes a task the nurse can act on: what was asked, what the patient chose,
+// what the signed packet says, and how serious the topic is.
+function renderAlerts(c) {
+  const facts = Object.fromEntries(c.facts.map((f) => [f.id, f]));
+  const sents = Object.fromEntries(c.sentences.map((s) => [s.id, s]));
+  const quiz = Object.fromEntries((c.quiz || []).map((q) => [q.id, q]));
+  const tl = c.language !== "en";
+  $("#alerts-sum").textContent = c.alerts.length ? `${c.alerts.length} to go over before the patient leaves` : "";
+  $("#alerts").innerHTML = c.alerts.length ? c.alerts.map((a) => {
+    const f = facts[a.fact_id] || {}, q = quiz[a.question], s = q && sents[q.sentence_id];
+    const chose = q && q.answer && q.options[q.answer.choice];
+    const sev = f.kind === "warning_sign" ? ["warning", "red", "Warning sign"] : f.risk === "high" ? ["high", "high", "High-risk medicine"] : ["", "amber", "Instruction"];
+    return `<div class="alert-item sev-${sev[0] || "normal"}">
+      <div class="al-head">${icon("heart")}<b>Go over this again</b><span class="pill ${sev[1]}">${sev[2]}</span><time>${new Date(a.at * 1000).toLocaleTimeString([], { timeStyle: "short" })}</time></div>
+      ${q ? `<p class="al-q">${esc(q.question)}</p>` : ""}
+      <div class="al-rows">
+        ${chose ? `<div class="al-row chose"><span>${icon("user")}Patient chose</span><p>${esc(chose.text)}</p></div>` : ""}
+        ${s ? `<div class="al-row says"><span>${icon("check")}Packet says</span><p>${esc(tl ? s.text_tl : s.text_en)}${tl ? `<span class="en">${esc(s.text_en)}</span>` : ""}</p></div>` : ""}
+      </div>
+      <p class="al-do">${icon("arrow")}${esc(a.message)}</p>
+    </div>`;
+  }).join("") : `<div class="calm">${icon("check")}<span>No alerts. If the patient gets a teach-back question wrong, it shows up here with their answer, so the nurse can go over it before they leave.</span></div>`;
 }
 
 async function patientInit() {
   document.body.classList.add("patient-mode");
   $("#p-print").onclick = () => window.print();
   $("#p-size").onclick = (e) => { const on = $("#patient-body").classList.toggle("big"); e.currentTarget.setAttribute("aria-pressed", on); };
-  show("patient");
+  activate("patient");
+  loadPacket();
 }
 
 if (PATIENT_TOKEN) patientInit();
