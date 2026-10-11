@@ -12,7 +12,7 @@ Verified against the lablab.ai tutorial "AMD Developer Cloud: Host Your First LL
    docker exec rocm tail -f /tmp/vllm.log   # wait for "Application startup complete"
    ```
    The first start downloads about 145 GB of weights. For a faster start use `MODEL=Qwen/Qwen2.5-32B-Instruct`.
-5. Start the app on port 80: `HOMEWARD_STAFF_PASSWORD=<something> bash deploy/amd/run_app.sh`, then open `http://<ip>/`. With the password set, the browser asks for it once (any user name); patient links work without it.
+5. Start the app behind HTTPS: `HOMEWARD_STAFF_PASSWORD=$(openssl rand -base64 18) bash deploy/amd/run_app.sh` (note the password). It prints the address, `https://<ip-with-dashes>.sslip.io/`; set `DOMAIN` to use your own name. The browser asks for the password once (any user name); patient links work without it.
 6. Record real runs of the sample cases so the public demo still works when the GPU is off:
    ```bash
    export HOMEWARD_LLM_BASE_URL=http://localhost:8000/v1 HOMEWARD_LLM_API_KEY=$VLLM_API_KEY
@@ -33,4 +33,4 @@ What the deck reads from these runs, and how each number is measured:
 | Seconds per packet | `docs/benchmark.json` | `wall_s` divided by packets finished, at concurrency 1 |
 | GPU cost per packet | `docs/benchmark.json` | $1.99 per GPU hour divided by packets per hour at the best concurrency |
 
-Security notes: Docker port mappings bypass UFW, so port 8000 is reachable from the internet. Always start vLLM with `--api-key` (the script refuses to run without one), and only ever send synthetic data.
+Security notes: Docker port mappings bypass UFW, so port 8000 is reachable from the internet, and it is plain HTTP, so the API key crosses the internet unencrypted when GitHub Actions records from it. Always start vLLM with `--api-key` (the script refuses to run without one), only ever send synthetic data, and destroy the droplet afterwards, which also retires the key. More in [docs/security.md](../../docs/security.md).

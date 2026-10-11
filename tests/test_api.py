@@ -67,10 +67,10 @@ def test_signed_packet_is_locked_and_reachable_by_patient_link():
     with TestClient(app) as client:
         c = _signed_knee(client)
         cid = c["id"]
-        for path, body in (("sentences/S1/edit", {"reviewer": "X", "text_en": "Changed."}),
-                           ("sentences/S1/remove", {"reviewer": "X"}),
-                           ("facts/F1/dismiss", {"reviewer": "X", "reason": "not needed at all"}),
-                           ("signoff", {"reviewer": "X"})):
+        for path, body in (("sentences/S1/edit", {"reviewer": "RN X", "text_en": "Changed."}),
+                           ("sentences/S1/remove", {"reviewer": "RN X"}),
+                           ("facts/F1/dismiss", {"reviewer": "RN X", "reason": "not needed at all"}),
+                           ("signoff", {"reviewer": "RN X"})):
             r = client.post(f"/api/cases/{cid}/{path}", json=body)
             assert r.status_code == 400 and "locked" in r.json()["detail"]
         assert all("correct" not in o for q in c["quiz"] for o in q["options"])  # staff view has no answer key
@@ -79,7 +79,7 @@ def test_signed_packet_is_locked_and_reachable_by_patient_link():
         p = client.get(link).json()
         assert p["signoff"]["by"] == "RN A"
         q = p["quiz"][0]["id"]
-        assert client.post(f"{link}/quiz/{q}", json={"choice": -1}).status_code == 404
+        assert client.post(f"{link}/quiz/{q}", json={"choice": -1}).status_code == 422
         first = client.post(f"{link}/quiz/{q}", json={"choice": 0}).json()
         again = client.post(f"{link}/quiz/{q}", json={"choice": 1}).json()
         assert again == {"correct": first["correct"], "already_answered": True}

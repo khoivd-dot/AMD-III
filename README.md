@@ -100,7 +100,7 @@ uvicorn homeward.app:app --port 8000
 
 Docker: `docker build -t homeward . && docker run -p 8080:8080 homeward`.
 
-Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD`: every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open.
+Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD`: every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open. Security measures and the deployment checklist are in [docs/security.md](docs/security.md).
 
 Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://localhost:8000` (needs Playwright).
 
