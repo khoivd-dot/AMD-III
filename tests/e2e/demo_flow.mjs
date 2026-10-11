@@ -8,12 +8,25 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || 
 const page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
+// Anything the content security policy blocks would silently break a screen, so it fails the run.
+const cspWatch = (p) => p.on("console", (m) => { if (m.type() === "error" && /Content Security Policy/i.test(m.text())) errors.push(m.text()); });
+cspWatch(page);
 page.on("dialog", (d) => d.accept(d.type() === "prompt" ? "Not relevant" : undefined));
 // Full-page shots: unstick the header so it does not land mid-page in the image.
+// Let entrance animations and count-ups finish first, so the image shows the settled screen.
+const settle = (p) => p.evaluate(() => Promise.all(document.getAnimations()
+  .filter((a) => a.effect && a.effect.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => {})))
+  .then(() => new Promise((r) => setTimeout(r, 900))));
 const shot = async (n) => {
-  const tag = await page.addStyleTag({ content: ".top,.queue{position:static!important}.queue{max-height:none!important}.toast{display:none!important}" });
-  await page.screenshot({ path: `${out}/${n}.png`, fullPage: true });
-  await tag.evaluate((el) => el.remove());
+  await settle(page);
+  // Set through the CSSOM rather than a <style> tag, which the app's content security policy would refuse.
+  const unstick = (on) => page.evaluate((on) => {
+    document.querySelectorAll(".top, .queue").forEach((el) => { el.style.position = on ? "static" : ""; if (el.matches(".queue")) el.style.maxHeight = on ? "none" : ""; });
+    document.querySelector(".toast").style.display = on ? "none" : "";
+  }, on);
+  await unstick(true);
+  await page.screenshot({ path: `${out}/${n}.png`, fullPage: true, animations: "disabled" });
+  await unstick(false);
 };
 
 await page.goto(base);
@@ -91,8 +104,9 @@ console.log("alerts:", (await page.textContent("#alerts")).trim());
 await page.setViewportSize({ width: 390, height: 844 });
 await page.click('#tabs button[data-view="patient"]');
 await page.waitForTimeout(500);
-await page.addStyleTag({ content: ".toast{display:none!important}" });
-await page.screenshot({ path: `${out}/6-patient-mobile.png` });
+await page.evaluate(() => { document.querySelector(".toast").style.display = "none"; });
+await settle(page);
+await page.screenshot({ path: `${out}/6-patient-mobile.png`, animations: "disabled" });
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 console.log("mobile horizontal overflow:", overflow);
 
@@ -100,12 +114,31 @@ console.log("mobile horizontal overflow:", overflow);
 const link = await page.getAttribute("#blockers .plink", "href");
 const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
 phone.on("pageerror", (e) => errors.push(e.message));
+cspWatch(phone);
 await phone.goto(new URL(link, base).href);
 await phone.waitForSelector("#patient-body:not(.hidden)", { timeout: 5000 });
-await phone.waitForTimeout(300);
-await phone.screenshot({ path: `${out}/7-patient-link.png` });
+await settle(phone);
+await phone.screenshot({ path: `${out}/7-patient-link.png`, animations: "disabled" });
 console.log("patient link:", link.replace(/[\w-]{12,}$/, "<token>"), "| staff tabs shown:", await phone.isVisible("#tabs"),
   "| quiz:", (await phone.textContent("#quiz")).trim().slice(0, 60));
+// Optional layout sweep (LAYOUT_DIR=dir): every view at phone and laptop sizes, light, dark and reduced motion.
+if (process.env.LAYOUT_DIR) {
+  const dir = process.env.LAYOUT_DIR;
+  const passes = [["light", "no-preference", [320, 360, 1280]], ["dark", "no-preference", [360, 1280]], ["light", "reduce", [1280]]];
+  for (const [scheme, motion, widths] of passes) {
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: motion });
+    for (const w of widths) {
+      await page.setViewportSize({ width: w, height: w > 800 ? 720 : 740 });
+      for (const v of ["nurse", "review", "patient", "impact"]) {
+        await page.click(`#tabs button[data-view="${v}"]`);
+        await settle(page);
+        if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) errors.push(`sideways scroll: ${v} at ${w}px, ${scheme}`);
+        await page.screenshot({ path: `${dir}/${scheme}${motion === "reduce" ? "-still" : ""}-${w}-${v}.png`, fullPage: true, animations: "disabled" });
+      }
+    }
+  }
+  console.log("layout sweep:", dir);
+}
 console.log("page errors:", errors.length ? errors : "none");
 await browser.close();
 if (errors.length) process.exit(1);
