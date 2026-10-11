@@ -13,18 +13,20 @@ FACTS_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
+                # The quote comes before the labels: with constrained decoding the model
+                # writes fields in this order, so it reads the text before it labels it.
                 "properties": {
                     "id": {"type": "string"},
+                    "source_quote": {"type": "string"},
                     "kind": {"type": "string", "enum": FACT_KINDS},
                     "med_action": {"type": ["string", "null"], "enum": MED_ACTIONS + [None]},
                     "drug": {"type": ["string", "null"]},
                     "dose": {"type": ["string", "null"]},
                     "frequency": {"type": ["string", "null"]},
                     "detail": {"type": "string"},
-                    "source_quote": {"type": "string"},
                 },
-                "required": ["id", "kind", "med_action", "drug", "dose", "frequency",
-                             "detail", "source_quote"],
+                "required": ["id", "source_quote", "kind", "med_action", "drug", "dose", "frequency",
+                             "detail"],
             },
         }
     },
@@ -100,13 +102,24 @@ def facts_messages(source: str) -> list[dict]:
     user = f"""Extract every instruction the patient must know from the discharge text below as atomic facts.
 
 Rules:
+- source_quote: copy the exact words from the text, including any label such as "NEW:" or "STOP:".
+- kind: medication (any medicine line), warning_sign (when to call or go to hospital), follow_up (appointments, tests, classes), activity, diet, wound_care, pending_result, diagnosis (only why the patient was in hospital), other.
 - One fact per medicine. med_action is: new (started in hospital), changed (dose or timing changed), stop (stop permanently), hold (pause until told to restart), continue (unchanged). Use null for non-medicine facts.
 - Copy drug, dose and frequency exactly as written. Use null when the text does not say.
-- One fact per warning sign or group of signs that share the same action, one per appointment or pending test, one per activity, diet or wound-care rule. Use kind "diagnosis" for why the patient was in hospital.
+- One fact per warning sign or group of signs that share the same action, one per appointment or pending test, one per activity, diet, monitoring or wound-care rule. Every instruction line must appear in some fact.
 - detail: one short plain-English sentence stating the fact, including what to do.
-- source_quote: copy the exact words from the text that support the fact.
 - ids: F1, F2, ... in order of appearance.
 - Do not infer anything that is not written.
+
+Example. Text:
+STOP: Ibuprofen - do not take while on apixaban.
+Fluid restriction 1.5 L/day.
+Call 911 for chest pain.
+Facts:
+{{"facts": [
+ {{"id": "F1", "source_quote": "STOP: Ibuprofen - do not take while on apixaban.", "kind": "medication", "med_action": "stop", "drug": "Ibuprofen", "dose": null, "frequency": null, "detail": "Stop taking ibuprofen while you take apixaban."}},
+ {{"id": "F2", "source_quote": "Fluid restriction 1.5 L/day.", "kind": "diet", "med_action": null, "drug": null, "dose": null, "frequency": null, "detail": "Drink no more than 1.5 litres of fluid a day."}},
+ {{"id": "F3", "source_quote": "Call 911 for chest pain.", "kind": "warning_sign", "med_action": null, "drug": null, "dose": null, "frequency": null, "detail": "Call 911 if you have chest pain."}}]}}
 
 Discharge text:
 <<<
@@ -121,9 +134,10 @@ def draft_messages(facts: list[dict], grade: int = 6) -> list[dict]:
     user = f"""Write discharge instructions for the patient using only these facts.
 
 Rules:
+- Keep "sodium" as sodium: a sodium limit is not a salt limit.
 - Reading level: grade {grade} or lower. Short sentences (under 15 words). Everyday words. Talk to the patient as "you".
 - Every sentence must list the fact ids it restates in fact_ids. Never write a sentence without a fact behind it.
-- Cover every medicine, warning sign and appointment. For each medicine say its name, the dose and how often, and clearly whether to start, change, keep taking, stop, or pause it.
+- Cover every fact in the list, including every medicine, warning sign and appointment. For each medicine say its name, the dose and how often, and clearly whether to start, change, keep taking, stop, or pause it.
 - A "hold" means pause until a clinician says to restart; say that, do not say stop forever.
 - Keep drug names, numbers and placeholders exactly as given.
 - Sections: why, medicines, warning_signs, appointments, daily_care. ids: S1, S2, ...
@@ -139,8 +153,10 @@ def translate_messages(sentences: list[dict], language: str) -> list[dict]:
 
 Rules:
 - Plain, warm, everyday {language}. Keep the meaning exactly; add and drop nothing.
-- Keep drug names, all numbers (as digits) and placeholders like [CLINICIAN_1] exactly as written.
-- Keep stop / do not take / pause / keep taking unmistakable.
+- Keep drug names, all numbers (as digits), units and placeholders like [CLINICIAN_1] exactly as written. mg is not mcg, units are not mL, pounds are not kilograms, days are not weeks.
+- Write each date with the month as a word in {language} (for example "October 21, 2026" becomes the {language} for 21 October 2026). Never write a date as numbers only.
+- Keep AM and PM, "only if needed", "until", and stop / do not take / pause / keep taking unmistakable.
+- "Sodium" stays sodium; it is not salt.
 - Return the same ids.
 
 Sentences:
@@ -164,7 +180,7 @@ def judge_messages(rows: list[dict]) -> list[dict]:
 - unsupported: adds information that is not in the facts.
 - contradicts: says something opposite to the facts.
 
-If "back_translation" is present, judge that text too: the sentence is only supported if the back-translation also matches. Give a reason of at most 20 words.
+If "translation" is present, judge it too, in its own language: the row is only supported if the translation says exactly what the facts say (same dose, unit, date, time of day, stop or keep taking, "only if needed"). "back_translation" is a literal English rendering of it, for reference. Give a reason of at most 20 words.
 
 Rows:
 {json.dumps(rows, ensure_ascii=False, indent=1)}"""

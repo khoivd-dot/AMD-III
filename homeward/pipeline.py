@@ -1,5 +1,6 @@
 """Discharge packet pipeline: mask, extract, draft, translate, check, review."""
 
+import re
 import time
 import uuid
 
@@ -7,8 +8,8 @@ from . import prompts, quiz
 from .lexicon import LANGUAGES
 from .llm import LLMError, Usage
 from .phi import mask
-from .textutil import fk_grade, word_count
-from .verify import coverage, cross_check_meds, verify_facts, verify_sentence
+from .textutil import fk_grade, spell_dates, word_count
+from .verify import coverage, cross_check_meds, uncovered_instructions, verify_facts, verify_sentence
 
 GPU_DOLLARS_PER_HOUR = 1.99  # AMD Developer Cloud, 1x MI300X
 INTERPRETER_RED_SHARE = 0.3  # above this share of blocked sentences, call an interpreter
@@ -53,6 +54,12 @@ async def run(case: dict, client) -> dict:
                                          prompts.FACTS_SCHEMA, usage, cid)
         facts = _norm_facts(out)
         verify_facts(facts, case["source_masked"])
+        # Instructions the model left out become rule-found facts, so the draft must cover them.
+        missed = uncovered_instructions(facts, case["source_masked"])
+        facts += missed
+        if missed:
+            audit(case, "system", "rule check found instructions the model missed",
+                  "; ".join(f["source_quote"] for f in missed))
         case["facts"] = facts
         case["med_issues"] = cross_check_meds(facts, case["source_masked"])
 
@@ -60,6 +67,8 @@ async def run(case: dict, client) -> dict:
         out = await client.complete_json("draft", "en", prompts.draft_messages(facts),
                                          prompts.DRAFT_SCHEMA, usage, cid)
         sentences = _norm_sentences(out)
+        for s in sentences:
+            s["text_en"] = spell_dates(s["text_en"])  # 10/12/2026 is 10 December outside the US
         case["sentences"] = sentences
 
         if case["language"] not in LANGUAGES:
@@ -87,12 +96,19 @@ async def run(case: dict, client) -> dict:
         for s in sentences:
             row = {"id": s["id"], "sentence": s["text_en"],
                    "facts": [by_id[i]["detail"] for i in s["fact_ids"] if i in by_id]}
+            if s.get("text_tl"):
+                row["translation"] = s["text_tl"]
             if s.get("back_en"):
                 row["back_translation"] = s["back_en"]
             rows.append(row)
-        out = await client.complete_json("judge", key, prompts.judge_messages(rows),
-                                         prompts.JUDGE_SCHEMA, usage, cid)
-        verdicts = {v["id"]: v for v in (out.get("verdicts") or []) if isinstance(v, dict) and v.get("id")}
+        try:
+            out = await client.complete_json("judge", key, prompts.judge_messages(rows),
+                                             prompts.JUDGE_SCHEMA, usage, cid)
+            verdicts = {v["id"]: v for v in (out.get("verdicts") or []) if isinstance(v, dict) and v.get("id")}
+        except LLMError as exc:
+            # The deterministic checks still stand; every sentence shows it was not model-reviewed.
+            verdicts = {}
+            audit(case, "system", "safety model unavailable", str(exc))
         for s in sentences:
             s["judge_en"] = verdicts.get(s["id"])
 
@@ -109,11 +125,19 @@ async def run(case: dict, client) -> dict:
         audit(case, "system", "packet drafted",
               f"{len(facts)} facts, {len(sentences)} sentences, {red} blocked")
         case["stage"] = "ready"
-    except (LLMError, KeyError, TypeError, ValueError) as exc:
-        case["stage"] = "error"
-        case["error"] = str(exc)
-        audit(case, "system", "pipeline error", str(exc))
+    except (LLMError, ValueError) as exc:
+        _failed(case, str(exc))
+    except (KeyError, TypeError, AttributeError, IndexError) as exc:
+        _failed(case, f"The model's {case['stage'].replace('_', ' ')} output was incomplete, so this packet "
+                      f"stopped there. Try again; if it keeps happening, the model needs checking. "
+                      f"({type(exc).__name__})")
     return case
+
+
+def _failed(case: dict, message: str) -> None:
+    case["error"] = message
+    audit(case, "system", f"stopped at {case['stage']}", message)
+    case["stage"] = "error"
 
 
 # Small or busy models sometimes return slightly off-schema JSON. Normalise it
@@ -121,12 +145,21 @@ async def run(case: dict, client) -> dict:
 SECTIONS = ("why", "medicines", "warning_signs", "appointments", "daily_care")
 
 
+_ID = re.compile(r"[A-Z]{1,2}\d{1,3}x?")
+
+
+def _clean_id(value) -> str:
+    """Ids come from the model and end up in the page; accept only F12-style ids."""
+    text = re.sub(r"\s+", "", str(value or "")).upper().replace("X", "x")
+    return text if _ID.fullmatch(text) else ""
+
+
 def _norm_facts(out: dict) -> list[dict]:
     facts, seen = [], set()
     for i, f in enumerate(out.get("facts") or [], 1):
         if not isinstance(f, dict):
             continue
-        fid = str(f.get("id") or f"F{i}")
+        fid = _clean_id(f.get("id")) or f"F{i}"
         if fid in seen:
             fid = f"F{i}x"
         seen.add(fid)
@@ -144,14 +177,15 @@ def _norm_sentences(out: dict) -> list[dict]:
     for i, s in enumerate(out.get("sentences") or [], 1):
         if not isinstance(s, dict) or not str(s.get("text") or "").strip():
             continue
-        sid = str(s.get("id") or f"S{i}")
+        sid = _clean_id(s.get("id")) or f"S{i}"
         if sid in seen:
             sid = f"S{i}x"
         seen.add(sid)
         ids = s.get("fact_ids") or []
+        ids = ids if isinstance(ids, list) else [ids]
         sentences.append({"id": sid, "section": s.get("section") if s.get("section") in SECTIONS else "daily_care",
                           "text_en": str(s["text"]).strip(),
-                          "fact_ids": [str(x) for x in ids] if isinstance(ids, list) else [str(ids)],
+                          "fact_ids": [x for x in map(_clean_id, ids) if x],
                           "review": None})
     if not sentences:
         raise ValueError("The model returned no sentences.")
@@ -159,7 +193,7 @@ def _norm_sentences(out: dict) -> list[dict]:
 
 
 def _by_id(out: dict, key: str, field: str) -> dict[str, str]:
-    return {str(i["id"]): str(i.get(field) or "") for i in (out.get(key) or [])
+    return {_clean_id(i["id"]): str(i.get(field) or "") for i in (out.get(key) or [])
             if isinstance(i, dict) and i.get("id")}
 
 
@@ -168,11 +202,10 @@ def recheck(case: dict) -> None:
     live = [s for s in case["sentences"] if not s.get("removed")]
     for s in live:
         verify_sentence(s, by_id, case["facts"], case["language"])
-        if s.get("review") and s["review"]["state"] in ("approved", "edited"):
-            # A human has accepted this exact wording; keep the checks visible but
-            # do not ask again unless a check hard-fails on the edited text.
-            if s["status"] != "red" or s["review"]["state"] == "approved":
-                s["needs_review"] = False
+        # An approval covers this exact wording (any edit resets it). An edit alone does
+        # not: a flagged or high-risk line stays in review until someone approves it.
+        if s.get("review") and s["review"]["state"] == "approved" and s["status"] != "red":
+            s["needs_review"] = False
     case["omissions"] = coverage(case["facts"], live)
 
 
@@ -191,14 +224,21 @@ def blockers(case: dict) -> list[str]:
         if f["status"] == "red" and not f.get("dismissed"):
             out.append(f"{f['id']}: fact not found in source.")
     for m in case["med_issues"]:
-        if m["type"] == "missing_fact" and not m.get("resolved"):
+        if not m.get("resolved"):
             out.append(m["message"])
     return out
 
 
 # ------------------------------------------------------------- review
 
+def _open(case: dict) -> None:
+    if case.get("signoff"):
+        raise ValueError(f"This packet was signed off by {case['signoff']['by']} and is locked. "
+                         "Start a new packet to change it.")
+
+
 def approve(case: dict, sid: str, reviewer: str) -> None:
+    _open(case)
     s = _sentence(case, sid)
     if s["status"] == "red":
         raise ValueError("A blocked sentence must be edited or removed, not approved as is.")
@@ -209,35 +249,76 @@ def approve(case: dict, sid: str, reviewer: str) -> None:
 
 def edit(case: dict, sid: str, reviewer: str, text_en: str | None, text_tl: str | None,
          fact_ids: list[str] | None = None) -> None:
+    _open(case)
     s = _sentence(case, sid)
     before = {"text_en": s["text_en"], "text_tl": s.get("text_tl")}
-    if text_en is not None:
-        s["text_en"] = text_en.strip()
-    if text_tl is not None:
-        s["text_tl"] = text_tl.strip()
-        # The reviewer's own wording replaces the model's back-translation.
+    translated = case["language"] != "en" and case["route"] != "interpreter"
+    new_en = spell_dates(text_en.strip()) if text_en is not None else s["text_en"]
+    new_tl = text_tl.strip() if text_tl is not None and translated else s.get("text_tl")
+    en_changed, tl_changed = new_en != s["text_en"], new_tl != s.get("text_tl")
+    if not (en_changed or tl_changed or (fact_ids is not None and fact_ids != s["fact_ids"])):
+        raise ValueError("Nothing was changed. Edit the wording, remove the sentence, or approve it if it is right.")
+    s["text_en"], s["text_tl"] = new_en, new_tl
+    if translated:
+        # The old back-translation and verdict describe the old wording; reverify() redoes them.
         s["back_en"] = ""
+        if en_changed and not tl_changed:
+            s["tl_stale"] = True  # the patient would still read the old meaning
+        elif tl_changed:
+            s["tl_stale"] = False
     if fact_ids is not None:
         s["fact_ids"] = fact_ids
     s["judge_en"] = None
     s["review"] = {"state": "edited", "by": reviewer, "at": time.time(), "before": before}
     recheck(case)
-    if s["status"] == "red":
-        s["needs_review"] = True
-    else:
-        s["needs_review"] = False
-    audit(case, reviewer, f"edited {sid}", f"{before['text_en']} -> {s['text_en']}")
+    audit(case, reviewer, f"edited {sid}",
+          f"{before['text_en']} -> {s['text_en']}" + (f" | {before['text_tl']} -> {s['text_tl']}" if tl_changed else ""))
+
+
+async def reverify(case: dict, client, sid: str) -> None:
+    """Back-translate and judge a reviewer's new wording, like the model's own."""
+    s = _sentence(case, sid)
+    lang = case["language"]
+    try:
+        if lang in LANGUAGES and lang != "en" and s.get("text_tl") and not s.get("tl_stale"):
+            out = await client.complete_json(
+                "back_translate", f"{lang}:edit:{sid}",
+                prompts.back_translate_messages([{"id": sid, "text": s["text_tl"]}], LANGUAGES[lang]),
+                prompts.TRANSLATION_SCHEMA, case["usage"], case.get("sample_id"))
+            s["back_en"] = _by_id(out, "items", "text").get(sid, "")
+        by_id = {f["id"]: f for f in case["facts"]}
+        row = {"id": sid, "sentence": s["text_en"], "facts": [by_id[i]["detail"] for i in s["fact_ids"] if i in by_id]}
+        if s.get("text_tl"):
+            row["translation"] = s["text_tl"]
+        if s.get("back_en"):
+            row["back_translation"] = s["back_en"]
+        out = await client.complete_json("judge", f"{lang}:edit:{sid}", prompts.judge_messages([row]),
+                                         prompts.JUDGE_SCHEMA, case["usage"], case.get("sample_id"))
+        s["judge_en"] = next((v for v in out.get("verdicts") or [] if isinstance(v, dict)), None)
+    except LLMError:
+        pass  # no model: the edit stays flagged as not machine-checked, and in review
+    recheck(case)
 
 
 def remove(case: dict, sid: str, reviewer: str) -> None:
+    _open(case)
     s = _sentence(case, sid)
     s["removed"] = True
     recheck(case)
     audit(case, reviewer, f"removed {sid}")
 
 
+def _fact(case: dict, fact_id: str) -> dict:
+    for f in case["facts"]:
+        if f["id"] == fact_id:
+            return f
+    raise ValueError(f"There is no fact {fact_id} in this packet.")
+
+
 def add_sentence(case: dict, reviewer: str, fact_id: str, text_en: str, text_tl: str | None) -> dict:
-    fact = next(f for f in case["facts"] if f["id"] == fact_id)
+    _open(case)
+    fact = _fact(case, fact_id)
+    text_en = spell_dates(text_en)
     section = {"medication": "medicines", "warning_sign": "warning_signs",
                "follow_up": "appointments"}.get(fact["kind"], "daily_care")
     n = 1 + max((int(s["id"][1:]) for s in case["sentences"] if s["id"][1:].isdigit()), default=0)
@@ -248,26 +329,37 @@ def add_sentence(case: dict, reviewer: str, fact_id: str, text_en: str, text_tl:
         s["back_en"] = ""
     case["sentences"].append(s)
     recheck(case)
-    s["needs_review"] = s["status"] == "red"
     audit(case, reviewer, f"added {s['id']} for {fact_id}", text_en)
     return s
 
 
 def dismiss_fact(case: dict, fact_id: str, reviewer: str, reason: str) -> None:
-    f = next(f for f in case["facts"] if f["id"] == fact_id)
-    f["dismissed"] = reason
+    _open(case)
+    f = _fact(case, fact_id)
+    if f.get("risk") == "high" and f.get("status") != "red" and f.get("origin") != "rule":
+        raise ValueError(f"{fact_id} is a high-risk instruction in the clinician's text, so it cannot be dismissed. "
+                         "Cover it in the packet, or ask the clinician to correct the discharge text.")
+    if len((reason or "").strip()) < 8:
+        raise ValueError("Say in a few words why the patient does not need this.")
+    f["dismissed"] = reason.strip()
     recheck(case)
     audit(case, reviewer, f"dismissed {fact_id}", reason)
 
 
 def resolve_med_issue(case: dict, drug: str, reviewer: str, reason: str) -> None:
-    for m in case["med_issues"]:
-        if m["drug"] == drug:
-            m["resolved"] = reason
+    _open(case)
+    issues = [m for m in case["med_issues"] if m["drug"] == drug]
+    if not issues:
+        raise ValueError(f"There is no medicine check for {drug or 'that medicine'}.")
+    if len((reason or "").strip()) < 8:
+        raise ValueError("Say in a few words what you checked against the source.")
+    for m in issues:
+        m["resolved"] = reason.strip()
     audit(case, reviewer, f"resolved medicine check for {drug}", reason)
 
 
 def sign_off(case: dict, reviewer: str) -> None:
+    _open(case)
     open_items = blockers(case)
     if open_items:
         raise ValueError("Cannot sign off yet: " + " ".join(open_items[:5]))
@@ -280,6 +372,10 @@ def sign_off(case: dict, reviewer: str) -> None:
 
 def answer(case: dict, qid: str, choice: int) -> dict:
     q = next(q for q in case["quiz"] if q["id"] == qid)
+    if not 0 <= choice < len(q["options"]):
+        raise IndexError(choice)
+    if q["answer"]:  # the first answer is the teach-back result; the nurse follows up on it
+        return {"correct": q["answer"]["correct"], "already_answered": True}
     correct = bool(q["options"][choice]["correct"])
     q["answer"] = {"choice": choice, "correct": correct, "at": time.time()}
     if not correct:
@@ -337,7 +433,11 @@ def metrics(case: dict) -> dict:
 
 def public(case: dict) -> dict:
     """Case as sent to the browser: no mask map, no raw source."""
-    out = {k: v for k, v in case.items() if not k.startswith("_") and k != "usage"}
+    out = {k: v for k, v in case.items() if not k.startswith("_") and k not in ("usage", "patient_token")}
+    if case.get("signoff") and case.get("patient_token"):
+        out["patient_link"] = f"/p/{case['patient_token']}"
+    # Staff see answers once given, never the key.
+    out["quiz"] = [q | {"options": [{"text": o["text"]} for o in q["options"]]} for q in case["quiz"]]
     out["metrics"] = metrics(case)
     out["blockers"] = blockers(case) if case["stage"] == "ready" else []
     return out
@@ -348,14 +448,18 @@ def packet(case: dict) -> dict:
     if not case.get("signoff"):
         raise ValueError("Packet is not signed off.")
     m = case["_mask"]
+    facts = {f["id"]: f for f in case["facts"]}
     sections = {}
     for s in case["sentences"]:
         if s.get("removed"):
             continue
+        # Lets the patient view group medicines by what changed (new, stop, keep...).
+        action = next((facts[i]["med_action"] for i in s.get("fact_ids", [])
+                       if facts.get(i, {}).get("med_action")), None)
         sections.setdefault(s["section"], []).append({
             "id": s["id"], "text_en": m.unmask(s["text_en"]),
             "text_tl": m.unmask(s.get("text_tl") or "") or None,
-            "risk": s.get("risk"),
+            "risk": s.get("risk"), "med_action": action,
         })
     return {"language": case["language"], "language_name": case["language_name"],
             "sections": sections, "signoff": case["signoff"],

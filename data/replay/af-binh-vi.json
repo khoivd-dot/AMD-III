@@ -1,0 +1,351 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:41 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "source_quote": "Diagnosis: New atrial fibrillation with rapid ventricular response, now rate controlled.",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient has a new diagnosis of atrial fibrillation with a rapid ventricular response, now controlled in rate."
+    },
+    {
+     "id": "F2",
+     "source_quote": "NEW: Apixaban 5 mg by mouth twice daily, about 12 hours apart. Do not skip doses. Do not stop without talking to your cardiologist.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Apixaban",
+     "dose": "5 mg",
+     "frequency": "twice daily",
+     "detail": "The patient is prescribed Apixaban 5 mg to be taken by mouth twice daily, about 12 hours apart, and should not skip doses or stop without consulting their cardiologist."
+    },
+    {
+     "id": "F3",
+     "source_quote": "NEW: Diltiazem extended-release 120 mg by mouth once daily.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Diltiazem",
+     "dose": "120 mg",
+     "frequency": "once daily",
+     "detail": "The patient is prescribed Diltiazem extended-release 120 mg to be taken by mouth once daily."
+    },
+    {
+     "id": "F4",
+     "source_quote": "STOP: Aspirin 81 mg - stop, because apixaban already protects against clots and both together raise bleeding risk.",
+     "kind": "medication",
+     "med_action": "stop",
+     "drug": "Aspirin",
+     "dose": "81 mg",
+     "frequency": null,
+     "detail": "The patient should stop taking Aspirin 81 mg as Apixaban already protects against clots and both together raise the risk of bleeding."
+    },
+    {
+     "id": "F5",
+     "source_quote": "CONTINUE: Atorvastatin 40 mg by mouth at bedtime.",
+     "kind": "medication",
+     "med_action": "continue",
+     "drug": "Atorvastatin",
+     "dose": "40 mg",
+     "frequency": "at bedtime",
+     "detail": "The patient should continue taking Atorvastatin 40 mg at bedtime."
+    },
+    {
+     "id": "F6",
+     "source_quote": "Bleeding precautions: Use a soft toothbrush and an electric razor. Avoid ibuprofen and naproxen; use acetaminophen for pain.",
+     "kind": "activity",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient should use a soft toothbrush and an electric razor and avoid ibuprofen and naproxen; instead, use acetaminophen for pain to prevent bleeding."
+    },
+    {
+     "id": "F7",
+     "source_quote": "Return precautions: Call 911 for sudden weakness on one side, trouble speaking, chest pain, or fainting. Go to the Emergency Department for black or bloody stools, vomiting blood, or a head injury.",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient should call 911 if they experience sudden weakness on one side, trouble speaking, chest pain, or fainting. They should go to the Emergency Department for black or bloody stools, vomiting blood, or a head injury."
+    },
+    {
+     "id": "F8",
+     "source_quote": "Follow-up: Cardiology clinic with [CLINICIAN_1] in 2 weeks. Primary care in 1 week.",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient should follow up with the Cardiology clinic with [CLINICIAN_1] in 2 weeks and with the Primary care in 1 week."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 102.94334337800001,
+   "prompt_tokens": 869,
+   "completion_tokens": 877
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 68.04529379899998,
+   "prompt_tokens": 972,
+   "completion_tokens": 541
+  },
+  "translate:vi": {
+   "stage": "translate",
+   "seconds": 47.320589290999976,
+   "prompt_tokens": 622,
+   "completion_tokens": 410
+  },
+  "back_translate:vi": {
+   "stage": "back_translate",
+   "seconds": 41.82077106700001,
+   "prompt_tokens": 526,
+   "completion_tokens": 375
+  },
+  "judge:vi": {
+   "stage": "judge",
+   "seconds": 54.53842948199997,
+   "prompt_tokens": 1549,
+   "completion_tokens": 271
+  },
+  "suggest:vi:F2": {
+   "stage": "suggest",
+   "seconds": 5.235470067000051,
+   "prompt_tokens": 244,
+   "completion_tokens": 28
+  },
+  "suggest:vi:F3": {
+   "stage": "suggest",
+   "seconds": 10.181179249000024,
+   "prompt_tokens": 231,
+   "completion_tokens": 105
+  },
+  "suggest:vi:F5": {
+   "stage": "suggest",
+   "seconds": 7.7343555940000215,
+   "prompt_tokens": 225,
+   "completion_tokens": 77
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "F1",
+     "section": "why",
+     "text": "You have a new heart problem called atrial fibrillation. Your heart is beating too fast, but it's now under control.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "F2",
+     "section": "medicines",
+     "text": "You need to take a new medicine called Apixaban. Take it twice a day, 12 hours apart, and don't skip doses or stop without talking to your cardiologist.",
+     "fact_ids": [
+      "F2"
+     ]
+    },
+    {
+     "id": "F3",
+     "section": "medicines",
+     "text": "You also need to take a new medicine called Diltiazem. Take it once a day.",
+     "fact_ids": [
+      "F3"
+     ]
+    },
+    {
+     "id": "F4",
+     "section": "warning_signs",
+     "text": "If you feel weak on one side, have trouble talking, chest pain, or faint, call 911. Go to the Emergency Room if you have black or bloody stools, vomit blood, or a head injury.",
+     "fact_ids": [
+      "F6",
+      "F7"
+     ]
+    },
+    {
+     "id": "F5",
+     "section": "appointments",
+     "text": "You need to see the Cardiology doctor in 2 weeks and the Primary care doctor in 1 week.",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "F6",
+     "section": "daily_care",
+     "text": "Use a soft toothbrush and an electric razor. Don't use ibuprofen or naproxen. Use acetaminophen for pain to prevent bleeding.",
+     "fact_ids": [
+      "F6"
+     ]
+    },
+    {
+     "id": "F7",
+     "section": "medicines",
+     "text": "You should stop taking Aspirin. It raises the risk of bleeding, and Apixaban already protects against clots.",
+     "fact_ids": [
+      "F4"
+     ]
+    },
+    {
+     "id": "F8",
+     "section": "medicines",
+     "text": "You should continue taking Atorvastatin. Take it at bedtime.",
+     "fact_ids": [
+      "F5"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "vi": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "Bạn có một vấn đề tim mới gọi là fibrillation tim. Tim bạn đang đập quá nhanh, nhưng giờ đã được kiểm soát."
+    },
+    {
+     "id": "F2",
+     "text": "Bạn cần phải uống một loại thuốc mới gọi là Apixaban. Uống hai lần mỗi ngày, cách nhau 12 giờ, và đừng bỏ liều hoặc ngừng uống mà không nói chuyện với bác sĩ tim mạch của bạn."
+    },
+    {
+     "id": "F3",
+     "text": "Bạn cũng cần phải uống một loại thuốc mới gọi là Diltiazem. Uống một lần mỗi ngày."
+    },
+    {
+     "id": "F4",
+     "text": "Nếu bạn cảm thấy yếu bên một bên, có khó khăn trong việc nói, đau ngực hoặc ngất, gọi 911. Đi đến Trung tâm Y tế nếu bạn có phân đen hoặc máu trong phân, nôn máu hoặc chấn thương đầu."
+    },
+    {
+     "id": "F5",
+     "text": "Bạn cần phải đi khám tim mạch trong hai tuần và khám bác sĩ chính trong một tuần."
+    },
+    {
+     "id": "F6",
+     "text": "Sử dụng bàn chải đánh răng mềm và máy cạo râu điện. Không sử dụng ibuprofen hoặc naproxen. Sử dụng paracetamol để giảm đau để tránh chảy máu."
+    },
+    {
+     "id": "F7",
+     "text": "Bạn nên停止服用 Aspirin. Nó tăng nguy cơ chảy máu, và Apixaban đã bảo vệ chống lại cục máu đông."
+    },
+    {
+     "id": "F8",
+     "text": "Bạn nên tiếp tục uống Atorvastatin. Uống vào buổi tối."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "vi": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "You have a new heart problem called atrial fibrillation. Your heart is beating too fast, but it is now under control."
+    },
+    {
+     "id": "F2",
+     "text": "You need to take a new medication called Apixaban. Take it twice a day, 12 hours apart, and do not skip doses or stop taking it without talking to your cardiologist."
+    },
+    {
+     "id": "F3",
+     "text": "You also need to take a new medication called Diltiazem. Take it once a day."
+    },
+    {
+     "id": "F4",
+     "text": "If you feel weak on one side, have trouble speaking, have chest pain, or faint, call 911. Go to the Emergency Center if you have black stools or blood in your stools, vomit blood, or have a head injury."
+    },
+    {
+     "id": "F5",
+     "text": "You need to see your cardiologist in two weeks and your primary doctor in one week."
+    },
+    {
+     "id": "F6",
+     "text": "Use a soft toothbrush and electric shaver. Do not use ibuprofen or naproxen. Use paracetamol to reduce pain to avoid bleeding."
+    },
+    {
+     "id": "F7",
+     "text": "You should stop taking Aspirin. It increases the risk of bleeding, and Apixaban has protected against blood clots."
+    },
+    {
+     "id": "F8",
+     "text": "You should continue taking Atorvastatin. Take it at night."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "vi": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F7",
+     "verdict": "unsupported",
+     "reason": "Sentence adds 'stop taking Aspirin' which is not in the facts."
+    },
+    {
+     "id": "F8",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    }
+   ]
+  }
+ },
+ "suggest": {
+  "vi:F2": {
+   "text_en": "You should not skip your medicine or stop taking it without talking to your doctor.",
+   "text_tl": "{"
+  },
+  "vi:F3": {
+   "text_en": "You will take a medicine called Diltiazem. It is a pill that you swallow once every day. The pill is 120 mg, which is a number that is important to remember.",
+   "text_tl": "Bạn sẽ phải dùng một loại thuốc gọi là Diltiazem. Đây là một viên thuốc mà bạn nuốt một lần một ngày. Viên thuốc này có khối lượng 120 mg, và con số này rất quan trọng để nhớ."
+  },
+  "vi:F5": {
+   "text_en": "You should keep taking the medicine called Atorvastatin, which helps your heart, and you should take one pill at the time you go to bed.",
+   "text_tl": "Bạn nên tiếp tục uống thuốc có tên Atorvastatin, giúp tim của bạn, và bạn nên uống một viên trước khi đi ngủ."
+  }
+ }
+}

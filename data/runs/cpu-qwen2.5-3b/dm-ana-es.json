@@ -1,0 +1,260 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-08 23:58 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Diabetic ketoacidosis",
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient has a new diagnosis of diabetic ketoacidosis.",
+     "source_quote": "Diagnosis: Diabetic ketoacidosis, new diagnosis of type 1 diabetes."
+    },
+    {
+     "id": "F2",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Type 1 diabetes",
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient has a new diagnosis of type 1 diabetes.",
+     "source_quote": "Diagnosis: Diabetic ketoacidosis, new diagnosis of type 1 diabetes."
+    },
+    {
+     "id": "F3",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Metformin",
+     "dose": "500 mg",
+     "frequency": null,
+     "detail": "The patient is instructed to stop Metformin 500 mg.",
+     "source_quote": "STOP: Metformin 500 mg - type 1 diabetes does not respond to metformin."
+    },
+    {
+     "id": "F4",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Insulin glargine",
+     "dose": "18 units",
+     "frequency": "under the skin once daily at 9 PM",
+     "detail": "The patient is instructed to take Insulin glargine 18 units under the skin once daily at 9 PM.",
+     "source_quote": "NEW: Insulin glargine 18 units under the skin once daily at 9 PM."
+    },
+    {
+     "id": "F5",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Insulin lispro",
+     "dose": "1 unit for every 10 g of carbohydrate, plus correction scale per handout",
+     "frequency": "under the skin with each meal",
+     "detail": "The patient is instructed to take Insulin lispro 1 unit for every 10 g of carbohydrate, plus correction scale per handout with each meal.",
+     "source_quote": "NEW: Insulin lispro under the skin with each meal: 1 unit for every 10 g of carbohydrate, plus correction scale per handout."
+    },
+    {
+     "id": "F6",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Hypoglycemia",
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient should take 15 g of fast sugar (4 glucose tablets or 1/2 cup juice) if glucose is below 70 mg/dL and recheck in 15 minutes.",
+     "source_quote": "Hypoglycemia: if glucose below 70 mg/dL, take 15 g of fast sugar (4 glucose tablets or 1/2 cup juice) and recheck in 15 minutes."
+    },
+    {
+     "id": "F7",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Vomiting",
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient should go to the Emergency Department if vomiting will not stop, glucose is above 300 mg/dL twice in a row with ketones, confusion, or trouble breathing.",
+     "source_quote": "Go to the Emergency Department for vomiting that will not stop, glucose above 300 mg/dL twice in a row with ketones, confusion, or trouble breathing."
+    },
+    {
+     "id": "F8",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Follow-up",
+     "dose": null,
+     "frequency": null,
+     "detail": "The patient is instructed to attend a diabetes education class on 10/20/2026 and an endocrinology clinic with [CLINICIAN_1] on 10/28/2026.",
+     "source_quote": "Follow-up: Diabetes education class on 10/20/2026. Endocrinology clinic with [CLINICIAN_1] on 10/28/2026."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 88.60405581100002,
+   "prompt_tokens": 614,
+   "completion_tokens": 1003
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 59.49306929399995,
+   "prompt_tokens": 960,
+   "completion_tokens": 473
+  },
+  "translate:es": {
+   "stage": "translate",
+   "seconds": 40.15282026400007,
+   "prompt_tokens": 510,
+   "completion_tokens": 418
+  },
+  "back_translate:es": {
+   "stage": "back_translate",
+   "seconds": 38.27678192799999,
+   "prompt_tokens": 540,
+   "completion_tokens": 373
+  },
+  "judge:es": {
+   "stage": "judge",
+   "seconds": 44.994780419999984,
+   "prompt_tokens": 1169,
+   "completion_tokens": 171
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "S1",
+     "section": "why",
+     "text": "You have a new diagnosis of diabetic ketoacidosis. You have a new diagnosis of type 1 diabetes.",
+     "fact_ids": [
+      "F1",
+      "F2"
+     ]
+    },
+    {
+     "id": "S2",
+     "section": "medicines",
+     "text": "You should stop Metformin 500 mg. You should take Insulin glargine 18 units under the skin once daily at 9 PM. You should take Insulin lispro 1 unit for every 10 g of carbohydrate, plus correction scale per handout with each meal.",
+     "fact_ids": [
+      "F3",
+      "F4",
+      "F5"
+     ]
+    },
+    {
+     "id": "S3",
+     "section": "warning_signs",
+     "text": "If your glucose is below 70 mg/dL, you should take 15 g of fast sugar (4 glucose tablets or 1/2 cup juice) and recheck in 15 minutes. If vomiting will not stop, your glucose is above 300 mg/dL twice in a row with ketones, you are confused, or you have trouble breathing, you should go to the Emergency Department.",
+     "fact_ids": [
+      "F6",
+      "F7"
+     ]
+    },
+    {
+     "id": "S4",
+     "section": "appointments",
+     "text": "You are instructed to attend a diabetes education class on 10/20/2026 and an endocrinology clinic with [CLINICIAN_1] on 10/28/2026.",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "S5",
+     "section": "daily_care",
+     "text": "You should check your glucose levels at least 4 times a day. You should eat a balanced diet and avoid skipping meals. You should stay hydrated and get regular exercise.",
+     "fact_ids": [
+      "F1",
+      "F2"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "Tienes un nuevo diagnóstico de ketoacidosis diabética. Tienes un nuevo diagnóstico de diabetes tipo 1."
+    },
+    {
+     "id": "S2",
+     "text": "Deberás dejar de tomar Metformin 500 mg. Deberás tomar Insulin glargine 18 unidades bajo la piel una vez al día a las 9 PM. Deberás tomar Insulin lispro 1 unidad por cada 10 g de carbohidrato, más el ajuste según el manifiesto con cada comida."
+    },
+    {
+     "id": "S3",
+     "text": "Si tu glucosa es menor a 70 mg/dL, deberás tomar 15 g de azúcar rápido (4 tabletas de glucosa o 1/2 taza de jugo) y recheckar en 15 minutos. Si el vómito no para, tu glucosa es mayor a 300 mg/dL dos veces seguidas con ketones, estás confundido, o tienes dificultad para respirar, deberás ir al Servicio de Urgencias."
+    },
+    {
+     "id": "S4",
+     "text": "Te has instruido a asistir a una clase de educación sobre diabetes el 10/20/2026 y a una consulta con el endocrinólogo [CLINICIAN_1] el 10/28/2026."
+    },
+    {
+     "id": "S5",
+     "text": "Deberás chequear tus niveles de glucosa al menos cuatro veces al día. Deberás comer una dieta equilibrada y evitar pasar por alto las comidas. Deberás mantener hidratado y hacer ejercicio regularmente."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "es": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "You have a new diagnosis of diabetic ketoacidosis. You have a new diagnosis of type 1 diabetes."
+    },
+    {
+     "id": "S2",
+     "text": "You will have to stop taking Metformin 500 mg. You will have to take Insulin glargine 18 units under the skin once a day at 9 PM. You will have to take Insulin lispro 1 unit for every 10 g of carbohydrate, plus the adjustment according to the manifest with each meal."
+    },
+    {
+     "id": "S3",
+     "text": "If your glucose is less than 70 mg/dL, you will have to take 15 g of fast sugar (4 tablets of glucose or 1/2 cup of juice) and recheck in 15 minutes. If the vomiting does not stop, your glucose is greater than 300 mg/dL twice consecutively with ketones, you are confused, or you have difficulty breathing, you will have to go to the Emergency Service."
+    },
+    {
+     "id": "S4",
+     "text": "You have been instructed to attend a diabetes education class on 10/20/2026 and a consultation with the endocrinologist [CLINICIAN_1] on 10/28/2026."
+    },
+    {
+     "id": "S5",
+     "text": "You will have to check your glucose levels at least four times a day. You will have to eat a balanced diet and avoid missing meals. You will have to stay hydrated and exercise regularly."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "es": {
+   "verdicts": [
+    {
+     "id": "S1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "S5",
+     "verdict": "unsupported",
+     "reason": "Adds information about new diagnoses not in the facts."
+    }
+   ]
+  }
+ }
+}

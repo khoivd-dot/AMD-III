@@ -60,3 +60,20 @@ def test_falls_back_when_server_rejects_json_schema():
     from homeward.llm import Usage
     out = asyncio.run(client.complete_json("facts", "en", [], {}, Usage()))
     assert out == {"ok": True} and seen == [True, False]
+
+
+def test_retries_cut_off_json_with_room_to_finish():
+    bodies = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        content = '{"facts": [{"id": "F1", "detail": "unfinish' if len(bodies) == 1 else '{"facts": []}'
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+    client = OpenAICompatClient("http://x/v1", "m", transport=httpx.MockTransport(handler))
+    from homeward.llm import Usage
+    msgs = [{"role": "user", "content": "Extract facts."}]
+    assert asyncio.run(client.complete_json("facts", "en", msgs, {}, Usage())) == {"facts": []}
+    assert [b["max_tokens"] for b in bodies] == [4096, 8192]
+    assert bodies[1]["temperature"] > 0 and "valid JSON only" in bodies[1]["messages"][-1]["content"]
+    assert msgs == [{"role": "user", "content": "Extract facts."}]  # caller's prompt untouched

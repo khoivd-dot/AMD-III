@@ -5,57 +5,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Homeward</title>
 <meta name="description" content="Verified, multilingual discharge instructions with human review and teach-back.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M8 17l8-7 8 7v8h-5v-5h-6v5H8z' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230b6e66'/%3E%3Cpath d='M8 17l8-7 8 7v8h-5v-5h-6v5H8z' fill='white'/%3E%3C/svg%3E">
+<link rel="preload" href="/static/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Inline icon set: one stroke style everywhere, prints cleanly, no emoji. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
+    <symbol id="i-hospital" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v6M9 10h6M9 21v-4h6v4"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.2 9.2l5.6 5.6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.8 4.8 0 019-3 4.8 4.8 0 019 3c-2 4.6-9 9-9 9z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M4 7h6v6H6l-2 4V7zM14 7h6v6h-4l-2 4V7z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 18L9 6l5 12M5.8 14h6.4M15 18l3-7 3 7M15.9 16h4.2"/></symbol>
+  </defs>
+</svg>
+
 <header class="top">
   <div class="brand">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M8 17l8-7 8 7v8h-5v-5h-6v5H8z"/></svg>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M8 17l8-7 8 7v8h-5v-5h-6v5H8z"/></svg>
     <div><strong>Homeward</strong><span>Discharge instructions patients can follow</span></div>
   </div>
-  <nav id="tabs" role="tablist">
-    <button data-view="nurse" class="active" role="tab">1 · Prepare</button>
-    <button data-view="review" role="tab">2 · Review</button>
-    <button data-view="patient" role="tab">3 · Patient</button>
-    <button data-view="impact" role="tab">4 · Impact</button>
+  <nav id="tabs" role="tablist" aria-label="Workflow">
+    <button data-view="nurse" class="active" role="tab" aria-selected="true"><span class="n">1</span><span class="t">Prepare<small>Nurse</small></span></button>
+    <button data-view="review" role="tab" aria-selected="false"><span class="n">2</span><span class="t">Review<small>Reviewer</small></span></button>
+    <button data-view="patient" role="tab" aria-selected="false"><span class="n">3</span><span class="t">Patient<small>Take-home</small></span></button>
+    <button data-view="impact" role="tab" aria-selected="false"><span class="n">4</span><span class="t">Impact<small>Results</small></span></button>
   </nav>
-  <div id="mode" class="mode"></div>
+  <div id="mode" class="mode" tabindex="0"></div>
 </header>
 
-<main>
-  <!-- NURSE -->
-  <section id="view-nurse" class="view active">
+<main id="main">
+  <!-- PREPARE -->
+  <section id="view-nurse" class="view active" role="tabpanel">
     <div class="intro">
+      <p class="eyebrow">Step 1 · Nurse</p>
       <h1>Turn discharge instructions into a packet the patient can follow</h1>
-      <p>Homeward rewrites the clinician's text in plain language and in the patient's own language, checks every sentence against the source, and sends only the risky ones to a human. It never diagnoses or adds medical advice.</p>
+      <p>Homeward rewrites the clinician's text in plain language and the patient's own language, checks every sentence against the source, and sends only the risky lines to a person. It never diagnoses or adds medical advice.</p>
     </div>
     <div class="grid2">
       <div class="card">
-        <h2>Discharge text</h2>
-        <div id="samples" class="samples"></div>
-        <label>Clinician's discharge instructions
-          <textarea id="source" rows="14" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
-        </label>
+        <div class="card-h"><h2>Discharge text</h2><span class="fine">Pick a sample or paste your own</span></div>
+        <div id="samples" class="samples" role="list"></div>
+        <label for="source">Clinician's discharge instructions</label>
+        <textarea id="source" rows="13" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
         <div class="row">
           <label>Patient's language <select id="language"></select></label>
-          <label>Patient name (masked before any model call) <input id="pname" placeholder="optional"></label>
+          <label>Patient name <span class="hint">masked before any model call</span><input id="pname" placeholder="optional" autocomplete="off"></label>
         </div>
-        <div class="row">
-          <label class="file">Or upload a .txt or .pdf <input type="file" id="file" accept=".txt,.pdf"></label>
-          <button id="run" class="primary">Create packet</button>
+        <div class="row between">
+          <label class="file"><input type="file" id="file" accept=".txt,.pdf"><span>Upload .txt or .pdf</span><em id="file-name"></em></label>
+          <button id="run" class="primary lg">Create packet <svg class="i"><use href="#i-arrow"/></svg></button>
         </div>
-        <p class="fine">Use synthetic or de-identified text only. This is a demo, not a medical device.</p>
+        <p class="fine note"><svg class="i"><use href="#i-lock"/></svg> Use synthetic or de-identified text. This is a demo, not a medical device.</p>
       </div>
-      <div class="card" id="progress-card">
-        <h2>What happens</h2>
+      <div class="card" id="progress-card" aria-live="polite">
+        <div class="card-h"><h2>What happens</h2><span class="fine" id="elapsed"></span></div>
         <ol id="stages" class="stages"></ol>
-        <div id="run-error" class="error hidden"></div>
+        <div id="run-error" class="error hidden" role="alert"></div>
         <div id="run-summary"></div>
       </div>
     </div>
     <div class="card hidden" id="ledger-card">
-      <h2>Fact ledger <small>every instruction the model found, each tied to a quote from the source</small></h2>
+      <div class="card-h"><h2>Fact ledger</h2><span class="fine">Every instruction the model found, each tied to an exact quote from the source</span></div>
       <div id="med-issues"></div>
       <div class="table-wrap"><table id="ledger"></table></div>
       <details><summary>Source as the model saw it (identifiers masked)</summary><pre id="masked"></pre></details>
@@ -63,63 +90,78 @@
   </section>
 
   <!-- REVIEW -->
-  <section id="view-review" class="view">
-    <div class="empty" id="review-empty">Create a packet first.</div>
-    <div id="review-body" class="hidden">
-      <div class="reviewbar card">
-        <div id="review-stats" class="stats"></div>
-        <div class="row">
-          <label>Reviewer <input id="reviewer" placeholder="e.g. RN Sam Lee"></label>
-          <label class="check"><input type="checkbox" id="only-flagged" checked> Show only what needs a human</label>
-          <button id="signoff" class="primary">Sign off and release</button>
+  <section id="view-review" class="view" role="tabpanel">
+    <div class="empty" id="review-empty"><svg class="i xl"><use href="#i-shield"/></svg><p>Create a packet first. The lines that need a person will appear here.</p></div>
+    <div id="review-body" class="hidden review">
+      <aside class="queue card" aria-label="Review queue">
+        <p class="eyebrow">Step 2 · Reviewer</p>
+        <h2>Review queue</h2>
+        <div class="progress"><div class="progress-bar"><i id="q-bar"></i></div><span id="q-count"></span></div>
+        <div id="review-stats" class="tally"></div>
+        <ol id="queue" class="queue-list"></ol>
+        <label class="check"><input type="checkbox" id="only-flagged" checked> Show only lines that need a person</label>
+        <p class="fine kbd-hint">Keys: <kbd>J</kbd>/<kbd>K</kbd> next or previous, <kbd>A</kbd> approve, <kbd>E</kbd> edit</p>
+        <div class="signbox">
+          <label>Reviewer name <input id="reviewer" placeholder="e.g. RN Sam Lee" autocomplete="name"></label>
+          <div id="blockers" class="blockers"></div>
+          <button id="signoff" class="primary lg block"><svg class="i"><use href="#i-shield"/></svg> Sign off and release</button>
         </div>
-        <div id="blockers" class="blockers"></div>
+      </aside>
+      <div class="review-main">
+        <div id="omissions"></div>
+        <div id="sentences"></div>
       </div>
-      <div id="omissions"></div>
-      <div id="sentences"></div>
     </div>
   </section>
 
   <!-- PATIENT -->
-  <section id="view-patient" class="view">
-    <div class="empty" id="patient-empty">The packet appears here after a reviewer signs it off.</div>
+  <section id="view-patient" class="view" role="tabpanel">
+    <div class="empty" id="patient-empty"><svg class="i xl"><use href="#i-lock"/></svg><p>The patient's packet appears here only after a named reviewer signs it off.</p></div>
     <div id="patient-body" class="hidden patient">
-      <div class="patient-head">
-        <div>
+      <div class="patient-hero">
+        <div class="hero-icon"><svg class="i"><use href="#i-home"/></svg></div>
+        <div class="hero-text">
           <h1 id="p-title">Your instructions for going home</h1>
           <p class="signed" id="p-signed"></p>
         </div>
-        <div class="row">
-          <div class="seg" id="p-lang"></div>
-          <button id="p-print">Print</button>
+        <div class="p-tools">
+          <div class="seg" id="p-lang" role="group" aria-label="Language"></div>
+          <button id="p-size" class="icon-btn" aria-pressed="false" title="Larger text"><svg class="i"><use href="#i-text"/></svg><span>Larger text</span></button>
+          <button id="p-print" class="icon-btn" title="Print"><svg class="i"><use href="#i-print"/></svg><span>Print</span></button>
         </div>
       </div>
       <div id="p-sections"></div>
       <div class="card quiz">
-        <h2 id="q-title">Check your understanding</h2>
-        <p id="q-intro" class="fine"></p>
+        <div class="quiz-head">
+          <div><h2 id="q-title">Check your understanding</h2><p id="q-intro" class="fine"></p></div>
+          <span id="q-step" class="q-step"></span>
+        </div>
         <div id="quiz"></div>
       </div>
+      <div class="notes print-only"><h2>My questions and notes</h2><div class="lines"></div></div>
     </div>
   </section>
 
   <!-- IMPACT -->
-  <section id="view-impact" class="view">
-    <div class="empty" id="impact-empty">Create a packet first.</div>
+  <section id="view-impact" class="view" role="tabpanel">
+    <div class="empty" id="impact-empty"><svg class="i xl"><use href="#i-cpu"/></svg><p>Create a packet first. Results for that case appear here.</p></div>
     <div id="impact-body" class="hidden">
+      <div class="intro"><p class="eyebrow">Step 4 · Results for this case</p><h1>What Homeward did for this patient</h1></div>
       <div id="kpis" class="kpis"></div>
       <div class="grid2">
-        <div class="card"><h2>What the checks caught</h2><div id="caught"></div></div>
-        <div class="card"><h2>Model on AMD</h2><div id="model"></div></div>
+        <div class="card"><div class="card-h"><h2>Reading level</h2><span class="fine">Flesch-Kincaid grade, lower is easier</span></div><div id="grade"></div></div>
+        <div class="card"><div class="card-h"><h2>What the checks caught</h2></div><div id="caught"></div></div>
       </div>
       <div class="grid2">
-        <div class="card"><h2>Nurse alerts from teach-back</h2><div id="alerts"></div></div>
-        <div class="card"><h2>Audit trail</h2><div id="audit" class="audit"></div></div>
+        <div class="card"><div class="card-h"><h2>Nurse alerts from teach-back</h2></div><div id="alerts"></div></div>
+        <div class="card"><div class="card-h"><h2>Model on AMD</h2></div><div id="model"></div></div>
       </div>
+      <div class="card"><div class="card-h"><h2>Audit trail</h2><span class="fine">Every action, by whom</span></div><div id="audit" class="audit"></div></div>
     </div>
   </section>
 </main>
-<footer>Homeward never diagnoses or recommends treatment. It restates what a clinician wrote, and nothing reaches a patient until a named person signs it off.</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<footer><svg class="i"><use href="#i-shield"/></svg> Homeward never diagnoses or recommends treatment. It restates what a clinician wrote, and nothing reaches a patient until a named person signs it off.</footer>
 <script src="/static/app.js"></script>
 </body>
 </html>

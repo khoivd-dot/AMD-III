@@ -8,8 +8,9 @@ from homeward import pipeline
 from homeward.lexicon import drugs_in, polarity
 from homeward.llm import ReplayClient, parse_json
 from homeward.phi import mask
-from homeward.textutil import fk_grade, numbers_in, quote_in_source
-from homeward.verify import coverage, verify_sentence
+from homeward.textutil import dates_in, fk_grade, numbers_in, quantities, quote_in_source, spell_dates, times_in
+from homeward.verify import (classify, coverage, cross_check_meds, uncovered_instructions, verify_facts,
+                             verify_sentence)
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -227,3 +228,218 @@ def test_off_schema_model_output_is_normalised_not_fatal():
     assert sents == [{"id": "S1", "section": "daily_care", "text_en": "Take it.", "fact_ids": ["F1"], "review": None}]
     with pytest.raises(ValueError):
         pipeline._norm_sentences({"sentences": []})
+
+
+# ---------------------------------------------------------------- failure modes seen on real model output
+
+AF_SOURCE = """MEDICATIONS
+NEW: Apixaban 5 mg by mouth twice daily, about 12 hours apart. Do not stop without talking to your cardiologist.
+STOP: Aspirin 81 mg - stop, because apixaban already protects against clots.
+Diet: Sodium restriction < 2 g/day; fluid restriction 1.5 L/day.
+Never skip insulin glargine, even if you are not eating."""
+
+
+def real_facts():
+    # What a 3B model returned: every fact labelled "diagnosis", labels dropped from quotes.
+    return [{"id": "F1", "kind": "diagnosis", "med_action": None, "drug": "Apixaban", "dose": "5 mg",
+             "frequency": "twice daily", "detail": "Take apixaban.",
+             "source_quote": "Apixaban 5 mg by mouth twice daily, about 12 hours apart."},
+            {"id": "F2", "kind": "diagnosis", "med_action": "stop", "drug": "Aspirin", "dose": "81 mg",
+             "frequency": None, "detail": "Stop aspirin.", "source_quote": "Aspirin 81 mg - stop"}]
+
+
+def test_model_labels_are_rechecked_against_the_text():
+    facts = real_facts()
+    verify_facts(facts, AF_SOURCE)
+    assert [(f["kind"], f["med_action"], f["risk"]) for f in facts] == \
+        [("medication", "new", "high"), ("medication", "stop", "high")]  # apixaban is high-alert
+    assert any(c["name"] == "classification" for c in facts[0]["checks"])
+
+
+def test_negated_stop_reads_as_keep_taking():
+    assert polarity("You must not stop taking aspirin.") == {"continue": True, "stop": False, "temporary": False}
+    assert polarity("Never skip insulin glargine.")["continue"]
+    assert polarity("You must not use the ipratropium inhaler.")["stop"]
+    f = {**real_facts()[1], "kind": "medication", "checks": []}
+    s = {"id": "S1", "text_en": "You must not stop taking Aspirin 81 mg.", "fact_ids": ["F2"]}
+    verify_sentence(s, {"F2": f}, [f], "en")
+    assert s["status"] == "red"
+
+
+def test_instructions_the_model_dropped_become_facts_to_cover():
+    facts = real_facts()
+    verify_facts(facts, AF_SOURCE)
+    missed = uncovered_instructions(facts, AF_SOURCE)
+    quotes = [m["source_quote"] for m in missed]
+    assert any("Sodium" in q for q in quotes) and any("fluid" in q for q in quotes)
+    insulin = next(m for m in missed if "insulin" in m["source_quote"])
+    assert insulin["kind"] == "medication" and insulin["med_action"] == "continue" and insulin["risk"] == "high"
+    assert all(m["must_cover"] and m["status"] == "amber" for m in missed)
+    omitted = {o["fact_id"] for o in coverage(facts + missed, [])}
+    assert {m["id"] for m in missed} <= omitted
+
+
+def test_medicine_list_label_belongs_to_the_first_medicine():
+    facts = real_facts()
+    verify_facts(facts, AF_SOURCE)
+    assert cross_check_meds(facts, AF_SOURCE) == []  # "do not stop" and "because apixaban" are not stop orders
+
+
+def test_lost_timing_is_an_omission_but_old_values_are_not():
+    f = {"id": "F1", "kind": "medication", "med_action": "changed", "drug": "Albuterol", "dose": "2 puffs",
+         "frequency": "every 4 hours", "detail": "", "source_quote":
+         "Albuterol inhaler 2 puffs every 4 hours as needed (was every 6 hours). Wait 12 hours between doses."}
+    said = [{"id": "S1", "text_en": "Use albuterol 2 puffs every 4 hours if you need it.", "fact_ids": ["F1"]}]
+    msgs = [o["message"] for o in coverage([f], said)]
+    assert len(msgs) == 1 and "12" in msgs[0] and "6" not in msgs[0].split("(")[0]
+
+
+def test_course_end_is_not_a_contradiction():
+    f = {"id": "F1", "kind": "medication", "med_action": "new", "drug": "Prednisone", "dose": "40 mg",
+         "frequency": "once daily", "detail": "", "source_quote": "Prednisone 40 mg once daily for 5 days, then stop."}
+    s = {"id": "S1", "text_en": "Take prednisone 40 mg once a day for 5 days, then stop.", "fact_ids": ["F1"]}
+    verify_sentence(s, {"F1": f}, [f], "en")
+    assert s["status"] == "green"
+
+
+def test_translation_in_the_wrong_writing_system_blocked():
+    s = checked("Call 911 for chest pain or fainting.", ["F3"], "vi",
+                tl="Gọi 911 nếu đau ngực hoặc 晕倒.", back="Call 911 if chest pain or you fall.")
+    assert s["status"] == "red" and any(c["name"] == "translation_script" for c in s["checks"])
+    ok = checked("Call 911 for chest pain.", ["F3"], "zh", tl="胸痛请拨打911。", back="Call 911 for chest pain.")
+    assert not any(c["name"] == "translation_script" for c in ok["checks"])
+
+
+def test_local_drug_spelling_is_a_warning_not_a_loss():
+    # Seen on the second real run: "furosemida" for furosemide is the same medicine, written the Spanish way.
+    s = checked("Take furosemide 40 mg twice a day.", ["F2"], "es",
+                tl="Tome furosemida 40 mg dos veces al día.", back="Take furosemida 40 mg twice a day.")
+    drug = [c for c in s["checks"] if c["name"] == "back_drug"]
+    assert [c["status"] for c in drug] == ["warn"] and "furosemida" in drug[0]["message"]
+    gone = checked("Take furosemide 40 mg twice a day.", ["F2"], "es",
+                   tl="Tome torsemida 40 mg dos veces al día.", back="Take torsemide 40 mg twice a day.")
+    assert any(c["name"] == "back_drug" and c["status"] == "fail" for c in gone["checks"])
+
+
+def test_if_you_need_is_kept_in_french():
+    s = checked("Call 911 for chest pain. Call your doctor if you need albuterol more than every 4 hours.", ["F3"], "fr",
+                tl="Appelez le 911 en cas de douleur thoracique. Appelez votre médecin si vous avez besoin "
+                   "d'albuterol plus souvent que toutes les 4 heures.",
+                back="Call 911 for chest pain. Call your doctor if you need albuterol more often than every 4 hours.")
+    assert not any(c["name"] == "translation_as_needed" for c in s["checks"])
+
+
+def test_real_runs_replay_as_labelled_samples():
+    cases = ReplayClient().available()
+    real = {k: v for k, v in cases.items() if v.get("source") == "recorded"}
+    assert real and all(v.get("model") and v.get("hardware") for v in real.values())  # shown on the sample card
+
+
+# ---------------------------------------------------------------- failure modes found in simulated user testing
+
+def test_numbers_next_to_chinese_characters():
+    assert numbers_in("每天服用14单位") == {"14"}
+    assert numbers_in("à 11h00") == {"11", "0"}
+    assert quantities("注射14单位, 14 毫升, Advair 50 mcg, 10 pound") == {("14", "unit"), ("14", "ml"), ("50", "mcg"), ("10", "lb")}
+
+
+def test_dates_and_times_are_read_as_a_local_reader_would():
+    assert dates_in("10/12/2026") == {(2026, 10, 12)} and dates_in("10/12/2026", "it") == {(2026, 12, 10)}
+    assert dates_in("el 21 de octubre de 2026", "es") == dates_in("2026年10月21日", "zh") == {(2026, 10, 21)}
+    assert dates_in("1/2 cup of juice") == set()
+    assert spell_dates("Clinic on 10/21/2026, 1/2 cup") == "Clinic on October 21, 2026, 1/2 cup"
+    assert times_in("Hẹn lúc 2:15 chiều", "vi") == {(2, 15, "pm")} and times_in("8 AM and 2 PM") == {(8, 0, "am"), (2, 0, "pm")}
+    assert times_in("every 4 hours") == set()
+
+
+MEDS = [{"id": "F1", "kind": "medication", "med_action": "new", "drug": "Oxycodone", "dose": "5 mg",
+         "frequency": "every 6 hours", "detail": "", "status": "green", "checks": [],
+         "source_quote": "Oxycodone 5 mg every 6 hours only if needed for severe pain. Maximum 4 tablets in 24 hours."},
+        {"id": "F2", "kind": "medication", "med_action": "new", "drug": "Furosemide", "dose": "40 mg",
+         "frequency": "twice daily", "detail": "", "status": "green", "checks": [],
+         "source_quote": "Furosemide 40 mg twice daily. Sodium restriction 2 g/day. Lift no more than 10 lb."},
+        {"id": "F3", "kind": "medication", "med_action": "new", "drug": "Insulin lispro", "dose": None,
+         "frequency": None, "detail": "", "status": "green", "checks": [],
+         "source_quote": "Insulin lispro: glucose 151-200 give 2 units; 201-250 give 4 units."},
+        {"id": "F4", "kind": "follow_up", "med_action": None, "drug": None, "dose": None, "frequency": None,
+         "detail": "", "status": "green", "checks": [], "source_quote": "Clinic on 10/14/2026 at 3:30 PM."}]
+MEDS_BY_ID = {f["id"]: f for f in MEDS}
+
+
+def names(text, fid, lang="en", tl=None):
+    s = {"id": "S1", "text_en": text, "fact_ids": [fid], "text_tl": tl, "back_en": None}
+    verify_sentence(s, MEDS_BY_ID, MEDS, lang)
+    return {c["name"] for c in s["checks"] if c["status"] == "fail"}
+
+
+def test_meaning_errors_with_the_same_digits_are_blocked():
+    assert "as_needed" in names("Take oxycodone 5 mg every 6 hours.", "F1")
+    assert "as_needed" not in names("Never take more than 4 oxycodone tablets in 24 hours.", "F1")
+    assert "frequency" in names("Take furosemide 40 mg once a day.", "F2")
+    assert "units" in names("Take furosemide 40 g twice a day.", "F2")
+    assert "units" in names("Do not lift more than 10 kg.", "F2")
+    assert "salt_sodium" in names("Eat no more than 2 g of salt a day.", "F2")
+    assert "scale" in names("If it is 201 to 250, give 2 units.", "F3")
+    assert "dates" in names("Go to the clinic on December 10, 2026.", "F4")
+
+
+def test_translation_meaning_is_checked_in_the_target_language():
+    en = "Take oxycodone 5 mg only if needed, every 6 hours."
+    assert "translation_as_needed" in names(en, "F1", "vi", tl="Uống oxycodone 5 mg mỗi 6 giờ.")
+    assert "translation_as_needed" not in names(en, "F1", "vi", tl="Chỉ uống oxycodone 5 mg khi cần, mỗi 6 giờ.")
+    appt = "Go to the clinic on October 14, 2026 at 3:30 PM."
+    assert "translation_time" in names(appt, "F4", "vi", tl="Đến phòng khám ngày 14 tháng 10 năm 2026 lúc 3:30 sáng.")
+    assert "translation_dates" in names(appt, "F4", "es", tl="Vaya a la clínica el 10/12/2026 a las 3:30 de la tarde.")
+    assert not names(appt, "F4", "es", tl="Vaya a la clínica el 14 de octubre de 2026 a las 3:30 de la tarde.")
+    assert "translation_units" in names("Give 2 units if it is 151 to 200.", "F3", "zh", tl="如果是151到200，注射2毫升。")
+
+
+def test_review_rules_stop_rubber_stamping():
+    case = run_sample("hf-maria-es")
+    with pytest.raises(ValueError, match="Nothing was changed"):
+        s12 = next(s for s in case["sentences"] if s["id"] == "S12")
+        pipeline.edit(case, "S12", "RN Test", s12["text_en"], s12["text_tl"])
+    pipeline.edit(case, "S12", "RN Test", "Drink no more than 1.2 liters of fluid each day.", None)
+    s12 = next(s for s in case["sentences"] if s["id"] == "S12")
+    assert s12["status"] == "red" and any(c["name"] == "translation_stale" for c in s12["checks"])
+    high = next(f for f in case["facts"] if f["risk"] == "high")
+    with pytest.raises(ValueError, match="cannot be dismissed"):
+        pipeline.dismiss_fact(case, high["id"], "RN Test", "not needed for this patient")
+    low = next(f for f in case["facts"] if f["risk"] == "normal")
+    with pytest.raises(ValueError, match="few words"):
+        pipeline.dismiss_fact(case, low["id"], "RN Test", "x")
+    # An edited high-risk line stays in review until someone approves it.
+    pipeline.edit(case, "S5", "RN Test", "Do not take ibuprofen until your heart doctor checks your kidneys again.",
+                  "No tome ibuprofen hasta que su cardiólogo revise sus riñones otra vez.")
+    s5 = next(s for s in case["sentences"] if s["id"] == "S5")
+    assert s5["needs_review"]
+    pipeline.approve(case, "S5", "RN Test")
+    assert not s5["needs_review"]
+
+
+def test_medicine_list_disagreement_blocks_until_resolved():
+    case = run_sample("hf-maria-es")
+    case["med_issues"] = [{"type": "action_mismatch", "drug": "lisinopril", "line": "", "message": "Lisinopril: differs."}]
+    assert "Lisinopril: differs." in pipeline.blockers(case)
+    with pytest.raises(ValueError):
+        pipeline.resolve_med_issue(case, "lisinopril", "RN Test", "ok")
+    pipeline.resolve_med_issue(case, "lisinopril", "RN Test", "checked against the medicine list")
+    assert "Lisinopril: differs." not in pipeline.blockers(case)
+
+
+def test_model_ids_cannot_carry_markup():
+    facts = pipeline._norm_facts({"facts": [{"id": "<img src=x onerror=alert(1)>", "kind": "other", "detail": "a",
+                                             "source_quote": "a"}]})
+    assert facts[0]["id"] == "F1"
+    sents = pipeline._norm_sentences({"sentences": [{"id": "S1", "text": "x", "fact_ids": ["F1", "<b>"]}]})
+    assert sents[0]["fact_ids"] == ["F1"]
+
+
+def test_masking_handles_non_english_labels_and_spares_dosing_text():
+    m = mask("Paciente: María José García\nHija: Rosa, +34 612 345 678\nSSN 123-45-6789\n"
+             "Fecha de nacimiento: 14 de marzo de 1953\nPriya Rao, MD\n姓名：陈建国。患者陈建国。\n"
+             "Oxycodone: Max 4 tablets in 24 hours. Take at 0800 1400 2000.", ["Max Taylor"])
+    for secret in ("María", "García", "Rosa", "612 345", "123-45-6789", "1953", "Priya", "陈建国"):
+        assert secret not in m.text, secret
+    assert "Max 4 tablets" in m.text and "0800 1400 2000" in m.text
+    assert mask("Patient: José Núñez. JOSE NUNEZ is 70.").text.count("[PATIENT_1]") == 2

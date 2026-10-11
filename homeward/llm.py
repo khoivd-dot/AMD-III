@@ -62,6 +62,23 @@ def parse_json(text: str):
         return json.loads(text[start:])
 
 
+def _plain(exc: Exception | None) -> str:
+    """Why a call failed, for a nurse: no URLs, hostnames or Python internals."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return f"the model server answered with error {exc.response.status_code}"
+    if isinstance(exc, httpx.TimeoutException):
+        return "the model server took too long to answer"
+    if isinstance(exc, httpx.HTTPError):
+        return "the model server could not be reached"
+    if isinstance(exc, (json.JSONDecodeError, ValueError)):
+        return "its reply was cut off or was not valid JSON"
+    return "unknown error"
+
+
+RETRY_NUDGE = ("\n\nYour last reply was not complete, valid JSON. Reply with valid JSON only. "
+               "Keep every field short and list each item once.")
+
+
 class OpenAICompatClient:
     mode = "live"
 
@@ -91,7 +108,7 @@ class OpenAICompatClient:
         }
         last_error = None
         async with httpx.AsyncClient(timeout=self.timeout, transport=self.transport) as client:
-            for attempt in range(2):
+            for attempt in range(3):
                 started = time.perf_counter()
                 try:
                     resp = await client.post(f"{self.base_url}/chat/completions",
@@ -112,7 +129,12 @@ class OpenAICompatClient:
                     return parse_json(content)
                 except (json.JSONDecodeError, ValueError) as exc:
                     last_error = exc
-        raise LLMError(f"{stage}: model call failed ({last_error})")
+                    # Small models sometimes run past the token limit or repeat themselves.
+                    # At temperature 0 a plain retry would repeat the same output, so give
+                    # room to finish, a little variation, and a nudge to stay compact.
+                    body["max_tokens"], body["temperature"] = 8192, 0.2
+                    body["messages"] = messages[:-1] + [{**messages[-1], "content": messages[-1]["content"] + RETRY_NUDGE}]
+        raise LLMError(f"The model's {stage.replace('_', ' ')} step failed: {_plain(last_error)}.")
 
 
 class RecordingClient(OpenAICompatClient):

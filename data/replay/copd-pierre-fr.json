@@ -1,0 +1,283 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:40 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "source_quote": "NEW: Prednisone 40 mg by mouth once daily with breakfast for 5 days, then stop. Last dose 10/18/2026.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Prednisone",
+     "dose": "40 mg",
+     "frequency": "once daily",
+     "detail": "Start taking Prednisone 40 mg daily with breakfast for 5 days, then stop on 10/18/2026."
+    },
+    {
+     "id": "F2",
+     "source_quote": "NEW: Tiotropium 2 puffs inhaled once daily.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Tiotropium",
+     "dose": "2 puffs",
+     "frequency": "once daily",
+     "detail": "Start taking Tiotropium 2 puffs daily."
+    },
+    {
+     "id": "F3",
+     "source_quote": "CHANGED: Albuterol inhaler 2 puffs every 4 hours as needed for shortness of breath (was every 6 hours).",
+     "kind": "medication",
+     "med_action": "changed",
+     "drug": "Albuterol inhaler",
+     "dose": "2 puffs",
+     "frequency": "every 4 hours",
+     "detail": "Change Albuterol inhaler from every 6 hours to every 4 hours as needed for shortness of breath."
+    },
+    {
+     "id": "F4",
+     "source_quote": "STOP: Ipratropium inhaler - do not use together with tiotropium.",
+     "kind": "medication",
+     "med_action": "stop",
+     "drug": "Ipratropium inhaler",
+     "dose": null,
+     "frequency": null,
+     "detail": "Do not use Ipratropium inhaler together with Tiotropium."
+    },
+    {
+     "id": "F5",
+     "source_quote": "Do not smoke. Smoking cessation clinic referral sent.",
+     "kind": "other",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Do not smoke. Refer to smoking cessation clinic."
+    },
+    {
+     "id": "F6",
+     "source_quote": "Return precautions: Call 911 for severe shortness of breath, blue lips, or confusion. Call your doctor if you need albuterol more than every 4 hours or have fever above 38.5 C.",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Call 911 if you have severe shortness of breath, blue lips, or confusion. Call your doctor if you need albuterol more than every 4 hours or have a fever above 38.5 C."
+    },
+    {
+     "id": "F7",
+     "source_quote": "Follow-up: Pulmonary clinic with [CLINICIAN_1] on 10/30/2026. Pulmonary rehabilitation intake on 11/04/2026.",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Follow up with the pulmonary clinic on 10/30/2026 and for pulmonary rehabilitation intake on 11/04/2026."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 79.28466148500002,
+   "prompt_tokens": 870,
+   "completion_tokens": 749
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 55.59724111000003,
+   "prompt_tokens": 860,
+   "completion_tokens": 461
+  },
+  "translate:fr": {
+   "stage": "translate",
+   "seconds": 38.879946913000026,
+   "prompt_tokens": 566,
+   "completion_tokens": 364
+  },
+  "back_translate:fr": {
+   "stage": "back_translate",
+   "seconds": 32.844709120999994,
+   "prompt_tokens": 484,
+   "completion_tokens": 315
+  },
+  "judge:fr": {
+   "stage": "judge",
+   "seconds": 55.50986974799997,
+   "prompt_tokens": 1361,
+   "completion_tokens": 232
+  },
+  "suggest:fr:F4": {
+   "stage": "suggest",
+   "seconds": 7.881973743000003,
+   "prompt_tokens": 222,
+   "completion_tokens": 63
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "F1",
+     "section": "medicines",
+     "text": "You will take Prednisone 40 mg once daily with breakfast for 5 days, then stop on 10/18/2026. (F1, F5)",
+     "fact_ids": [
+      "F1",
+      "F5"
+     ]
+    },
+    {
+     "id": "F2",
+     "section": "medicines",
+     "text": "You will start taking Tiotropium 2 puffs once daily. (F2, F5)",
+     "fact_ids": [
+      "F2",
+      "F5"
+     ]
+    },
+    {
+     "id": "F3",
+     "section": "medicines",
+     "text": "You will change Albuterol inhaler to 2 puffs every 4 hours as needed for shortness of breath. (F3, F5)",
+     "fact_ids": [
+      "F3",
+      "F5"
+     ]
+    },
+    {
+     "id": "F4",
+     "section": "warning_signs",
+     "text": "Call 911 if you have severe shortness of breath, blue lips, or confusion. Call your doctor if you need albuterol more than every 4 hours or have a fever above 38.5 C. (F4, F6)",
+     "fact_ids": [
+      "F4",
+      "F6"
+     ]
+    },
+    {
+     "id": "F5",
+     "section": "appointments",
+     "text": "Follow up with the pulmonary clinic on 10/30/2026 and for pulmonary rehabilitation intake on 11/04/2026. (F5, F7)",
+     "fact_ids": [
+      "F5",
+      "F7"
+     ]
+    },
+    {
+     "id": "F6",
+     "section": "daily_care",
+     "text": "Do not smoke. (F5)",
+     "fact_ids": [
+      "F5"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "fr": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "Vous prendrez la Prednisone à 40 mg une fois par jour le matin pendant 5 jours, puis arrêter le 18 octobre 2026. (F1, F5)"
+    },
+    {
+     "id": "F2",
+     "text": "Vous commencerez à prendre la Tiotropium à 2 puffs une fois par jour. (F2, F5)"
+    },
+    {
+     "id": "F3",
+     "text": "Vous changerez l'insuline Albuterol à 2 puffs toutes les 4 heures selon les besoins pour les difficultés respiratoires. (F3, F5)"
+    },
+    {
+     "id": "F4",
+     "text": "Appelez l'urgence si vous avez une difficultés respiratoire sévère, des lèvres bleues ou de la confusion. Appelez votre médecin si vous avez besoin d'Albuterol plus souvent toutes les 4 heures ou si vous avez une température supérieure à 38,5°C. (F4, F6)"
+    },
+    {
+     "id": "F5",
+     "text": "Suivez votre rendez-vous chez le pulmonologue le 30 octobre 2026 et pour l'entrée dans le programme de réhabilitation le 4 novembre 2026. (F5, F7)"
+    },
+    {
+     "id": "F6",
+     "text": "Ne fumez pas. (F5)"
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "fr": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "You will take Prednisone at 40 mg once a day in the morning for 5 days, then stop on October 18, 2026. (F1, F5)"
+    },
+    {
+     "id": "F2",
+     "text": "You will start taking Tiotropium at 2 puffs once a day. (F2, F5)"
+    },
+    {
+     "id": "F3",
+     "text": "You will change Albuterol insulin to 2 puffs every 4 hours as needed for respiratory difficulties. (F3, F5)"
+    },
+    {
+     "id": "F4",
+     "text": "Call the emergency room if you have severe respiratory difficulties, blue lips, or confusion. Call your doctor if you need Albuterol more often every 4 hours or if your temperature is higher than 38.5°C. (F4, F6)"
+    },
+    {
+     "id": "F5",
+     "text": "Follow up with your pulmonologist on October 30, 2026, and for entry into the rehabilitation program on November 4, 2026. (F5, F7)"
+    },
+    {
+     "id": "F6",
+     "text": "Do not smoke. (F5)"
+    }
+   ]
+  }
+ },
+ "judge": {
+  "fr": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including timing and stop date."
+    },
+    {
+     "id": "F2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including timing and dose."
+    },
+    {
+     "id": "F3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including timing and dose."
+    },
+    {
+     "id": "F4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including timing and conditions."
+    },
+    {
+     "id": "F5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including follow-up dates."
+    },
+    {
+     "id": "F6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly, including the do not smoke directive."
+    }
+   ]
+  }
+ },
+ "suggest": {
+  "fr:F4": {
+   "text_en": "Do not use the Ipratropium inhaler with the Tiotropium, because it can be dangerous.",
+   "text_tl": "Ne pas utiliser l'inhalateur Ipratropium avec le Tiotropium, car cela peut être dangereux."
+  }
+ }
+}

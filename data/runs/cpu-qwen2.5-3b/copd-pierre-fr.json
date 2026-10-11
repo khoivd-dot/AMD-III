@@ -1,0 +1,360 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-08 23:57 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "COPD exacerbation triggered by a viral chest infection",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient was in the hospital due to COPD exacerbation triggered by a viral chest infection.",
+     "source_quote": "Diagnosis: COPD exacerbation triggered by a viral chest infection."
+    },
+    {
+     "id": "F2",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Prednisone",
+     "dose": "40 mg",
+     "frequency": "once daily",
+     "detail": "Patient must take Prednisone 40 mg by mouth once daily with breakfast for 5 days, then stop.",
+     "source_quote": "NEW: Prednisone 40 mg by mouth once daily with breakfast for 5 days, then stop."
+    },
+    {
+     "id": "F3",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Tiotropium",
+     "dose": "2 puffs",
+     "frequency": "once daily",
+     "detail": "Patient must take Tiotropium 2 puffs inhaled once daily.",
+     "source_quote": "NEW: Tiotropium 2 puffs inhaled once daily."
+    },
+    {
+     "id": "F4",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Albuterol",
+     "dose": "2 puffs",
+     "frequency": "every 4 hours",
+     "detail": "Patient must use Albuterol inhaler 2 puffs every 4 hours as needed for shortness of breath.",
+     "source_quote": "CHANGED: Albuterol inhaler 2 puffs every 4 hours as needed for shortness of breath (was every 6 hours)."
+    },
+    {
+     "id": "F5",
+     "kind": "diagnosis",
+     "med_action": "stop",
+     "drug": "Ipratropium",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must not use Ipratropium inhaler.",
+     "source_quote": "STOP: Ipratropium inhaler - do not use together with tiotropium."
+    },
+    {
+     "id": "F6",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Do not smoke",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must not smoke.",
+     "source_quote": "Do not smoke."
+    },
+    {
+     "id": "F7",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Call 911",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must call 911 for severe shortness of breath, blue lips, or confusion.",
+     "source_quote": "Call 911 for severe shortness of breath, blue lips, or confusion."
+    },
+    {
+     "id": "F8",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Call your doctor",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must call their doctor if they need albuterol more than every 4 hours or have fever above 38.5 C.",
+     "source_quote": "Call your doctor if you need albuterol more than every 4 hours or have fever above 38.5 C."
+    },
+    {
+     "id": "F9",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Follow-up",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must follow-up with the pulmonary clinic with [CLINICIAN_1] on 10/30/2026.",
+     "source_quote": "Follow-up: Pulmonary clinic with [CLINICIAN_1] on 10/30/2026."
+    },
+    {
+     "id": "F10",
+     "kind": "diagnosis",
+     "med_action": null,
+     "drug": "Follow-up",
+     "dose": null,
+     "frequency": null,
+     "detail": "Patient must follow-up with the pulmonary rehabilitation intake on 11/04/2026.",
+     "source_quote": "Follow-up: Pulmonary rehabilitation intake on 11/04/2026."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 80.78599418900001,
+   "prompt_tokens": 556,
+   "completion_tokens": 1047
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 54.04353937000002,
+   "prompt_tokens": 1023,
+   "completion_tokens": 530
+  },
+  "translate:fr": {
+   "stage": "translate",
+   "seconds": 35.33269849999999,
+   "prompt_tokens": 518,
+   "completion_tokens": 431
+  },
+  "back_translate:fr": {
+   "stage": "back_translate",
+   "seconds": 31.39092329800002,
+   "prompt_tokens": 545,
+   "completion_tokens": 363
+  },
+  "judge:fr": {
+   "stage": "judge",
+   "seconds": 40.93339866499997,
+   "prompt_tokens": 1102,
+   "completion_tokens": 319
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "S1",
+     "section": "why",
+     "text": "You have a lung problem that got worse. You need to take some medicines to help you feel better.",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "S2",
+     "section": "medicines",
+     "text": "You must take Prednisone 40 mg once a day with breakfast for 5 days, then stop.",
+     "fact_ids": [
+      "F2"
+     ]
+    },
+    {
+     "id": "S3",
+     "section": "medicines",
+     "text": "You must take Tiotropium 2 puffs once a day.",
+     "fact_ids": [
+      "F3"
+     ]
+    },
+    {
+     "id": "S4",
+     "section": "medicines",
+     "text": "You must use Albuterol inhaler 2 puffs every 4 hours as needed for shortness of breath.",
+     "fact_ids": [
+      "F4"
+     ]
+    },
+    {
+     "id": "S5",
+     "section": "warning_signs",
+     "text": "If you have severe shortness of breath, blue lips, or confusion, call 911.",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "S6",
+     "section": "warning_signs",
+     "text": "If you need albuterol more than every 4 hours or have a fever above 38.5 C, call your doctor.",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "S7",
+     "section": "appointments",
+     "text": "You must follow-up with the pulmonary clinic with [CLINICIAN_1] on 10/30/2026.",
+     "fact_ids": [
+      "F9"
+     ]
+    },
+    {
+     "id": "S8",
+     "section": "appointments",
+     "text": "You must follow-up with the pulmonary rehabilitation intake on 11/04/2026.",
+     "fact_ids": [
+      "F10"
+     ]
+    },
+    {
+     "id": "S9",
+     "section": "daily_care",
+     "text": "You must not smoke and must not use Ipratropium inhaler.",
+     "fact_ids": [
+      "F5",
+      "F6"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "fr": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "Vous avez une problématique des poumons qui s'est aggravée. Vous devez prendre certains médicaments pour vous sentir mieux."
+    },
+    {
+     "id": "S2",
+     "text": "Vous devez prendre le Prednisone à 40 mg une fois par jour avec le petit déjeuner pour 5 jours, puis arrêter."
+    },
+    {
+     "id": "S3",
+     "text": "Vous devez prendre les Tiotropium à 2 pincettes une fois par jour."
+    },
+    {
+     "id": "S4",
+     "text": "Vous devez utiliser l'inhalateur Albuterol à 2 pincettes à chaque 4 heures selon les besoins pour la difficultés d'inspiration."
+    },
+    {
+     "id": "S5",
+     "text": "Si vous avez une difficultés d'inspiration sévère, des lèvres bleues ou une confusion, appelez 911."
+    },
+    {
+     "id": "S6",
+     "text": "Si vous avez besoin d'Albuterol plus souvent qu'à chaque 4 heures ou une température supérieure à 38,5°C, appelez votre médecin."
+    },
+    {
+     "id": "S7",
+     "text": "Vous devez suivre avec le service des poumons avec [CLINICIAN_1] le 10/30/2026."
+    },
+    {
+     "id": "S8",
+     "text": "Vous devez suivre avec l'entrée de l'intervention de réhabilitation pulmonaire le 11/04/2026."
+    },
+    {
+     "id": "S9",
+     "text": "Vous devez ne pas fumer et ne pas utiliser l'Ipratropium inhaler."
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "fr": {
+   "items": [
+    {
+     "id": "S1",
+     "text": "You have a lung problem that has worsened. You must take some medications to feel better."
+    },
+    {
+     "id": "S2",
+     "text": "You must take Prednisone at 40 mg once a day with breakfast for 5 days, then stop."
+    },
+    {
+     "id": "S3",
+     "text": "You must take Tiotropium at 2 puffs once a day."
+    },
+    {
+     "id": "S4",
+     "text": "You must use Albuterol at 2 puffs every 4 hours as needed for shortness of breath."
+    },
+    {
+     "id": "S5",
+     "text": "If you have severe shortness of breath, blue lips, or confusion, call 911."
+    },
+    {
+     "id": "S6",
+     "text": "If you need Albuterol more often than every 4 hours or a temperature higher than 38.5°C, call your doctor."
+    },
+    {
+     "id": "S7",
+     "text": "You must follow with the lung service with [CLINICIAN_1] on 10/30/2026."
+    },
+    {
+     "id": "S8",
+     "text": "You must follow with the pulmonary rehabilitation admission on 11/04/2026."
+    },
+    {
+     "id": "S9",
+     "text": "You must not smoke and not use the Ipratropium inhaler."
+    }
+   ]
+  }
+ },
+ "judge": {
+  "fr": {
+   "verdicts": [
+    {
+     "id": "S1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S7",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S8",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    },
+    {
+     "id": "S9",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts and back-translation."
+    }
+   ]
+  }
+ }
+}

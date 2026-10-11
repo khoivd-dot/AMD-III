@@ -1,0 +1,380 @@
+{
+ "_meta": {
+  "source": "recorded",
+  "model": "Qwen2.5-3B-Instruct (Q4_K_M GGUF)",
+  "hardware": "GitHub Actions CPU runner · llama.cpp (not AMD)",
+  "recorded_at": "2026-10-09 00:43 UTC"
+ },
+ "facts": {
+  "en": {
+   "facts": [
+    {
+     "id": "F1",
+     "source_quote": "NEW: Enoxaparin 40 mg subcutaneous injection once daily for 14 days to prevent blood clots. Last dose 10/26/2026.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Enoxaparin",
+     "dose": "40 mg",
+     "frequency": "subcutaneous injection once daily",
+     "detail": "Start taking Enoxaparin 40 mg subcutaneous injection once daily for 14 days to prevent blood clots, last dose on 10/26/2026."
+    },
+    {
+     "id": "F2",
+     "source_quote": "NEW: Oxycodone 5 mg by mouth every 6 hours only if needed for severe pain. Maximum 4 tablets in 24 hours.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Oxycodone",
+     "dose": "5 mg",
+     "frequency": "by mouth every 6 hours",
+     "detail": "Start taking Oxycodone 5 mg by mouth every 6 hours only if needed for severe pain, maximum 4 tablets in 24 hours."
+    },
+    {
+     "id": "F3",
+     "source_quote": "NEW: Paracetamol 1000 mg by mouth every 8 hours for pain. Do not exceed 3000 mg in 24 hours.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Paracetamol",
+     "dose": "1000 mg",
+     "frequency": "by mouth every 8 hours",
+     "detail": "Start taking Paracetamol 1000 mg by mouth every 8 hours for pain, do not exceed 3000 mg in 24 hours."
+    },
+    {
+     "id": "F4",
+     "source_quote": "NEW: Docusate 100 mg by mouth twice daily while taking oxycodone.",
+     "kind": "medication",
+     "med_action": "new",
+     "drug": "Docusate",
+     "dose": "100 mg",
+     "frequency": "by mouth twice daily",
+     "detail": "Start taking Docusate 100 mg by mouth twice daily while taking Oxycodone."
+    },
+    {
+     "id": "F5",
+     "source_quote": "CONTINUE: Amlodipine 5 mg by mouth once daily.",
+     "kind": "medication",
+     "med_action": "continue",
+     "drug": "Amlodipine",
+     "dose": "5 mg",
+     "frequency": "by mouth once daily",
+     "detail": "Continue taking Amlodipine 5 mg by mouth once daily."
+    },
+    {
+     "id": "F6",
+     "source_quote": "Precautions: Do not drive or drink alcohol while taking oxycodone.",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": "Oxycodone",
+     "dose": null,
+     "frequency": null,
+     "detail": "Do not drive or drink alcohol while taking Oxycodone."
+    },
+    {
+     "id": "F7",
+     "source_quote": "Wound care: Keep the dressing clean and dry. You may shower after 48 hours; do not soak the knee in a bath or pool until staples are removed.",
+     "kind": "wound_care",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Keep the dressing clean and dry. You may shower after 48 hours; do not soak the knee in a bath or pool until staples are removed."
+    },
+    {
+     "id": "F8",
+     "source_quote": "Activity: Use the walker at all times for 2 weeks. Do the home exercises from physiotherapy 3 times a day.",
+     "kind": "activity",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Use the walker at all times for 2 weeks. Do the home exercises from physiotherapy 3 times a day."
+    },
+    {
+     "id": "F9",
+     "source_quote": "Return precautions: Call 999 for chest pain or sudden shortness of breath. Call the orthopaedic ward on [PHONE_1] for calf pain or swelling, fever above 38.5 C, or redness, warmth or drainage from the wound.",
+     "kind": "warning_sign",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "In case of chest pain or sudden shortness of breath, call 999. For calf pain or swelling, fever above 38.5 C, or redness, warmth or drainage from the wound, call the orthopaedic ward on [PHONE_1]."
+    },
+    {
+     "id": "F10",
+     "source_quote": "Follow-up: Physiotherapy at home on 10/15/2026. Orthopaedic clinic with [CLINICIAN_1] on 10/26/2026 for staple removal.",
+     "kind": "follow_up",
+     "med_action": null,
+     "drug": null,
+     "dose": null,
+     "frequency": null,
+     "detail": "Your follow-up includes physiotherapy at home on 10/15/2026 and an orthopaedic clinic visit with [CLINICIAN_1] on 10/26/2026 for staple removal."
+    }
+   ]
+  }
+ },
+ "_timings": {
+  "facts:en": {
+   "stage": "facts",
+   "seconds": 121.68690374599998,
+   "prompt_tokens": 1038,
+   "completion_tokens": 1196
+  },
+  "draft:en": {
+   "stage": "draft",
+   "seconds": 88.25899108499999,
+   "prompt_tokens": 1187,
+   "completion_tokens": 727
+  },
+  "translate:it": {
+   "stage": "translate",
+   "seconds": 68.97194389100002,
+   "prompt_tokens": 801,
+   "completion_tokens": 660
+  },
+  "back_translate:it": {
+   "stage": "back_translate",
+   "seconds": 60.2189097239999,
+   "prompt_tokens": 772,
+   "completion_tokens": 570
+  },
+  "judge:it": {
+   "stage": "judge",
+   "seconds": 93.39238709699998,
+   "prompt_tokens": 2184,
+   "completion_tokens": 324
+  }
+ },
+ "draft": {
+  "en": {
+   "sentences": [
+    {
+     "id": "F1",
+     "section": "medicines",
+     "text": "You will start taking Enoxaparin 40 mg subcutaneous injection once daily for 14 days to prevent blood clots, last dose on 10/26/2026. (F1)",
+     "fact_ids": [
+      "F1"
+     ]
+    },
+    {
+     "id": "F2",
+     "section": "medicines",
+     "text": "You will start taking Oxycodone 5 mg by mouth every 6 hours only if needed for severe pain, maximum 4 tablets in 24 hours. (F2)",
+     "fact_ids": [
+      "F2"
+     ]
+    },
+    {
+     "id": "F3",
+     "section": "medicines",
+     "text": "You will start taking Paracetamol 1000 mg by mouth every 8 hours for pain, do not exceed 3000 mg in 24 hours. (F3)",
+     "fact_ids": [
+      "F3"
+     ]
+    },
+    {
+     "id": "F4",
+     "section": "medicines",
+     "text": "You will start taking Docusate 100 mg by mouth twice daily while taking Oxycodone. (F4)",
+     "fact_ids": [
+      "F4"
+     ]
+    },
+    {
+     "id": "F5",
+     "section": "medicines",
+     "text": "You will continue taking Amlodipine 5 mg by mouth once daily. (F5)",
+     "fact_ids": [
+      "F5"
+     ]
+    },
+    {
+     "id": "F6",
+     "section": "warning_signs",
+     "text": "Do not drive or drink alcohol while taking Oxycodone. (F6)",
+     "fact_ids": [
+      "F6"
+     ]
+    },
+    {
+     "id": "F7",
+     "section": "daily_care",
+     "text": "Keep the dressing clean and dry. You may shower after 48 hours; do not soak the knee in a bath or pool until staples are removed. (F7)",
+     "fact_ids": [
+      "F7"
+     ]
+    },
+    {
+     "id": "F8",
+     "section": "appointments",
+     "text": "Use the walker at all times for 2 weeks. Do the home exercises from physiotherapy 3 times a day. (F8)",
+     "fact_ids": [
+      "F8"
+     ]
+    },
+    {
+     "id": "F9",
+     "section": "warning_signs",
+     "text": "In case of chest pain or sudden shortness of breath, call 999. For calf pain or swelling, fever above 38.5 C, or redness, warmth or drainage from the wound, call the orthopaedic ward on [PHONE_1]. (F9)",
+     "fact_ids": [
+      "F9"
+     ]
+    },
+    {
+     "id": "F10",
+     "section": "appointments",
+     "text": "Your follow-up includes physiotherapy at home on 10/15/2026 and an orthopaedic clinic visit with [CLINICIAN_1] on 10/26/2026 for staple removal. (F10)",
+     "fact_ids": [
+      "F10"
+     ]
+    }
+   ]
+  }
+ },
+ "translate": {
+  "it": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "Inizierai a prendere Enoxaparin 40 mg in iniezione sotto pelle una volta al giorno per 14 giorni per prevenire i blocchi sanguigni, l'ultima dose il 21 ottobre 2026. (F1)"
+    },
+    {
+     "id": "F2",
+     "text": "Inizierai a prendere Oxycodone 5 mg per via orale solo se necessario per il dolore molto intenso, massimo 4 farmaci in 24 ore. (F2)"
+    },
+    {
+     "id": "F3",
+     "text": "Inizierai a prendere Paracetamol 1000 mg per via orale ogni 8 ore per il dolore, non superare 3000 mg in 24 ore. (F3)"
+    },
+    {
+     "id": "F4",
+     "text": "Inizierai a prendere Docusate 100 mg per via orale due volte al giorno mentre prendi Oxycodone. (F4)"
+    },
+    {
+     "id": "F5",
+     "text": "Continuerai a prendere Amlodipine 5 mg per via orale una volta al giorno. (F5)"
+    },
+    {
+     "id": "F6",
+     "text": "Non guidare né bere alcolico mentre prendi Oxycodone. (F6)"
+    },
+    {
+     "id": "F7",
+     "text": "Rimani il lenzuolo pulito e secco. Puoi fare una doccia dopo 48 ore; non immergerti nel bagno o nel lago fino alla rimozione delle fascette. (F7)"
+    },
+    {
+     "id": "F8",
+     "text": "Usa la caviglia a tutti i tempi per 2 settimane. Fai gli esercizi da casa tre volte al giorno con il fisioterapista. (F8)"
+    },
+    {
+     "id": "F9",
+     "text": "In caso di dolore al petto o di improvviso insufficienza respiratoria, chiamare 999. Per dolore al ginocchio o gonfiore, febbre superiore a 38.5 C, o rosso, caldo o drenaggio dal ferito, chiamare il reparto ortopedico con [PHONE_1]. (F9)"
+    },
+    {
+     "id": "F10",
+     "text": "Il tuo seguito comprende la fisioterapia a casa il 15 ottobre 2026 e una visita al reparto ortopedico con [CLINICIAN_1] il 26 ottobre 2026 per rimozione delle fascette. (F10)"
+    }
+   ]
+  }
+ },
+ "back_translate": {
+  "it": {
+   "items": [
+    {
+     "id": "F1",
+     "text": "You will start taking Enoxaparin 40 mg in subcutaneous injection once a day for 14 days to prevent blood clots, the last dose on October 21, 2026. (F1)"
+    },
+    {
+     "id": "F2",
+     "text": "You will start taking Oxycodone 5 mg by oral route only if necessary for very intense pain, no more than 4 tablets in 24 hours. (F2)"
+    },
+    {
+     "id": "F3",
+     "text": "You will start taking Paracetamol 1000 mg by oral route every 8 hours for pain, do not exceed 3000 mg in 24 hours. (F3)"
+    },
+    {
+     "id": "F4",
+     "text": "You will start taking Docusate 100 mg by oral route twice a day while taking Oxycodone. (F4)"
+    },
+    {
+     "id": "F5",
+     "text": "You will continue taking Amlodipine 5 mg by oral route once a day. (F5)"
+    },
+    {
+     "id": "F6",
+     "text": "Do not drive or drink alcohol while taking Oxycodone. (F6)"
+    },
+    {
+     "id": "F7",
+     "text": "Keep the bedsheet clean and dry. You can take a shower after 48 hours; do not immerse in the bathroom or lake until the bandages are removed. (F7)"
+    },
+    {
+     "id": "F8",
+     "text": "Use the ankle continuously for 2 weeks. Do the home exercises three times a day with the physiotherapist. (F8)"
+    },
+    {
+     "id": "F9",
+     "text": "In case of chest pain or sudden respiratory insufficiency, call 999. For knee pain or swelling, fever higher than 38.5 C, or redness, heat, or drainage from the wound, call the orthopedic department with [PHONE_1]. (F9)"
+    },
+    {
+     "id": "F10",
+     "text": "Your follow-up includes home physiotherapy on October 15, 2026, and a visit to the orthopedic department with [CLINICIAN_1] on October 26, 2026, for bandage removal. (F10)"
+    }
+   ]
+  }
+ },
+ "judge": {
+  "it": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F2",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F3",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F4",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F5",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F6",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F7",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F8",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F9",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    },
+    {
+     "id": "F10",
+     "verdict": "supported",
+     "reason": "Sentence matches the facts exactly."
+    }
+   ]
+  }
+ }
+}
