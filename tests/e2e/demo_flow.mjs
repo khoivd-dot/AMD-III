@@ -101,6 +101,14 @@ await shot("5-impact");
 const kpis = await page.locator(".kpi").allTextContents();
 console.log("kpis:", kpis.join(" | "));
 console.log("alerts:", (await page.textContent("#alerts")).trim());
+// Where the server records follow-ups, the nurse marks the alert as gone over, with a note.
+if (await page.locator("#alerts form.al-ack").count()) {
+  await page.locator("#alerts .ack-note").first().fill("Went over the new dose with teach-back.");
+  await page.locator("#alerts .al-ack button").first().click();
+  await page.waitForSelector("#alerts .alert-item.acked");
+  console.log("alert acknowledged:", (await page.locator("#alerts .al-ack.done").first().textContent()).trim(), "|", (await page.textContent("#alerts-sum")).trim());
+  await shot("5b-impact-acknowledged");
+}
 await page.setViewportSize({ width: 390, height: 844 });
 await page.click('#tabs button[data-view="patient"]');
 await page.waitForTimeout(500);

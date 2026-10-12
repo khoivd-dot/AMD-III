@@ -64,7 +64,7 @@ const SPEECH = { en: "en-US", es: "es-ES", it: "it-IT", vi: "vi-VN", zh: "zh-CN"
 
 // Opened from the patient's own link (/p/<token>): show only the signed packet and its quiz.
 const PATIENT_TOKEN = (location.pathname.match(/^\/p\/([\w-]+)\/?$/) || [])[1];
-const state = { meta: null, caseId: null, c: null, sample: null, packet: null, pLang: "tl", poll: null, started: 0, focus: 0, quiz: { i: 0, answers: {} } };
+const state = { meta: null, caseId: null, c: null, sample: null, packet: null, pLang: "tl", poll: null, started: 0, focus: 0, quiz: { i: 0, answers: {} }, ackNotes: {} };
 
 async function api(path, opts = {}) {
   const res = await fetch(path, { headers: opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}, ...opts });
@@ -226,7 +226,7 @@ async function start() {
       const sampleId = state.sample && state.sample.source === source ? state.sample.id : null;
       r = await post("/api/cases", { source, language, patient_name: $("#pname").value, sample_id: sampleId });
     }
-    state.caseId = r.id; state.packet = null; state.started = Date.now(); state.quiz = { i: 0, answers: {} };
+    state.caseId = r.id; state.packet = null; state.started = Date.now(); state.quiz = { i: 0, answers: {} }; state.ackNotes = {};
     clearInterval(state.poll);
     state.poll = setInterval(refresh, 600);
     refresh();
@@ -722,27 +722,55 @@ function renderImpact() {
 }
 
 // A wrong teach-back answer becomes a task the nurse can act on: what was asked, what the patient chose,
-// what the signed packet says, and how serious the topic is.
+// what the signed packet says, and how serious the topic is. Once gone over, the nurse marks it with their name.
 function renderAlerts(c) {
   const facts = Object.fromEntries(c.facts.map((f) => [f.id, f]));
   const sents = Object.fromEntries(c.sentences.map((s) => [s.id, s]));
   const quiz = Object.fromEntries((c.quiz || []).map((q) => [q.id, q]));
   const tl = c.language !== "en";
-  $("#alerts-sum").textContent = c.alerts.length ? `${c.alerts.length} to go over before the patient leaves` : "";
+  const at = (t) => new Date(t * 1000).toLocaleTimeString([], { timeStyle: "short" });
+  const named = $("#reviewer").value.trim();
+  const open = c.alerts.filter((a) => !a.acknowledged).length;
+  $("#alerts-sum").textContent = open ? `${open} to go over before the patient leaves` : c.alerts.length ? "All gone over" : "";
   $("#alerts").innerHTML = c.alerts.length ? c.alerts.map((a) => {
     const f = facts[a.fact_id] || {}, q = quiz[a.question], s = q && sents[q.sentence_id];
     const chose = q && q.answer && q.options[q.answer.choice];
     const sev = f.kind === "warning_sign" ? ["warning", "red", "Warning sign"] : f.risk === "high" ? ["high", "high", "High-risk medicine"] : ["", "amber", "Instruction"];
-    return `<div class="alert-item sev-${sev[0] || "normal"}">
-      <div class="al-head">${icon("heart")}<b>Go over this again</b><span class="pill ${sev[1]}">${sev[2]}</span><time>${new Date(a.at * 1000).toLocaleTimeString([], { timeStyle: "short" })}</time></div>
+    const ack = a.acknowledged;
+    // Alerts carry an id only on servers that can record the follow-up.
+    const foot = !a.id ? "" : ack
+      ? `<p class="al-ack done">${icon("check")}<span><b>${esc(ack.by)}</b> went over this at ${at(ack.at)}.${ack.note ? ` <span class="fine">${esc(ack.note)}</span>` : ""}</span></p>`
+      : `<form class="al-ack" data-id="${esc(a.id)}">
+          ${named ? "" : `<input class="ack-who" maxlength="100" placeholder="Your name, e.g. RN Sam Lee" aria-label="Your name" autocomplete="name">`}
+          <input class="ack-note" maxlength="1000" placeholder="What you went over (optional)" aria-label="What you went over (optional)" value="${esc(state.ackNotes[a.id] || "")}">
+          <button class="primary small">${icon("check")}Mark as gone over</button>
+        </form>`;
+    return `<div class="alert-item sev-${sev[0] || "normal"}${ack ? " acked" : ""}${state.justDone === a.id ? " just-done" : ""}">
+      <div class="al-head">${icon(ack ? "check" : "heart")}<b>${ack ? "Gone over" : "Go over this again"}</b><span class="pill ${sev[1]}">${sev[2]}</span><time>${at(a.at)}</time></div>
       ${q ? `<p class="al-q">${esc(q.question)}</p>` : ""}
       <div class="al-rows">
         ${chose ? `<div class="al-row chose"><span>${icon("user")}Patient chose</span><p>${esc(chose.text)}</p></div>` : ""}
         ${s ? `<div class="al-row says"><span>${icon("check")}Packet says</span><p>${esc(tl ? s.text_tl : s.text_en)}${tl ? `<span class="en">${esc(s.text_en)}</span>` : ""}</p></div>` : ""}
       </div>
       <p class="al-do">${icon("arrow")}${esc(a.message)}</p>
+      ${foot}
     </div>`;
   }).join("") : `<div class="calm">${icon("check")}<span>No alerts. If the patient gets a teach-back question wrong, it shows up here with their answer, so the nurse can go over it before they leave.</span></div>`;
+  $$("#alerts form.al-ack").forEach((form) => {
+    const id = form.dataset.id, note = $(".ack-note", form), who = $(".ack-who", form), btn = $("button", form);
+    note.oninput = () => { state.ackNotes[id] = note.value; };
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (who) {
+        if (!who.value.trim()) { who.focus(); return toast("Enter your name first.", true); }
+        $("#reviewer").value = who.value.trim();
+        $("#reviewer").dispatchEvent(new Event("change"));
+      }
+      btn.disabled = true;
+      await act(() => post(`/api/cases/${c.id}/alerts/${id}/acknowledge`, { reviewer: reviewer(), note: note.value.trim() }), "Marked as gone over", id);
+      btn.disabled = false;
+    };
+  });
 }
 
 async function patientInit() {

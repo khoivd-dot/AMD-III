@@ -60,7 +60,7 @@ Where it is used:
 - **Running the pipeline.** Each step fills in, and the trail between steps grows. The current step pulses.
 - **Reviewing.** Cards come in one after another when the view opens, but not on every re-render. An approved card flashes green and its queue check pops. The sign-off button pulses twice when it becomes available, and a seal draws itself after sign-off.
 - **Patient packet.** The porch light comes on when a signed packet arrives. The quiz is a path of stepping stones that ends at the house, which lights up on the last answer. While a section is read aloud, its button shows a level meter and works as a stop button.
-- **Results.** The numbers count up and the bars grow.
+- **Results.** The numbers count up and the bars grow. When a nurse marks a teach-back alert as gone over, it flashes green and folds down to who went over it, when, and their note.
 
 With `prefers-reduced-motion`, every animation and transition is off, and each screen shows its final state.
 
