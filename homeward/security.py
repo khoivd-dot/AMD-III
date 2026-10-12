@@ -5,13 +5,12 @@ import re
 import time
 import unicodedata
 
-# Pages load only their own files. Inline style attributes are allowed (the UI sets
-# widths and the icon sprite); inline scripts, other origins and framing are not.
+# Pages load only their own files: no inline scripts or styles, other origins or framing.
 CSP = "; ".join([
     "default-src 'self'",
     "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
+    "style-src 'self'",
+    "img-src 'self'",
     "font-src 'self'",
     "connect-src 'self'",
     "media-src 'self'",

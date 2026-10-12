@@ -15,7 +15,7 @@ def test_security_headers_and_no_api_docs():
     with TestClient(app) as client:
         for path in ("/", "/api/meta", "/static/app.js", "/p/anything"):
             h = client.get(path).headers
-            assert "script-src 'self'" in h["content-security-policy"]
+            assert "script-src 'self'" in h["content-security-policy"] and "unsafe-inline" not in h["content-security-policy"]
             assert "frame-ancestors 'none'" in h["content-security-policy"]
             assert h["x-content-type-options"] == "nosniff"
             assert h["referrer-policy"] == "no-referrer"
