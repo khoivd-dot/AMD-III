@@ -562,6 +562,16 @@ mark.diff { background: var(--solid-red); color: var(--on-solid); border-radius:
 .al-row.chose { background: var(--amber-soft); } .al-row.chose > span { color: var(--amber); }
 .al-row.says { background: var(--green-soft); } .al-row.says > span { color: var(--green); }
 .al-do { margin: 10px 0 0; font-size: .86rem; font-weight: 600; display: flex; gap: 6px; align-items: center; color: var(--ink); }
+.al-ack { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.al-ack input { flex: 1 1 200px; margin: 0; padding: 7px 10px; font-size: .86rem; }
+.al-ack button { flex: none; }
+.al-ack.done { gap: 8px; align-items: flex-start; font-size: .86rem; color: var(--ink); }
+.al-ack.done > .i { color: var(--green); flex: none; margin-top: 2px; }
+.alert-item.acked { border-left-color: var(--green); background: var(--sunk); }
+.alert-item.acked .al-head > .i { color: var(--green); }
+.alert-item.acked .al-rows, .alert-item.acked .al-do { display: none; }
+.alert-item.just-done { animation: flash-done 1.2s var(--ease-out); }
+.alert-item.just-done .al-head > .i { animation: pop var(--t-3) var(--ease-pop); }
 .calm { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: .9rem; }
 .calm .i { width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: var(--green-soft); color: var(--green); }
 .audit { max-height: 360px; overflow: auto; font-size: .86rem; }
