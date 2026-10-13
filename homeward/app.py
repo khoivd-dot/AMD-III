@@ -298,6 +298,18 @@ class Answer(BaseModel):
     choice: int = Field(ge=0, le=9)
 
 
+class Ack(BaseModel):
+    reviewer: str = Field(max_length=100)
+    note: str = Field("", max_length=1000)
+
+
+@app.post("/api/cases/{cid}/alerts/{aid}/acknowledge")
+def acknowledge(cid: str, aid: str, body: Ack):
+    who = _need_reviewer(body)
+    note = security.clean_name(body.note)
+    return _do(cid, lambda c: pipeline.acknowledge_alert(c, aid, who, note))
+
+
 @app.post("/api/cases/{cid}/quiz/{qid}")
 def answer(cid: str, qid: str, body: Answer):
     case = get_case(cid)

@@ -110,3 +110,24 @@ def test_errors_are_plain_and_bad_pdfs_are_refused():
         wait_ready(client, cid)
         r = client.post(f"/api/cases/{cid}/sentences/S99/approve", json={"reviewer": "RN A"})
         assert r.status_code == 404 and "'" not in r.json()["detail"]
+
+
+def test_nurse_acknowledges_alerts():
+    import homeward.app as appmod
+    with TestClient(app) as client:
+        c = _signed_knee(client)
+        cid, link = c["id"], c["patient_link"].replace("/p/", "/api/patient/")
+        q = appmod.CASES[cid]["quiz"][0]
+        wrong = next(i for i, o in enumerate(q["options"]) if not o["correct"])
+        assert client.post(f"{link}/quiz/{q['id']}", json={"choice": wrong}).json()["correct"] is False
+        a = client.get(f"/api/cases/{cid}").json()["alerts"][0]
+        assert a["id"] == "A1" and a["acknowledged"] is None
+        url = f"/api/cases/{cid}/alerts/A1/acknowledge"
+        assert client.post(url, json={"reviewer": "\u200b"}).status_code == 400
+        assert client.post(url, json={"reviewer": "RN B"}, headers={"Origin": "https://evil.example"}).status_code == 403
+        assert client.post(f"/api/cases/{cid}/alerts/A9/acknowledge", json={"reviewer": "RN B"}).status_code == 404
+        r = client.post(url, json={"reviewer": "RN B", "note": "Went over the dose again."})
+        ack = r.json()["alerts"][0]["acknowledged"]
+        assert r.status_code == 200 and ack["by"] == "RN B" and ack["note"] == "Went over the dose again."
+        assert any(e["action"] == "acknowledged alert A1" for e in r.json()["audit"])
+        assert client.post(url, json={"reviewer": "RN C"}).status_code == 400  # once only

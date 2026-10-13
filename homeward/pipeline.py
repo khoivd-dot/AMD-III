@@ -380,12 +380,25 @@ def answer(case: dict, qid: str, choice: int) -> dict:
     q["answer"] = {"choice": choice, "correct": correct, "at": time.time()}
     if not correct:
         fact = next(f for f in case["facts"] if f["id"] == q["fact_id"])
-        case["alerts"].append({"at": time.time(), "question": qid, "fact_id": fact["id"],
-                               "message": f"Re-explain: {fact['detail']}"})
+        case["alerts"].append({"id": f"A{len(case['alerts']) + 1}", "at": time.time(), "question": qid,
+                               "fact_id": fact["id"], "message": f"Re-explain: {fact['detail']}",
+                               "acknowledged": None})
         audit(case, "patient", f"missed {qid}", fact["detail"])
     else:
         audit(case, "patient", f"answered {qid} correctly")
     return {"correct": correct}
+
+
+def acknowledge_alert(case: dict, alert_id: str, reviewer: str, note: str = "") -> None:
+    """A nurse records that they followed up a missed teach-back answer.
+
+    Allowed after sign-off: alerts arrive once the patient has the packet.
+    """
+    alert = next(a for a in case["alerts"] if a.get("id") == alert_id)
+    if alert.get("acknowledged"):
+        raise ValueError(f"Already acknowledged by {alert['acknowledged']['by']}.")
+    alert["acknowledged"] = {"by": reviewer, "at": time.time(), "note": note}
+    audit(case, reviewer, f"acknowledged alert {alert_id}", note)
 
 
 def _sentence(case: dict, sid: str) -> dict:
