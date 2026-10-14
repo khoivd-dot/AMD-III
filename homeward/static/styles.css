@@ -71,7 +71,8 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-padding-top: 90px; }
+html { scroll-padding-top: 90px; -webkit-tap-highlight-color: color-mix(in srgb, var(--brand) 16%, transparent); }
+button, a, label, summary, select, input[type=checkbox] { touch-action: manipulation; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font);
   font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
 h1 { font-size: clamp(1.6rem, 2.8vw, 2.25rem); line-height: 1.14; margin: 0 0 .6rem; letter-spacing: -.022em; font-weight: 750; text-wrap: balance; }
@@ -100,6 +101,7 @@ a { color: var(--brand); }
 @keyframes flash-done { from { background: var(--green-soft); } }
 @keyframes light-up { from { fill: #2C4A46; } }
 @keyframes glow-in { from { opacity: 0; transform: scale(.6); } }
+@keyframes shine { to { background-position: 0 0; } }
 @keyframes nudge { 0%, 100% { transform: none; } 50% { transform: translateX(4px); } }
 @keyframes vt-out { to { opacity: 0; transform: translateX(-28px); } }
 @keyframes vt-in { from { opacity: 0; transform: translateX(28px); } }
@@ -142,7 +144,7 @@ nav button.trail::after { transform: scaleX(1); }
 nav button .n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-strong);
   font-size: .85rem; font-weight: 700; background: var(--panel); transition: background var(--t-2), border-color var(--t-2), color var(--t-2); }
 nav button .t { display: flex; flex-direction: column; text-align: left; line-height: 1.15; }
-nav button small { font-size: .7rem; font-weight: 500; color: var(--muted); opacity: .85; }
+nav button small { font-size: .7rem; font-weight: 500; color: var(--muted); }
 nav button:hover:not(:disabled) { background: var(--sunk); }
 nav button.active { color: var(--ink); background: var(--brand-soft); }
 nav button.active .n { border-color: var(--brand); background: var(--brand); color: var(--brand-ink); }
@@ -180,7 +182,7 @@ textarea:focus, input:focus, select:focus { outline: none; border-color: var(--b
 .row > label { flex: 1; min-width: 190px; }
 .row.go { margin-top: 22px; flex-wrap: wrap-reverse; }
 .row.go .note { margin: 0; flex: 1; min-width: 220px; }
-label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; cursor: pointer; }
+label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; cursor: pointer; min-height: 32px; }
 label.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand); }
 
 button { font: inherit; font-weight: 600; padding: 9px 15px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong);
@@ -274,6 +276,9 @@ button.danger:hover:not(:disabled) { border-color: var(--red); }
 .stages li .dot .i { width: 13px; height: 13px; stroke-width: 3; color: var(--brand-ink); opacity: 0; transform: scale(.4); transition: opacity var(--t-2), transform var(--t-3) var(--ease-pop); }
 .stages li.done { color: var(--ink); } .stages li.done .dot { background: var(--brand); border-color: var(--brand); } .stages li.done .dot .i { opacity: 1; transform: none; }
 .stages li.now { color: var(--ink); font-weight: 700; }
+/* The step being worked on has a light sweeping across its name: a "working" cue, so it may loop. */
+.stages li.now .st { background: linear-gradient(100deg, var(--ink) 40%, var(--brand) 50%, var(--ink) 60%) 100% 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 1.8s linear infinite; }
 .stages li.now .dot { border-color: var(--brand); animation: ring 1.1s var(--ease-out) infinite; }
 .stages li.now .dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
 .stages li small { display: block; font-weight: 400; color: var(--muted); font-size: .82rem; }
@@ -348,9 +353,14 @@ mark.diff { background: var(--solid-red); color: var(--on-solid); border-radius:
 .tally b { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: var(--panel); font-size: .8rem; }
 .tally .red { background: var(--red-soft); color: var(--red); } .tally .amber { background: var(--amber-soft); color: var(--amber); }
 .tally .high { background: var(--violet-soft); color: var(--violet); }
-.tally .zero { opacity: .55; }
+.tally .zero { background: var(--sunk); color: var(--muted); }
 .tally-note { margin: -6px 0 12px; }
 .queue-list { list-style: none; margin: 0 0 12px; padding: 0; border-top: 1px solid var(--line); }
+/* While more of the queue is scrolled out of sight, that edge fades out. */
+.queue-list { --fade-t: 0px; --fade-b: 0px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-t), #000 calc(100% - var(--fade-b)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-t), #000 calc(100% - var(--fade-b)), transparent); }
+.queue-list.more-above { --fade-t: 22px; } .queue-list.more-below { --fade-b: 30px; }
 .queue-list li a { display: flex; gap: 9px; align-items: center; padding: 8px 6px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: .86rem; border-radius: 6px; transition: background var(--t-1); }
 .queue-list li a:hover, .queue-list li a.cur { background: var(--brand-soft); }
 .queue-list .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; transition: background var(--t-2); }
@@ -377,8 +387,8 @@ mark.diff { background: var(--solid-red); color: var(--on-solid); border-radius:
 .sentence { border-left: 5px solid var(--line); scroll-margin-top: 100px; transition: box-shadow var(--t-2), opacity var(--t-2); }
 .sentence.red { border-left-color: var(--red); } .sentence.amber { border-left-color: var(--amber); } .sentence.green { border-left-color: var(--green); }
 .sentence.focus, .omission.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent), var(--shadow); }
-.sentence.done { opacity: .72; }
-.sentence.done:hover, .sentence.done.focus { opacity: 1; }
+/* Reviewed cards step back with a quieter surface, not lower opacity, so their text keeps full contrast. */
+.sentence.done { background: var(--sunk); box-shadow: none; }
 .sentence.just-done { animation: flash-done 1.2s var(--ease-out); }
 .sentence.just-done .reviewed .i { animation: pop var(--t-3) var(--ease-pop); }
 .s-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; font-size: .82rem; color: var(--muted); }
@@ -399,7 +409,7 @@ mark.diff { background: var(--solid-red); color: var(--on-solid); border-radius:
 .ev .i { color: var(--brand); margin-top: 2px; }
 .ev b { color: var(--ink); font: 600 .78rem var(--mono); margin-right: 4px; }
 .passed { margin-top: 10px; font-size: .84rem; color: var(--muted); }
-.passed summary { cursor: pointer; font-weight: 600; color: var(--muted); margin: 0; display: inline-flex; gap: 6px; align-items: center; }
+.passed summary { cursor: pointer; font-weight: 600; color: var(--muted); margin: 0; display: inline-flex; gap: 6px; align-items: center; min-height: 28px; }
 .passed summary .i { color: var(--green); }
 .passed ul { margin: 6px 0 0; padding-left: 26px; }
 .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; align-items: center; }

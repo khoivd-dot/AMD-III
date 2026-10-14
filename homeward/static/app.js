@@ -84,6 +84,9 @@ function toast(msg, err = false) {
 }
 
 const VIEWS = ["nurse", "review", "patient", "impact"];
+// The address bar names the step (#prepare, #review, #patient, #results), so Back and Forward move between steps.
+const HASH = { nurse: "prepare", review: "review", patient: "patient", impact: "results" };
+const viewFromHash = () => location.hash ? VIEWS.find((v) => `#${HASH[v]}` === location.hash) : "nurse";
 let enterTimer;
 function activate(view) {
   $$("#tabs button").forEach((b) => { const on = b.dataset.view === view; b.classList.toggle("active", on); b.setAttribute("aria-selected", on); });
@@ -96,10 +99,12 @@ function activate(view) {
   enterTimer = setTimeout(() => el.classList.remove("entering"), 1000);
   window.scrollTo({ top: 0 });
   if (view === "impact") countUp(el);
+  if (view === "review") queueEdges();
 }
 
 // Views slide in the direction of the workflow where the browser supports View Transitions.
-function show(view) {
+function show(view, push = true) {
+  if (push && !PATIENT_TOKEN && location.hash !== `#${HASH[view]}`) history.pushState(null, "", `#${HASH[view]}`);
   const from = VIEWS.indexOf(($(".view.active") || {}).id?.replace("view-", ""));
   if (view === "patient") loadPacket();
   if (!document.startViewTransition || calm() || from === VIEWS.indexOf(view) || from < 0) return activate(view);
@@ -192,21 +197,56 @@ async function init() {
   walkHome();
   $("#run").onclick = start;
   $("#signoff").onclick = signOff;
-  $("#only-flagged").onchange = renderReview;
+  $("#only-flagged").onchange = () => flip($("#view-review"), renderReview);
   $("#p-print").onclick = () => window.print();
   $("#p-size").onclick = (e) => { const on = $("#patient-body").classList.toggle("big"); e.currentTarget.setAttribute("aria-pressed", on); };
   $("#file").onchange = (e) => { $("#file-name").textContent = e.target.files[0] ? e.target.files[0].name : ""; };
   try { $("#reviewer").value = localStorage.getItem("hw-reviewer") || ""; } catch (e) { /* storage blocked */ }
   $("#reviewer").onchange = (e) => { try { localStorage.setItem("hw-reviewer", e.target.value); } catch (err) { /* ignore */ } };
   document.addEventListener("keydown", reviewKeys);
+  window.addEventListener("popstate", () => { const v = viewFromHash(); if (v) show(v, false); });
+  window.addEventListener("beforeunload", (e) => { if (unsaved()) e.preventDefault(); });
+  $("#queue").addEventListener("scroll", queueEdges, { passive: true });
+  window.addEventListener("resize", queueEdges, { passive: true });
+  loadFlip();
+  await restoreCase();
+  const v = viewFromHash();
+  if (v && v !== "nurse") { if (v === "patient") loadPacket(); activate(v); }
+}
+
+// A reload keeps the case this tab was working on (its id only, in this tab's session storage).
+async function restoreCase() {
+  let id = null;
+  try { id = sessionStorage.getItem("hw-case"); } catch (e) { return; }
+  if (!id) return;
+  state.caseId = id;
+  try {
+    await refresh();
+    if (!["ready", "error"].includes(state.c.stage)) { busy(true); state.poll = setInterval(refresh, 600); }
+  } catch (e) {
+    state.caseId = null;
+    try { sessionStorage.removeItem("hw-case"); } catch (err) { /* ignore */ }
+  }
+}
+
+// Typed text that has not been saved yet: an open editor, a dismissal reason, an alert note, or pasted instructions.
+function unsaved() {
+  return $$("textarea, input:not([type]), input[type=text]").some((el) => el.id !== "reviewer" && el.offsetParent && el.value.trim() && el.value !== el.defaultValue);
+}
+
+// Fade the queue's top or bottom edge while more items are scrolled out of sight there.
+function queueEdges() {
+  const q = $("#queue");
+  q.classList.toggle("more-above", q.scrollTop > 2);
+  q.classList.toggle("more-below", q.scrollTop + q.clientHeight < q.scrollHeight - 2);
 }
 
 async function pickSample(id, btn) {
   const s = await api(`/api/samples/${id}`);
   state.sample = s;
-  $("#source").value = s.source;
+  $("#source").value = $("#source").defaultValue = s.source;
   $("#language").value = s.language;
-  $("#pname").value = s.patient_name || "";
+  $("#pname").value = $("#pname").defaultValue = s.patient_name || "";
   $$(".sample").forEach((b) => b.classList.toggle("selected", b === btn));
 }
 
@@ -227,6 +267,9 @@ async function start() {
       r = await post("/api/cases", { source, language, patient_name: $("#pname").value, sample_id: sampleId });
     }
     state.caseId = r.id; state.packet = null; state.started = Date.now(); state.quiz = { i: 0, answers: {} }; state.ackNotes = {};
+    try { sessionStorage.setItem("hw-case", r.id); } catch (e) { /* storage blocked: reload starts over */ }
+    $("#source").defaultValue = $("#source").value;
+    $("#pname").defaultValue = $("#pname").value;
     clearInterval(state.poll);
     state.poll = setInterval(refresh, 600);
     refresh();
@@ -240,7 +283,7 @@ function busy(on) {
   const b = $("#run");
   b.disabled = on;
   b.classList.toggle("busy", on);
-  $(".run-label", b).textContent = on ? "Working" : "Create packet";
+  $(".run-label", b).textContent = on ? "Working…" : "Create packet";
 }
 
 function showError(msg) { const el = $("#run-error"); el.textContent = msg; el.classList.remove("hidden"); }
@@ -257,7 +300,33 @@ function setCase(c) {
   renderStages(c);
   updateTabs();
   if (c.stage === "error") showError(c.error);
-  if (c.stage === "ready") { renderLedger(); renderReview(); renderImpact(); }
+  if (c.stage === "ready") { renderLedger(); flip($("#view-review"), renderReview); flip($("#view-impact"), renderImpact); }
+}
+
+// GSAP Flip (vendored in static/vendor/gsap) slides cards to their new place when a review action changes
+// a list, instead of letting them jump. Staff screens only: the patient's link never downloads it.
+let flipLoad;
+function loadFlip() {
+  if (PATIENT_TOKEN || calm()) return;
+  flipLoad ||= ["gsap.min.js", "Flip.min.js"].reduce((prev, f) => prev.then(() => new Promise((ok, fail) => {
+    const el = document.createElement("script");
+    el.src = `/static/vendor/gsap/${f}`;
+    el.onload = ok; el.onerror = fail;
+    document.head.appendChild(el);
+  })), Promise.resolve()).then(() => window.gsap.registerPlugin(window.Flip)).catch(() => { /* re-render without motion */ });
+}
+
+// Record where each [data-flip-id] element sits, re-render, then animate each from its old box to its new one.
+// New elements fade in. Hidden views, reduced motion, or no GSAP: a plain re-render.
+function flip(root, render) {
+  const F = window.Flip;
+  if (!F || calm() || !root || !root.classList.contains("active")) return render();
+  const before = F.getState($$("[data-flip-id]", root));
+  render();
+  F.from(before, {
+    targets: $$("[data-flip-id]", root), duration: 0.42, ease: "power3.out", simple: true, prune: true,
+    onEnter: (els) => window.gsap.fromTo(els, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out", clearProps: "opacity,transform" }),
+  });
 }
 
 // ------------------------------------------------------------------ prepare
@@ -271,7 +340,7 @@ function renderStages(c) {
   const shape = list.map((s) => s[0]).join();
   if (ol.dataset.shape !== shape) {
     ol.dataset.shape = shape;
-    ol.innerHTML = list.map(([k, t, d, who]) => `<li data-k="${k}"><span class="link"></span><span class="dot">${icon("check")}</span><div>${esc(t)}<span class="who ${who}">${WHO[who]}</span><small>${esc(d)}</small></div></li>`).join("");
+    ol.innerHTML = list.map(([k, t, d, who]) => `<li data-k="${k}"><span class="link"></span><span class="dot">${icon("check")}</span><div><span class="st">${esc(t)}</span><span class="who ${who}">${WHO[who]}</span><small>${esc(d)}</small></div></li>`).join("");
   }
   $$("li", ol).forEach((li) => {
     const i = order.indexOf(li.dataset.k);
@@ -359,8 +428,9 @@ function renderReview() {
     + chip("high", m.high_risk, "high risk") + chip("red", m.omissions, "missing")
     + `<p class="fine tally-note">${m.sentences - m.sentences_flagged} of ${m.sentences} sentences passed every check and need no one.</p>`;
   const qIcon = { red: "x", amber: "warn", high: "shield", done: "check" };
-  $("#queue").innerHTML = items.map((i) => `<li class="${i.cls}${i.anchor === `s-${state.justDone}` ? " just-done" : ""}"><a href="#${i.anchor}" data-anchor="${i.anchor}"><span class="ic">${icon(qIcon[i.cls] || "warn")}</span><span class="lbl">${esc(i.label)}</span><span class="id">${esc(i.id)}</span></a></li>`).join("");
+  $("#queue").innerHTML = items.map((i) => `<li class="${i.cls}${i.anchor === `s-${state.justDone}` ? " just-done" : ""}" data-flip-id="q-${esc(i.anchor)}"><a href="#${i.anchor}" data-anchor="${i.anchor}"><span class="ic">${icon(qIcon[i.cls] || "warn")}</span><span class="lbl">${esc(i.label)}</span><span class="id">${esc(i.id)}</span></a></li>`).join("");
   $$("#queue a").forEach((a) => a.onclick = (e) => { e.preventDefault(); focusCard(document.getElementById(a.dataset.anchor)); });
+  queueEdges();
 
   const signed = c.signoff;
   $("#signoff").disabled = !!signed || open > 0;
@@ -379,13 +449,13 @@ function renderReview() {
 
   const facts = Object.fromEntries(c.facts.map((f) => [f.id, f]));
   $("#omissions").innerHTML = c.omissions.map((o) => `
-    <div class="card omission" id="om-${o.fact_id}" data-fact="${o.fact_id}" tabindex="-1">
+    <div class="card omission" id="om-${o.fact_id}" data-fact="${o.fact_id}" data-flip-id="om-${o.fact_id}" tabindex="-1">
       <div class="tag">${icon("x")} Missing from the packet · ${o.fact_id}</div>
       <p>${marked(o.message)}</p>
       <div class="ev">${icon("quote")}<div><b>${o.fact_id}</b>“${marked(facts[o.fact_id].source_quote)}”</div></div>
       <div class="editor">
         <label>English<textarea rows="2" class="add-en">${esc(facts[o.fact_id].detail)}</textarea></label>
-        ${tl ? `<label>${esc(c.language_name)}<textarea rows="2" class="add-tl" placeholder="Use “Suggest wording” or type the translation"></textarea></label>` : ""}
+        ${tl ? `<label>${esc(c.language_name)}<textarea rows="2" class="add-tl" placeholder="Use “Suggest wording” or type the translation…"></textarea></label>` : ""}
       </div>
       <div class="actions">
         <button class="small primary add">${icon("check")} Add to packet</button>
@@ -393,7 +463,7 @@ function renderReview() {
         <span class="spacer"></span>
         <button class="small ghost dismiss">Not needed for this patient</button>
       </div>
-      <div class="dismiss-box hidden"><input class="dismiss-reason" placeholder="Why does the patient not need this? (goes in the audit trail)"><button class="small confirm-dismiss">Dismiss</button></div>
+      <div class="dismiss-box hidden"><input class="dismiss-reason" aria-label="Why the patient does not need this" placeholder="Why does the patient not need this? Goes in the audit trail…"><button class="small confirm-dismiss">Dismiss</button></div>
     </div>`).join("");
   $$(".omission").forEach((el) => {
     const fid = el.dataset.fact;
@@ -422,18 +492,18 @@ function renderReview() {
   const unresolved = c.med_issues.filter((m) => !m.resolved);
   const unsupported = c.facts.filter((f) => f.status === "red" && !f.dismissed && !c.omissions.some((o) => o.fact_id === f.id));
   $("#omissions").insertAdjacentHTML("beforeend", unresolved.map((m) => `
-    <div class="card omission decision" id="mi-${esc(m.drug)}" data-drug="${esc(m.drug)}" tabindex="-1">
+    <div class="card omission decision" id="mi-${esc(m.drug)}" data-drug="${esc(m.drug)}" data-flip-id="mi-${esc(m.drug)}" tabindex="-1">
       <div class="tag">${icon("x")} Medicine list check · ${esc(m.drug)}</div>
       <p>${esc(m.message)} Fix the wording if the model got it wrong, then record what you checked.</p>
       <div class="ev">${icon("quote")}<div><b>Source</b>“${marked(m.line)}”</div></div>
-      <div class="dismiss-box"><input class="resolve-note" placeholder="What did you check against the source? (goes in the audit trail)"><button class="small primary confirm-resolve">${icon("check")} Mark checked</button></div>
+      <div class="dismiss-box"><input class="resolve-note" aria-label="What you checked against the source" placeholder="What did you check against the source? Goes in the audit trail…"><button class="small primary confirm-resolve">${icon("check")} Mark checked</button></div>
     </div>`).join("") + unsupported.map((f) => `
-    <div class="card omission decision" id="rf-${f.id}" data-fact="${f.id}" tabindex="-1">
+    <div class="card omission decision" id="rf-${f.id}" data-fact="${f.id}" data-flip-id="rf-${f.id}" tabindex="-1">
       <div class="tag">${icon("x")} Fact not found in the source · ${f.id}</div>
       <p>${marked(f.detail)}</p>
       <div class="ev">${icon("quote")}<div><b>${f.id}</b>“${marked(f.source_quote)}”</div></div>
       ${f.checks.filter((k) => k.status !== "pass").map((k) => `<p class="fine">${esc(k.message)}</p>`).join("")}
-      <div class="dismiss-box"><input class="dismiss-reason" placeholder="Why is it safe to drop this fact? (goes in the audit trail)"><button class="small confirm-drop">Dismiss this fact</button></div>
+      <div class="dismiss-box"><input class="dismiss-reason" aria-label="Why it is safe to drop this fact" placeholder="Why is it safe to drop this fact? Goes in the audit trail…"><button class="small confirm-drop">Dismiss this fact</button></div>
     </div>`).join(""));
   $$(".decision[data-drug]").forEach((el) => {
     $(".confirm-resolve", el).onclick = () => {
@@ -484,7 +554,7 @@ function sentenceCard(s, facts, tl) {
   const evidence = s.fact_ids.map((id) => facts[id]
     ? `<div class="ev">${icon("quote")}<div><b>${id}</b>“${marked(facts[id].source_quote)}”</div></div>`
     : `<div class="ev">${icon("warn")}<div><b>${esc(id)}</b>Cites a fact that does not exist.</div></div>`).join("");
-  return `<div class="card sentence ${s.status} ${s.review && s.review.state && !s.needs_review ? "done" : ""} ${state.justDone === s.id ? "just-done" : ""}" id="s-${s.id}" data-id="${s.id}" tabindex="-1">
+  return `<div class="card sentence ${s.status} ${s.review && s.review.state && !s.needs_review ? "done" : ""} ${state.justDone === s.id ? "just-done" : ""}" id="s-${s.id}" data-id="${s.id}" data-flip-id="s-${s.id}" tabindex="-1">
     <div class="s-head"><span class="pill ${s.status}">${icon(sIcon)}${label}</span>${s.risk === "high" ? `<span class="pill high">${icon("shield")}High risk</span>` : ""}
       <span class="id">${s.id}</span>${reviewed}<span class="sec">${esc(UI.en[s.section] || s.section)}</span></div>
     ${why}
@@ -717,7 +787,7 @@ function renderImpact() {
   renderAlerts(c);
   const initials = (who) => who === "patient" ? "P" : who.replace(/^(RN|MD|Dr\.?|NP|PA)\s+/i, "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
   const kind = (who) => who === "patient" ? "patient" : /^(system|homeward)$/i.test(who) ? "system" : "";
-  $("#audit").innerHTML = c.audit.slice().reverse().map((a) => `<div><span class="who-dot ${kind(a.actor)}" aria-hidden="true">${esc(initials(a.actor))}</span><time>${new Date(a.at * 1000).toLocaleTimeString()}</time><span><b>${esc(a.actor)}</b> ${esc(a.action)} <span class="fine">${esc(a.detail)}</span></span></div>`).join("");
+  $("#audit").innerHTML = c.audit.map((a, i) => [a, i]).reverse().map(([a, i]) => `<div data-flip-id="au-${i}"><span class="who-dot ${kind(a.actor)}" aria-hidden="true">${esc(initials(a.actor))}</span><time>${new Date(a.at * 1000).toLocaleTimeString()}</time><span><b>${esc(a.actor)}</b> ${esc(a.action)} <span class="fine">${esc(a.detail)}</span></span></div>`).join("");
   applySizes($("#view-impact"));
 }
 
@@ -741,11 +811,11 @@ function renderAlerts(c) {
     const foot = !a.id ? "" : ack
       ? `<p class="al-ack done">${icon("check")}<span><b>${esc(ack.by)}</b> went over this at ${at(ack.at)}.${ack.note ? ` <span class="fine">${esc(ack.note)}</span>` : ""}</span></p>`
       : `<form class="al-ack" data-id="${esc(a.id)}">
-          ${named ? "" : `<input class="ack-who" maxlength="100" placeholder="Your name, e.g. RN Sam Lee" aria-label="Your name" autocomplete="name">`}
-          <input class="ack-note" maxlength="1000" placeholder="What you went over (optional)" aria-label="What you went over (optional)" value="${esc(state.ackNotes[a.id] || "")}">
+          ${named ? "" : `<input class="ack-who" maxlength="100" placeholder="Your name, e.g. RN Sam Lee…" aria-label="Your name" autocomplete="name">`}
+          <input class="ack-note" maxlength="1000" placeholder="What you went over (optional)…" aria-label="What you went over (optional)" value="${esc(state.ackNotes[a.id] || "")}">
           <button class="primary small">${icon("check")}Mark as gone over</button>
         </form>`;
-    return `<div class="alert-item sev-${sev[0] || "normal"}${ack ? " acked" : ""}${state.justDone === a.id ? " just-done" : ""}">
+    return `<div class="alert-item sev-${sev[0] || "normal"}${ack ? " acked" : ""}${state.justDone === a.id ? " just-done" : ""}" data-flip-id="al-${esc(a.id || a.at)}">
       <div class="al-head">${icon(ack ? "check" : "heart")}<b>${ack ? "Gone over" : "Go over this again"}</b><span class="pill ${sev[1]}">${sev[2]}</span><time>${at(a.at)}</time></div>
       ${q ? `<p class="al-q">${esc(q.question)}</p>` : ""}
       <div class="al-rows">
