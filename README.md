@@ -23,7 +23,7 @@ Rewriting and translating is easy now. Making the result **trustworthy enough to
 2. Homeward **masks identifiers**, has the model build a **fact ledger** (every instruction tied to an exact quote), writes a **grade-6 draft** where every sentence cites its facts, **translates** it, and **back-translates** it for checking.
 3. **Deterministic checks** run on every sentence and a **safety model** reviews it; each sentence comes out green (verified), amber (uncertain) or red (blocked), with the reason in plain words.
 4. **Reviewer** sees only what needs a human: red and amber sentences, every high-risk instruction, and anything missing. They fix, approve or remove, then sign off by name.
-5. **Patient** gets a bilingual packet with read-aloud and a short **teach-back quiz**, on the ward screen or through their own private link on a phone. A wrong answer alerts the nurse to re-explain that item before the patient leaves. Once signed, the packet is locked: nothing can change it without a new sign-off.
+5. **Patient** gets a bilingual packet with read-aloud and a short **teach-back quiz**, on the ward screen or through their own private link on a phone. A wrong answer alerts the nurse to re-explain that item before the patient leaves; the nurse marks each alert as gone over, with their name, once they have. Once signed, the packet is locked: nothing can change it without a new sign-off.
 
 ```
  clinician text ─► mask IDs ─► fact ledger ─► plain draft ─► translate ─► back-translate
@@ -40,6 +40,18 @@ Rewriting and translating is easy now. Making the result **trustworthy enough to
                                                                            ▼
                                                    bilingual packet + teach-back ─► nurse alerts
 ```
+
+## The app
+
+Four steps, each with its own address (`#prepare`, `#review`, `#patient`, `#results`), so Back and Forward move between them and a reload keeps the case open.
+
+| Prepare | Review | Patient | Results |
+|---|---|---|---|
+| ![Prepare](docs/screenshots/1-prepare.png) | ![Review](docs/screenshots/3-review-after.png) | ![Patient](docs/screenshots/4-patient.png) | ![Results](docs/screenshots/5-impact.png) |
+
+- **Lamplight design system:** evergreen for the clinical work, warm lamplight only in the illustrations of home. Green, amber and red are kept for safety states and always come with an icon and a word. Light and dark themes, a "Larger text" switch, and reduced motion are all supported. Details and palette: [`docs/design.md`](docs/design.md).
+- **Readable for patients:** Atkinson Hyperlegible Next, 18 px patient text (21 px larger), at least 4.5:1 contrast everywhere, one quiz question at a time, and a phone layout for the private link.
+- **Nothing loads from elsewhere:** fonts, icons, illustrations and the one animation library (GSAP 3.15.0 with Flip, vendored with its notice in `homeward/static/vendor/gsap/`, staff screens only) are in the repo, so no page makes a third-party request.
 
 ## Safety, as the track asks
 
@@ -78,13 +90,17 @@ These two cases replay hand-written model outputs (see below), so treat their nu
 - Five model calls per packet (facts, draft, translation, back-translation, safety review), all JSON-schema constrained. vLLM batches packets from a whole ward on the same GPU.
 - Setup: [`deploy/amd/README.md`](deploy/amd/README.md).
 
+## Security
+
+Homeward treats everything it holds as health data. In short: identifiers are masked before the model, the model is self-hosted, cases live in memory only, staff pages sit behind `HOMEWARD_STAFF_PASSWORD` with a lockout after repeated wrong tries, the patient link is a 128-bit token that opens only that patient's signed packet, quiz answers never leave the server, and every response carries a strict Content Security Policy (scripts, styles, fonts and images from the app itself only, no inline code). Cross-site requests are refused, and the AMD deploy script puts the app behind HTTPS. The full list, a deployment checklist and the known limits are in [`docs/security.md`](docs/security.md).
+
 ## Run it
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 uvicorn homeward.app:app --port 8000     # replay mode, no GPU needed
-pytest                                    # 48 tests
+pytest                                    # 55 tests
 python -m eval.mutation_eval              # error-injection report
 python -m eval.redteam_eval               # red-team regression (20 injected errors on 5 new cases)
 ```
@@ -100,19 +116,27 @@ uvicorn homeward.app:app --port 8000
 
 Docker: `docker build -t homeward . && docker run -p 8080:8080 homeward`.
 
-Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD`: every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open. Security measures and the deployment checklist are in [docs/security.md](docs/security.md).
+Copy `.env.example` to `.env` to see every setting. Leave `HOMEWARD_LLM_BASE_URL` empty for replay mode.
 
-Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://localhost:8000` (needs Playwright).
+Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD` (12 or more characters): every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open. On an AMD droplet, `deploy/amd/run_app.sh` starts the app behind Caddy with an automatic HTTPS certificate and refuses to start without a password.
+
+Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://localhost:8000 [screenshot-dir]` (needs Playwright). It fails on any Content Security Policy violation and runs an accessibility sweep (contrast, accessible names, 24 px touch targets); set `LAYOUT_DIR=<dir>` to also capture 320, 360 and 1280 px layouts in light, dark and reduced motion.
+
+Real model runs: the **Record real model runs** GitHub Actions workflow (`.github/workflows/record-runs.yml`) runs the sample cases through either a small open model on the runner's CPU or any OpenAI-compatible endpoint such as vLLM on the MI300X (needs repository secrets `HOMEWARD_LLM_BASE_URL` and `HOMEWARD_LLM_API_KEY`), and commits the outputs to a `runs/<label>` branch.
 
 ## Layout
 
 ```
 homeward/   app.py (API) · pipeline.py · verify.py (checks) · phi.py (masking) · quiz.py
-            llm.py (vLLM client, replay) · prompts.py · lexicon.py · textutil.py · static/ (UI)
+            security.py (headers, CSP, staff sign-in, cross-site checks)
+            llm.py (vLLM client, replay) · prompts.py · lexicon.py · textutil.py
+            static/ (UI: index.html · app.js · styles.css · fonts/ · vendor/gsap/)
 data/       samples/ (5 synthetic cases) · replay/ (saved model outputs) · runs/ (real model runs and their reports)
-eval/       mutation_eval.py · gold_fixes.json
-scripts/    record_samples.py · benchmark.py · author_*.py (scripted sample runs)
-deploy/amd/ start_vllm.sh · run_app.sh
+eval/       mutation_eval.py · redteam_eval.py · redteam/ (5 red-team cases) · real_runs_report.py · gold_fixes.json
+tests/      test_*.py (checks, API, security, red team, live client) · e2e/demo_flow.mjs (browser walk-through)
+scripts/    record_samples.py · benchmark.py · author_*.py (scripted sample runs) · render_brand.mjs
+deploy/amd/ start_vllm.sh · run_app.sh (app behind Caddy HTTPS) · README.md
+docs/       research · security · design · eval and red-team reports · real runs · submission · screenshots/ · brand/
 ```
 
 ## Limits
