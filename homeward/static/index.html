@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Homeward</title>
 <meta name="description" content="Verified, multilingual discharge instructions with human review and teach-back.">
-<meta name="theme-color" content="#0B3B37">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141C1A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/static/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/styles.css">
@@ -48,7 +49,7 @@
 <header class="top">
   <div class="brand">
     <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="m-bg" width="32" height="32" rx="9"/><path class="m-house" d="M7.5 16.5 16 9l8.5 7.5V25h-17z"/><rect class="m-win" x="13.75" y="17.5" width="4.5" height="4.5" rx="1"/></svg>
-    <div><strong>Homeward</strong><span>Discharge instructions patients can follow</span></div>
+    <div><strong translate="no">Homeward</strong><span>Discharge instructions patients can follow</span></div>
   </div>
   <nav id="tabs" role="tablist" aria-label="Workflow">
     <button data-view="nurse" class="active" role="tab" aria-selected="true"><span class="n">1</span><span class="t">Prepare<small>Nurse</small></span></button>
@@ -113,12 +114,12 @@
         <div class="card-h"><h2><span class="step-n">1</span>Choose the instructions</h2><span class="fine">Pick a sample or paste your own</span></div>
         <div id="samples" class="samples" role="list"></div>
         <label for="source">Clinician's discharge instructions</label>
-        <textarea id="source" rows="12" placeholder="Paste discharge instructions here, or pick a sample above."></textarea>
+        <textarea id="source" name="source" rows="12" autocomplete="off" placeholder="Paste discharge instructions here, or pick a sample above…"></textarea>
         <label class="file"><input type="file" id="file" accept=".txt,.pdf"><svg class="i"><use href="#i-upload"/></svg><span>Or upload a .txt or .pdf</span><em id="file-name"></em></label>
         <div class="card-h sub"><h2><span class="step-n">2</span>About the patient</h2></div>
         <div class="row">
-          <label>Patient's language <select id="language"></select></label>
-          <label>Patient name <span class="hint">masked before any model call</span><input id="pname" placeholder="optional" autocomplete="off"></label>
+          <label>Patient's language <select id="language" name="language"></select></label>
+          <label>Patient name <span class="hint">masked before any model call</span><input id="pname" name="patient-name" placeholder="Optional…" autocomplete="off" spellcheck="false"></label>
         </div>
         <div class="row between go">
           <p class="fine note"><svg class="i"><use href="#i-lock"/></svg> Use synthetic or de-identified text. This is a demo, not a medical device.</p>
@@ -166,7 +167,7 @@
         <label class="check"><input type="checkbox" id="only-flagged" checked> Show only lines that need a person</label>
         <p class="fine kbd-hint">Keys: <kbd>J</kbd>/<kbd>K</kbd> next or previous, <kbd>A</kbd> approve, <kbd>E</kbd> edit</p>
         <div class="signbox">
-          <label>Reviewer name <input id="reviewer" placeholder="e.g. RN Sam Lee" autocomplete="name"></label>
+          <label>Reviewer name <input id="reviewer" name="reviewer" placeholder="e.g. RN Sam Lee…" autocomplete="name" spellcheck="false"></label>
           <div id="blockers" class="blockers" aria-live="polite"></div>
           <button id="signoff" class="primary lg block"><svg class="i"><use href="#i-shield"/></svg> Sign off and release</button>
         </div>
@@ -195,7 +196,7 @@
     <div id="patient-body" class="hidden patient">
       <div class="patient-hero">
         <div class="hero-text">
-          <p class="p-brand"><svg class="i"><use href="#i-home"/></svg> Homeward</p>
+          <p class="p-brand"><svg class="i"><use href="#i-home"/></svg> <span translate="no">Homeward</span></p>
           <h1 id="p-title">Your instructions for going home</h1>
         </div>
         <p class="signed" id="p-signed"></p>

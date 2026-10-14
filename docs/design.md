@@ -10,7 +10,7 @@ Tokens live at the top of [`homeward/static/styles.css`](../homeward/static/styl
 2. **Uncertainty is visible.** Green, amber and red are reserved for safety states. Each always comes with an icon and a word, never colour alone (NHS rule).
 3. **Motion explains a change.** It shows where something came from, what changed, or that an action worked. Nothing loops except "working" indicators.
 4. **Legible first.** Atkinson Hyperlegible Next, generous patient text (18 px, 21 px with "Larger text"), and contrast of at least 4.5:1 for all text in both themes.
-5. **Nothing loads from elsewhere.** Fonts, icons and illustrations are in the repo, so patient pages make no third-party requests. The UI sets no inline styles or scripts and works under a strict content security policy.
+5. **Nothing loads from elsewhere.** Fonts, icons, illustrations and the one animation library are in the repo, so no page makes third-party requests. The UI sets no inline styles or scripts and works under a strict content security policy.
 
 ## Palette
 
@@ -57,12 +57,40 @@ Where it is used:
 
 - **Changing view.** The page slides in the direction of the workflow, using View Transitions where supported. Elsewhere it fades up.
 - **Opening the app.** The path from hospital to home draws itself, a walker follows it, and the window lights up. This plays once.
-- **Running the pipeline.** Each step fills in, and the trail between steps grows. The current step pulses.
-- **Reviewing.** Cards come in one after another when the view opens, but not on every re-render. An approved card flashes green and its queue check pops. The sign-off button pulses twice when it becomes available, and a seal draws itself after sign-off.
+- **Running the pipeline.** Each step fills in, and the trail between steps grows. The current step pulses, and a soft shine runs across its name while it works.
+- **Reviewing.** Cards come in one after another when the view opens, but not on every re-render. When the queue, the sentence list or the audit trail changes (an approval, an edit, "Only show flagged"), items glide from where they were to where they now sit, and new ones fade in, so a reviewer can see what moved. An approved card flashes green and its queue check pops. The sign-off button pulses twice when it becomes available, and a seal draws itself after sign-off.
+- **Long queues.** The review queue fades at the top or bottom edge when there is more to scroll.
 - **Patient packet.** The porch light comes on when a signed packet arrives. The quiz is a path of stepping stones that ends at the house, which lights up on the last answer. While a section is read aloud, its button shows a level meter and works as a stop button.
 - **Results.** The numbers count up and the bars grow. When a nurse marks a teach-back alert as gone over, it flashes green and folds down to who went over it, when, and their note.
 
-With `prefers-reduced-motion`, every animation and transition is off, and each screen shows its final state.
+With `prefers-reduced-motion`, every animation and transition is off, and each screen shows its final state. The glide library is not even loaded then.
+
+## Moving around
+
+Each step has its own address (`#prepare`, `#review`, `#patient`, `#results`), so the browser's Back and Forward buttons move between steps, and a reload keeps the case and the step. Leaving the page with unsaved text in an edit box asks first. The patient's private link has no steps and ignores these addresses.
+
+## Checks
+
+`node tests/e2e/demo_flow.mjs <url> <dir>` walks the whole demo in Playwright and fails on any page error or content-security-policy block. It also sweeps every screen (laptop and phone, light and dark, and the patient's link) for:
+
+- text contrast of at least 4.5:1, measured against the real backgrounds behind each piece of text;
+- an accessible name on every button, link and field;
+- touch targets of at least 24 by 24 px on phones.
+
+`LAYOUT_DIR=<dir>` adds screenshots at 320, 360 and 1280 px in light, dark and reduced motion.
+
+## Libraries
+
+Six open-source projects were checked for malware and for what they could add (14 October 2026). None contained malware. The full report, with what was scanned and how, is in the hackathon design folder (`repo-vetting.md`).
+
+| Project | Used | Why |
+|---|---|---|
+| [GSAP](https://gsap.com) 3.15.0, Flip plugin | Staff screens | The glide when lists change. Vendored in `homeward/static/vendor/gsap/` with its notice (GSAP Standard License, no charge). Loaded only on staff screens and never under reduced motion, so patient pages stay light. Flip runs in `simple` mode so it never writes a `style` attribute that the security policy would block. |
+| [Playwright](https://playwright.dev) | Tests only | The end-to-end walk, the accessibility sweep and the screenshots. |
+| [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) (Vercel Labs, MIT) | As a checklist | Led to the step addresses, the unsaved-text warning, theme colours, field names, `touch-action`, `scroll-padding` and `translate="no"` on the brand. |
+| [React Bits](https://reactbits.dev) | Ideas only | The working-step shine and the queue edge fades are rebuilt in plain CSS. No code is copied: its licence (MIT with Commons Clause) does not allow redistributing ported components. |
+| [Lenis](https://lenis.darkroom.engineering) | Not in the app | Smooth scrolling takes over the page's own scroll, which gets in the way of keyboard, zoom and screen-reader use. It is used only on the design portfolio page. |
+| [Vanta](https://www.vantajs.com) | No | A looping WebGL background drains phone batteries, adds about 600 KB of three.js, and is decoration rather than explanation. It has also had no commits since 2023. |
 
 ## Illustrations
 
@@ -78,4 +106,6 @@ The illustrations are drawn in-house as inline SVG: flat shapes, a 2.5 px evergr
 - Better (Better.care), [animation and motion in healthcare applications](https://www.better.care/?p=2458): use motion for feedback, attention and orientation, and prefer "less delight, more usability".
 - Val Head, [How fast should your UI animations be?](https://valhead.com/?p=2978): 200 to 500 ms, with the shorter end for smaller elements.
 - UXmatters, [Designing calm UX](https://www.uxmatters.com/mt/archives/2025/05/designing-calm-ux-principles-for-reducing-users-anxiety.php): progressive disclosure, a stable structure, reassuring copy, and immediate feedback.
+- Paul Lewis, [FLIP your animations](https://aerotwist.com/blog/flip-your-animations/): measure first and last positions, then animate the difference with transforms only.
+- Vercel, [Web Interface Guidelines](https://vercel.com/design/guidelines): the checklist behind the URL, form and touch fixes.
 - Chrome for Developers, [View transitions in 2025](https://developer.chrome.com/blog/view-transitions-in-2025): same-document transitions in Chrome 111+, Safari 18+ and Firefox 144+.

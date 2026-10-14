@@ -129,6 +129,91 @@ await settle(phone);
 await phone.screenshot({ path: `${out}/7-patient-link.png`, animations: "disabled" });
 console.log("patient link:", link.replace(/[\w-]{12,}$/, "<token>"), "| staff tabs shown:", await phone.isVisible("#tabs"),
   "| quiz:", (await phone.textContent("#quiz")).trim().slice(0, 60));
+// Accessibility sweep on every view: text contrast (WCAG AA), a name on every control, and on phones
+// touch targets of at least 24 by 24 px (WCAG 2.2 target size). Light and dark, laptop and phone.
+const a11y = (p, where, phoneSize) => p.evaluate(({ where, phoneSize }) => {
+  const bad = [];
+  const parse = (c) => {
+    let m = c.match(/^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/);
+    if (m) return [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]];
+    m = c.match(/^color\(srgb ([\d.e-]+) ([\d.e-]+) ([\d.e-]+)(?: \/ ([\d.]+))?\)$/);
+    if (m) return [m[1] * 255, m[2] * 255, m[3] * 255, m[4] == null ? 1 : +m[4]];
+    return null;
+  };
+  const over = (f, b) => [0, 1, 2].map((i) => f[i] * f[3] + b[i] * (1 - f[3])).concat(1);
+  const lum = (c) => { const l = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2]; };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const name = (el) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.classList.length ? "." + [...el.classList].join(".") : ""} "${(el.textContent || el.value || "").trim().slice(0, 30)}"`;
+  // The background behind an element: composite every background colour up to the page. Gradients and images are skipped.
+  const backdrop = (el) => {
+    const layers = [], r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    for (let n = el; n; n = n.parentElement) {
+      const cs = getComputedStyle(n), box = n.getBoundingClientRect();
+      // A label placed outside its parent's box (a gauge's "Target" tag) does not sit on that parent's colour.
+      if (n !== el && n !== document.body && n !== document.documentElement && !(x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)) continue;
+      if (cs.backgroundImage !== "none" && !n.matches(".queue-list")) return null;
+      const c = parse(cs.backgroundColor);
+      if (c === null) return null;
+      if (c[3] > 0) layers.push(c);
+      if (c[3] >= 1) break;
+    }
+    return layers.reverse().reduce((b, f) => over(f, b), [255, 255, 255, 1]);
+  };
+  const shown = (el) => el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) && el.getClientRects().length;
+  let checked = 0, skipped = 0;
+  for (const el of document.querySelectorAll("body *")) {
+    if (el.closest("svg, .sprite, [aria-hidden=true], button:disabled, .hidden") || !shown(el)) continue;
+    const text = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (!text) continue;
+    const cs = getComputedStyle(el), fg = parse(cs.color), bg = backdrop(el);
+    if (!fg || !bg || fg[3] === 0) { skipped++; continue; }
+    let alpha = fg[3];
+    for (let n = el; n; n = n.parentElement) alpha *= +getComputedStyle(n).opacity;
+    const size = parseFloat(cs.fontSize), bold = +cs.fontWeight >= 700;
+    const need = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
+    const r = ratio(over([fg[0], fg[1], fg[2], alpha], bg), bg);
+    checked++;
+    if (r < need - 0.01) bad.push(`${where}: contrast ${r.toFixed(2)} < ${need} on ${name(el)}`);
+  }
+  for (const el of document.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea, summary")) {
+    if (!shown(el) || el.closest(".hidden, .sprite")) continue;
+    const label = el.getAttribute("aria-label") || el.textContent.trim() || el.title || el.placeholder || (el.labels && [...el.labels].map((l) => l.textContent.trim()).join(""));
+    if (!label) bad.push(`${where}: no accessible name on ${name(el)}`);
+    if (phoneSize && el.type !== "file") {
+      const box = el.getBoundingClientRect();
+      // Links inside a sentence are exempt; everything else needs room for a fingertip.
+      const inline = el.matches("a") && getComputedStyle(el).display === "inline";
+      const hit = el.closest("label") ? el.closest("label").getBoundingClientRect() : box;
+      if (!inline && (Math.max(box.width, hit.width) < 24 || Math.max(box.height, hit.height) < 24)) bad.push(`${where}: target ${Math.round(box.width)}x${Math.round(box.height)} px on ${name(el)}`);
+    }
+  }
+  return { bad, checked, skipped };
+}, { where, phoneSize });
+
+const sweepA11y = async (p, label, views, phoneSize) => {
+  let total = 0;
+  for (const v of views) {
+    if (v) { await p.click(`#tabs button[data-view="${v}"]`); }
+    await settle(p);
+    const r = await a11y(p, `${label} ${v || "patient link"}`, phoneSize);
+    errors.push(...r.bad);
+    total += r.checked;
+  }
+  return total;
+};
+const views = ["nurse", "review", "patient", "impact"];
+let checkedText = await sweepA11y(page, "laptop light", views, false);
+await page.emulateMedia({ colorScheme: "dark" });
+checkedText += await sweepA11y(page, "laptop dark", views, false);
+await page.setViewportSize({ width: 360, height: 740 });
+checkedText += await sweepA11y(page, "phone dark", views, true);
+await page.emulateMedia({ colorScheme: "light" });
+checkedText += await sweepA11y(page, "phone light", views, true);
+checkedText += await sweepA11y(phone, "phone", [null], true);
+await phone.emulateMedia({ colorScheme: "dark" });
+checkedText += await sweepA11y(phone, "phone dark", [null], true);
+console.log("accessibility sweep:", checkedText, "text elements checked,", errors.filter((e) => /contrast|accessible name|target/.test(e)).length, "problems");
+
 // Optional layout sweep (LAYOUT_DIR=dir): every view at phone and laptop sizes, light, dark and reduced motion.
 if (process.env.LAYOUT_DIR) {
   const dir = process.env.LAYOUT_DIR;
