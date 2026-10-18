@@ -41,6 +41,17 @@ Key text contrast: ink on linen 15.1:1, muted on white 6.3:1, white on evergreen
 
 Atkinson Hyperlegible Next (Braille Institute, OFL), self-hosted variable font, weights 200 to 800. Vietnamese and Chinese fall back to the system font. Numbers are tabular so doses and times line up. Headings use `text-wrap: balance`.
 
+## Layout
+
+Each screen leads with what the person in front of it has to do next.
+
+- **Header.** Brand on the left, the four steps in the centre, the model status on the right, all on one row on laptops. Below 1100 px the tagline and the status detail ("no GPU connected") drop away; the status keeps them in its tooltip. On phones the brand and status share a row, the four steps sit evenly below it with their names, and the bar scrolls away with the page rather than holding a fifth of the screen.
+- **One set of numbers.** Only the four workflow steps are numbered. Card headings carry an icon instead, so "1 Choose the instructions" never competes with "1 Prepare".
+- **Prepare.** Sample cards are equal height, with a one-line note on where the saved run came from ("Recorded on CPU, not AMD"; the full model, hardware and time are in the tooltip). When the checks finish, the result and "Open review" move to the top of the steps card and the steps fold into a compact checklist. On laptops the steps card stays in view while the nurse scrolls the form; on phones the page scrolls to it when the run starts.
+- **Review.** A high-risk line that passed every check gets one quiet line ("High risk. Every check passed…") instead of a full warning box. It is routine, and the boxes are kept for what actually failed.
+- **Results.** Teach-back alerts come first, full width, because they are the nurse's to-do before the patient leaves. With room, what the patient chose and what the packet says sit side by side. The model card lists only what was measured, so a scripted replay shows its mode and an honest note rather than a column of dashes. On phones the headline number spans the width and the other four pair up.
+- **The patient's link** has no app bar. The packet's own header carries the name, and staff copy ("…patients can follow") never reaches the patient.
+
 ## Motion
 
 | Token | Value | Used for |
@@ -57,7 +68,7 @@ Where it is used:
 
 - **Changing view.** The page slides in the direction of the workflow, using View Transitions where supported. Elsewhere it fades up.
 - **Opening the app.** The path from hospital to home draws itself, a walker follows it, and the window lights up. This plays once.
-- **Running the pipeline.** Each step fills in, and the trail between steps grows. The current step pulses, and a soft shine runs across its name while it works.
+- **Running the pipeline.** Each step fills in, and the trail between steps grows. The current step pulses, and a soft shine runs across its name while it works. When the last step is done, the result rises in above the steps.
 - **Reviewing.** Cards come in one after another when the view opens, but not on every re-render. When the queue, the sentence list or the audit trail changes (an approval, an edit, "Only show flagged"), items glide from where they were to where they now sit, and new ones fade in, so a reviewer can see what moved. An approved card flashes green and its queue check pops. The sign-off button pulses twice when it becomes available, and a seal draws itself after sign-off.
 - **Long queues.** The review queue fades at the top or bottom edge when there is more to scroll.
 - **Patient packet.** The porch light comes on when a signed packet arrives. The quiz is a path of stepping stones that ends at the house, which lights up on the last answer. While a section is read aloud, its button shows a level meter and works as a stop button.
