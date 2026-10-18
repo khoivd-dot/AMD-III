@@ -126,13 +126,13 @@ function updateTabs() {
     const done = b.classList.contains("done");
     // Only touch the number when it changes, so the check pops in once rather than on every poll.
     if (b.dataset.done !== String(done)) { $(".n", b).innerHTML = done ? icon("check") : String(i + 1); b.dataset.done = done; }
-    if (i) b.classList.toggle("trail", $$("#tabs button")[i - 1].classList.contains("done"));
+    if (i) b.classList.toggle("reached", $$("#tabs button")[i - 1].classList.contains("done"));
   });
   tab("review").title = ready ? "" : "Create a packet first";
   tab("patient").title = signed ? "" : "Unlocks after sign-off";
 }
 
-// Results count up when the Impact view opens. Screen readers get the final value straight away.
+// Numbers count up when the Results view opens. Screen readers get the final value straight away.
 function countUp(root) {
   if (calm()) return;
   $$("[data-n]", root).forEach((el) => {
@@ -171,10 +171,12 @@ async function init() {
   state.meta = await api("/api/meta");
   const llm = state.meta.llm;
   const mode = $("#mode");
+  // The detail after the dot drops away on narrower screens; the tooltip keeps all of it.
   if (llm.mode === "live") {
-    mode.textContent = `Live · ${llm.model.split("/").pop()} on ${llm.hardware}`;
+    mode.innerHTML = `<span class="txt">Live<span class="more"> · ${esc(llm.model.split("/").pop())} on ${esc(llm.hardware)}</span></span>`;
+    mode.title = `Live: ${llm.model} on ${llm.hardware}`;
   } else {
-    mode.textContent = "Sample runs · no GPU connected";
+    mode.innerHTML = `<span class="txt">Sample runs<span class="more"> · no GPU connected</span></span>`;
     mode.classList.add("replay");
     mode.title = "The AMD endpoint is switched off. Sample cases replay their saved model outputs; the checks, review and quiz run live.";
   }
@@ -187,8 +189,11 @@ async function init() {
     b.className = "sample";
     b.setAttribute("role", "listitem");
     b.disabled = !s.available;
-    const tag = s.replay ? (s.replay.source === "recorded" ? `Recorded on ${s.replay.hardware || "AMD"}` : "Scripted sample run") : (s.available ? "" : "Needs the AMD endpoint");
-    b.innerHTML = `<span class="ok">${icon("check")}</span><b>${esc(state.meta.languages[s.language])}</b>${esc(s.title.replace(/, [A-Z][a-z]+$/, ""))}<span class="tag">${esc(tag)}</span>`;
+    // A short provenance line on the card; the full model, hardware and time are in its tooltip.
+    const rec = s.replay && s.replay.source === "recorded", hw = (rec && s.replay.hardware) || "";
+    const tag = s.replay ? (rec ? `Recorded on ${/not AMD/i.test(hw) ? "CPU, not AMD" : hw.split("·")[0].trim() || "AMD"}` : "Scripted sample run") : (s.available ? "" : "Needs the AMD endpoint");
+    if (rec) b.title = `Recorded ${s.replay.recorded_at || ""} with ${s.replay.model || "the model"} on ${hw || "AMD"}`;
+    b.innerHTML = `<span class="ok">${icon("check")}</span><b>${esc(state.meta.languages[s.language])}</b>${esc(s.title.replace(/, [A-Z][a-z]+$/, ""))}<span class="tag">${s.available ? "" : icon("lock")}${esc(tag)}</span>`;
     b.onclick = () => pickSample(s.id, b);
     box.appendChild(b);
   });
@@ -273,6 +278,8 @@ async function start() {
     clearInterval(state.poll);
     state.poll = setInterval(refresh, 600);
     refresh();
+    // On a phone the steps sit below the form, so bring them into view as they start filling in.
+    if (matchMedia("(max-width: 820px)").matches) $("#progress-card").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
   } catch (e) {
     showError(e.message);
     busy(false);
@@ -346,6 +353,9 @@ function renderStages(c) {
     const i = order.indexOf(li.dataset.k);
     li.className = !c ? "" : c.stage === "ready" || i < idx ? "done" : i === idx ? "now" : "";
   });
+  const finished = !!c && c.stage === "ready";
+  $("#progress-card").classList.toggle("finished", finished);
+  $("#progress-title").textContent = finished ? "Ready for review" : "What happens next";
   $("#elapsed").textContent = c && state.started ? `${((Date.now() - state.started) / 1000).toFixed(1)} s` : "";
   const sum = $("#run-summary");
   if (c && c.stage === "ready") {
@@ -550,7 +560,7 @@ function sentenceCard(s, facts, tl) {
   const badBack = failed.has("back_numbers") ? minus(back, en) : null;
   const badEn = failed.has("translation_numbers") ? minus(en, tlN) : null;
   const why = failing.length ? `<div class="reason ${s.status}">${icon(sIcon)}<div><b>${s.status === "red" ? "Blocked: edit or remove" : "Why this needs a look"}</b><ul>${failing.map((k) => `<li>${esc(k.message)}</li>`).join("")}</ul></div></div>`
-    : highOnly ? `<div class="reason high">${icon("shield")}<div><b>High-risk instruction</b>Every check passed, but a person must confirm medicine changes and warning signs.</div></div>` : "";
+    : highOnly ? `<div class="reason high slim">${icon("shield")}<span><b>High risk.</b> Every check passed. Medicine changes and warning signs always need a person to confirm them.</span></div>` : "";
   const evidence = s.fact_ids.map((id) => facts[id]
     ? `<div class="ev">${icon("quote")}<div><b>${id}</b>“${marked(facts[id].source_quote)}”</div></div>`
     : `<div class="ev">${icon("warn")}<div><b>${esc(id)}</b>Cites a fact that does not exist.</div></div>`).join("");
@@ -773,16 +783,18 @@ function renderImpact() {
   const u = m.model, llm = state.meta.llm;
   const replay = llm.mode !== "live";
   const meta = (llm.cases || {})[c.sample_id] || {};
-  $("#model").innerHTML = `<dl class="kv">
-    <dt>Mode</dt><dd>${replay ? (meta.source === "recorded" ? `Replay of a recorded run (${esc(meta.recorded_at || "")})` : "Scripted sample run, no GPU connected") : "Live"}</dd>
-    <dt>Model</dt><dd>${esc(replay ? meta.model || "–" : llm.model)}</dd>
-    <dt>Hardware</dt><dd>${esc(replay ? meta.hardware || "–" : llm.hardware)}</dd>
-    <dt>Model calls</dt><dd>${u.calls}</dd>
-    <dt>Model time</dt><dd>${u.seconds ? u.seconds + " s" : "–"}</dd>
-    <dt>Tokens</dt><dd>${u.prompt_tokens + u.completion_tokens || "–"}</dd>
-    <dt>Throughput</dt><dd>${u.tokens_per_second ? u.tokens_per_second + " tokens/s" : "–"}</dd>
-    <dt>GPU cost per packet</dt><dd>${m.gpu_cost_usd != null ? "$" + m.gpu_cost_usd.toFixed(4) + " at $1.99/h" : "–"}</dd>
-  </dl><p class="fine">${replay ? "Homeward is built to run its model on a single AMD Instinct MI300X through vLLM and ROCm, on infrastructure the hospital controls. This case replays saved model output, so nothing above was measured on a GPU just now."
+  // Only what was actually measured is listed; a scripted replay has no model numbers, so it shows none.
+  const spec = [
+    ["Mode", replay ? (meta.source === "recorded" ? `Replay of a recorded run (${meta.recorded_at || ""})` : "Scripted sample run, no GPU connected") : "Live"],
+    ["Model", replay ? meta.model : llm.model],
+    ["Hardware", replay ? meta.hardware : llm.hardware],
+    ["Model calls", u.calls || null],
+    ["Model time", u.seconds ? `${u.seconds} s` : null],
+    ["Tokens", u.prompt_tokens + u.completion_tokens || null],
+    ["Throughput", u.tokens_per_second ? `${u.tokens_per_second} tokens/s` : null],
+    ["GPU cost per packet", m.gpu_cost_usd != null ? `$${m.gpu_cost_usd.toFixed(4)} at $1.99/h` : null],
+  ].filter(([, v]) => v != null && v !== "");
+  $("#model").innerHTML = `<dl class="kv">${spec.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl><p class="fine">${replay ? "Homeward is built to run its model on a single AMD Instinct MI300X through vLLM and ROCm, on infrastructure the hospital controls. This case replays saved model output, so nothing above was measured on a GPU just now."
       : "The model runs on the endpoint shown above. Identifiers are masked before any model call."}</p>`;
   renderAlerts(c);
   const initials = (who) => who === "patient" ? "P" : who.replace(/^(RN|MD|Dr\.?|NP|PA)\s+/i, "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
@@ -802,6 +814,7 @@ function renderAlerts(c) {
   const named = $("#reviewer").value.trim();
   const open = c.alerts.filter((a) => !a.acknowledged).length;
   $("#alerts-sum").textContent = open ? `${open} to go over before the patient leaves` : c.alerts.length ? "All gone over" : "";
+  $("#alerts-card").classList.toggle("open", open > 0);
   $("#alerts").innerHTML = c.alerts.length ? c.alerts.map((a) => {
     const f = facts[a.fact_id] || {}, q = quiz[a.question], s = q && sents[q.sentence_id];
     const chose = q && q.answer && q.options[q.answer.choice];

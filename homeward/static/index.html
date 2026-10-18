@@ -43,6 +43,7 @@
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v15H6a2 2 0 00-2 2z"/><path d="M4 20a2 2 0 002 1h13v-3M8 7h7M8 11h5"/></symbol>
+    <symbol id="i-steps" viewBox="0 0 24 24"><path d="M3.5 6.5L5 8l3-3M3.5 12.5L5 14l3-3M3.5 18.5L5 20l3-3M11.5 6.5h9M11.5 12.5h9M11.5 18.5h9"/></symbol>
   </defs>
 </svg>
 
@@ -55,7 +56,7 @@
     <button data-view="nurse" class="active" role="tab" aria-selected="true"><span class="n">1</span><span class="t">Prepare<small>Nurse</small></span></button>
     <button data-view="review" role="tab" aria-selected="false"><span class="n">2</span><span class="t">Review<small>Reviewer</small></span></button>
     <button data-view="patient" role="tab" aria-selected="false"><span class="n">3</span><span class="t">Patient<small>Take-home</small></span></button>
-    <button data-view="impact" role="tab" aria-selected="false"><span class="n">4</span><span class="t">Impact<small>Results</small></span></button>
+    <button data-view="impact" role="tab" aria-selected="false"><span class="n">4</span><span class="t">Results<small>Follow-up</small></span></button>
   </nav>
   <div id="mode" class="mode" tabindex="0"></div>
 </header>
@@ -111,12 +112,12 @@
     </div>
     <div class="grid2">
       <div class="card form-card">
-        <div class="card-h"><h2><span class="step-n">1</span>Choose the instructions</h2><span class="fine">Pick a sample or paste your own</span></div>
+        <div class="card-h"><h2><span class="h-ico"><svg class="i"><use href="#i-quote"/></svg></span>Choose the instructions</h2><span class="fine">Pick a sample or paste your own</span></div>
         <div id="samples" class="samples" role="list"></div>
         <label for="source">Clinician's discharge instructions</label>
         <textarea id="source" name="source" rows="12" autocomplete="off" placeholder="Paste discharge instructions here, or pick a sample above…"></textarea>
         <label class="file"><input type="file" id="file" accept=".txt,.pdf"><svg class="i"><use href="#i-upload"/></svg><span>Or upload a .txt or .pdf</span><em id="file-name"></em></label>
-        <div class="card-h sub"><h2><span class="step-n">2</span>About the patient</h2></div>
+        <div class="card-h sub"><h2><span class="h-ico"><svg class="i"><use href="#i-user"/></svg></span>About the patient</h2></div>
         <div class="row">
           <label>Patient's language <select id="language" name="language"></select></label>
           <label>Patient name <span class="hint">masked before any model call</span><input id="pname" name="patient-name" placeholder="Optional…" autocomplete="off" spellcheck="false"></label>
@@ -127,10 +128,11 @@
         </div>
       </div>
       <div class="card" id="progress-card" aria-live="polite">
-        <div class="card-h"><h2><span class="step-n">3</span>What happens next</h2><span class="fine" id="elapsed"></span></div>
-        <ol id="stages" class="stages"></ol>
+        <div class="card-h"><h2><span class="h-ico"><svg class="i"><use href="#i-steps"/></svg></span><span id="progress-title">What happens next</span></h2><span class="fine" id="elapsed"></span></div>
+        <!-- Once the checks finish, the result comes first and the steps fold down to a compact list. -->
         <div id="run-error" class="error hidden" role="alert"></div>
         <div id="run-summary"></div>
+        <ol id="stages" class="stages"></ol>
       </div>
     </div>
     <details class="card hidden ledger" id="ledger-card">
@@ -251,16 +253,17 @@
     </div>
     <div id="impact-body" class="hidden">
       <div class="intro"><p class="eyebrow">Step 4 · Results for this case</p><h1>What Homeward did for this patient</h1></div>
+      <!-- The nurse's to-do comes first: anything the patient got wrong must be gone over before they leave. -->
+      <div class="card alerts-card" id="alerts-card"><div class="card-h"><h2><span class="h-ico"><svg class="i"><use href="#i-heart"/></svg></span>Nurse alerts from teach-back</h2><span class="fine" id="alerts-sum"></span></div><div id="alerts"></div></div>
       <div id="kpis" class="kpis stagger"></div>
       <div class="grid2">
         <div class="card"><div class="card-h"><h2>Reading level</h2><span class="fine">Flesch-Kincaid grade, lower is easier</span></div><div id="grade"></div></div>
         <div class="card"><div class="card-h"><h2>What the checks caught</h2></div><div id="caught"></div></div>
       </div>
-      <div class="grid2">
-        <div class="card"><div class="card-h"><h2>Nurse alerts from teach-back</h2><span class="fine" id="alerts-sum"></span></div><div id="alerts"></div></div>
+      <div class="grid2 wide-right">
         <div class="card"><div class="card-h"><h2>Model on AMD</h2></div><div id="model"></div></div>
+        <div class="card"><div class="card-h"><h2>Audit trail</h2><span class="fine">Every action, by whom</span></div><div id="audit" class="audit"></div></div>
       </div>
-      <div class="card"><div class="card-h"><h2>Audit trail</h2><span class="fine">Every action, by whom</span></div><div id="audit" class="audit"></div></div>
     </div>
   </section>
 </main>

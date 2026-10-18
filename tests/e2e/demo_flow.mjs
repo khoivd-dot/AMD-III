@@ -21,7 +21,7 @@ const shot = async (n) => {
   await settle(page);
   // Set through the CSSOM rather than a <style> tag, which the app's content security policy would refuse.
   const unstick = (on) => page.evaluate((on) => {
-    document.querySelectorAll(".top, .queue").forEach((el) => { el.style.position = on ? "static" : ""; if (el.matches(".queue")) el.style.maxHeight = on ? "none" : ""; });
+    document.querySelectorAll(".top, .queue, #progress-card").forEach((el) => { el.style.position = on ? "static" : ""; if (el.matches(".queue")) el.style.maxHeight = on ? "none" : ""; });
     document.querySelector(".toast").style.display = on ? "none" : "";
   }, on);
   await unstick(true);
