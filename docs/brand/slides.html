@@ -1,34 +1,36 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Homeward slides</title><style>
+@font-face{font-family:"Atkinson Next";font-weight:200 800;src:url(../../homeward/static/fonts/atkinson-next-latin.woff2) format("woff2")}
+@font-face{font-family:"Atkinson Next";font-weight:200 800;src:url(../../homeward/static/fonts/atkinson-next-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF}
 @page{size:1600px 900px;margin:0}
 *{box-sizing:border-box;margin:0}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1c2421;background:#ddd}
-.s{width:1600px;height:900px;padding:80px 100px;position:relative;background:#f6f7f5;page-break-after:always;overflow:hidden}
+body{font-family:"Atkinson Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;color:#14211F;background:#ddd}
+.s{width:1600px;height:900px;padding:80px 100px;position:relative;background:#F6F4EF;page-break-after:always;overflow:hidden}
 .s.dark{background:#0b3b37;color:#fff}
 .k{font-size:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0f766e;margin-bottom:18px}
-.dark .k{color:#5eead4}
+.dark .k{color:#7DE3CF}
 h1{font-size:64px;line-height:1.08;letter-spacing:-.03em;margin-bottom:28px}
 h2{font-size:52px;line-height:1.1;letter-spacing:-.02em;margin-bottom:36px}
 p,li{font-size:28px;line-height:1.45}
-.muted{color:#5d6b66}.dark .muted{color:#cdeae6}
+.muted{color:#56635F}.dark .muted{color:#CFE7E2}
 ul{padding-left:30px}li{margin-bottom:14px}
 .n{position:absolute;bottom:40px;right:60px;font-size:18px;color:#9aa8a3}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
-.stat{background:#fff;border-radius:18px;padding:30px;border:1px solid #e2e6e3}
+.stat{background:#fff;border-radius:18px;padding:30px;border:1px solid #E4E0D6}
 .stat b{display:block;font-size:64px;letter-spacing:-.03em;color:#0f766e;margin-bottom:8px}
 .stat span{font-size:22px;line-height:1.35;display:block}
-.stat small{display:block;font-size:16px;color:#5d6b66;margin-top:12px}
+.stat small{display:block;font-size:16px;color:#56635F;margin-top:12px}
 .flow{display:flex;gap:14px;align-items:stretch;margin-top:20px}
-.flow div{flex:1;background:#fff;border:1px solid #e2e6e3;border-radius:16px;padding:22px;font-size:21px;line-height:1.35}
+.flow div{flex:1;background:#fff;border:1px solid #E4E0D6;border-radius:16px;padding:22px;font-size:21px;line-height:1.35}
 .flow div b{display:block;font-size:24px;margin-bottom:8px;color:#0f766e}
 table{border-collapse:collapse;width:100%;font-size:21px}
-td,th{padding:12px 14px;border-bottom:1px solid #e2e6e3;text-align:left;vertical-align:top}
-th{font-size:17px;text-transform:uppercase;color:#5d6b66;letter-spacing:.04em}
+td,th{padding:12px 14px;border-bottom:1px solid #E4E0D6;text-align:left;vertical-align:top}
+th{font-size:17px;text-transform:uppercase;color:#56635F;letter-spacing:.04em}
 td:first-child{font-weight:700;width:26%}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
-img.shot{width:100%;border-radius:14px;border:1px solid #e2e6e3;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+img.shot{width:100%;border-radius:14px;border:1px solid #E4E0D6;box-shadow:0 10px 30px rgba(0,0,0,.12)}
 .crop{height:640px;overflow:hidden;border-radius:14px}
 .pill{display:inline-block;font-size:18px;font-weight:700;padding:4px 14px;border-radius:999px}
-.g{background:#e7f5ec;color:#15803d}.r{background:#fdecec;color:#b91c1c}.a{background:#fdf3e2;color:#b45309}
+.g{background:#E5F4EA;color:#1D7A3E}.r{background:#FDECEA;color:#B42318}.a{background:#FCF1DE;color:#9A5800}
 .quote{font-size:40px;line-height:1.3;max-width:1200px}
 </style></head><body>
 
@@ -80,10 +82,10 @@ img.shot{width:100%;border-radius:14px;border:1px solid #e2e6e3;box-shadow:0 10p
 
 <section class="s"><div class="k">Results</div><h2>What it caught</h2>
 <div class="grid">
-<div class="stat"><b style="font-size:54px">8.7 → 3.8</b><span>reading grade, heart failure case</span><small>Flesch-Kincaid on the English draft</small></div>
+<div class="stat"><b style="font-size:54px">8.7 → 4.1</b><span>reading grade, heart failure case</span><small>Flesch-Kincaid on the English draft</small></div>
 <div class="stat"><b>63%</b><span>of sentences verified with no human needed</span><small>the reviewer reads 6 of 16</small></div>
 <div class="stat"><b>3 / 3</b><span>planted problems stopped: 15 L vs 1.5 L, hold-as-stop, missing warning</span><small>plus an invented ibuprofen in the Italian case</small></div>
-<div class="stat"><b>99.4%</b><span>of 161 injected errors flagged by deterministic checks alone</span><small>0 false alarms on clean packets; synthetic test</small></div>
+<div class="stat"><b>100%</b><span>of 162 injected errors flagged by the deterministic checks alone</span><small>0 false alarms on 33 clean sentences; synthetic test</small></div>
 </div><div class="n">8</div></section>
 
 <section class="s dark"><div class="k">AMD</div><h2>A 72B multilingual model on one GPU, inside the hospital</h2>
