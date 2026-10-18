@@ -49,7 +49,8 @@ Four steps, each with its own address (`#prepare`, `#review`, `#patient`, `#resu
 |---|---|---|---|
 | ![Prepare](docs/screenshots/1-prepare.png) | ![Review](docs/screenshots/3-review-after.png) | ![Patient](docs/screenshots/4-patient.png) | ![Results](docs/screenshots/5-impact.png) |
 
-- **Lamplight design system:** evergreen for the clinical work, warm lamplight only in the illustrations of home. Green, amber and red are kept for safety states and always come with an icon and a word. Light and dark themes, a "Larger text" switch, and reduced motion are all supported. Details and palette: [`docs/design.md`](docs/design.md).
+- **Each screen leads with the next job:** when the checks finish, Prepare puts "7 items need a person" and **Open review** on top and folds the finished steps into a checklist. Review keeps full warning boxes for what actually failed, and gives high-risk lines that passed every check one quiet line. Results opens with the teach-back alerts the nurse must go over, showing what the patient chose next to what the packet says. The patient's link is just their packet, with no app bar.
+- **Lamplight design system:** evergreen for the clinical work, warm lamplight only in the illustrations of home. Green, amber and red are kept for safety states and always come with an icon and a word. Light and dark themes, a "Larger text" switch, and reduced motion are all supported. On laptops the header keeps the four steps on one row; on phones they sit on a second row with their names, and the bar scrolls away with the page. Details, palette and layout: [`docs/design.md`](docs/design.md).
 - **Readable for patients:** Atkinson Hyperlegible Next, 18 px patient text (21 px larger), at least 4.5:1 contrast everywhere, one quiz question at a time, and a phone layout for the private link.
 - **Nothing loads from elsewhere:** fonts, icons, illustrations and the one animation library (GSAP 3.15.0 with Flip, vendored with its notice in `homeward/static/vendor/gsap/`, staff screens only) are in the repo, so no page makes a third-party request.
 
@@ -81,7 +82,7 @@ These two cases replay hand-written model outputs (see below), so treat their nu
 
 **Real model output** ([`docs/real-runs.md`](docs/real-runs.md)): an open 3B model on a GitHub CPU runner (not AMD) dropped medicines and diet limits, labelled every fact "diagnosis", turned a STOP into "must not stop", and mixed Chinese into Vietnamese. Each of those is now flagged. A second run with the improved prompts finished all five cases; its errors (a last injection date moved from 26 to 21 October, "twice a day" translated as "a day", a dropped emergency number) are all flagged too.
 
-**Sample runs:** the two cases above replay hand-written model outputs that reproduce error types from the studies, so the demo works without a GPU, and the app says so on screen. The Vietnamese, French and Spanish diabetes cases replay the second real 3B run, labelled "Recorded on GitHub Actions CPU runner (not AMD)", so you can review real, unscripted model output in the app. `scripts/record_samples.py` replaces them with recorded runs from the MI300X, and `scripts/benchmark.py` measures latency, throughput and cost per packet.
+**Sample runs:** the two cases above replay hand-written model outputs that reproduce error types from the studies, so the demo works without a GPU, and the app says so on screen. The Vietnamese, French and Spanish diabetes cases replay the second real 3B run, labelled "Recorded on CPU, not AMD" (the card's tooltip names the model, the GitHub Actions runner and when it was recorded), so you can review real, unscripted model output in the app. `scripts/record_samples.py` replaces them with recorded runs from the MI300X, and `scripts/benchmark.py` measures latency, throughput and cost per packet.
 
 ## AMD
 
@@ -121,6 +122,8 @@ Copy `.env.example` to `.env` to see every setting. Leave `HOMEWARD_LLM_BASE_URL
 Anywhere other people can reach it, set `HOMEWARD_STAFF_PASSWORD` (12 or more characters): every staff page and API call then asks for it, and only the patient's own link (`/p/<token>`) stays open. On an AMD droplet, `deploy/amd/run_app.sh` starts the app behind Caddy with an automatic HTTPS certificate and refuses to start without a password.
 
 Browser walk-through of the full demo: `node tests/e2e/demo_flow.mjs http://localhost:8000 [screenshot-dir]` (needs Playwright). It fails on any Content Security Policy violation and runs an accessibility sweep (contrast, accessible names, 24 px touch targets); set `LAYOUT_DIR=<dir>` to also capture 320, 360 and 1280 px layouts in light, dark and reduced motion.
+
+Cover and slides: `node scripts/render_brand.mjs` (needs Playwright) re-renders `docs/brand/cover.png` and `docs/brand/homeward-slides.pdf` from their HTML, with the app's current screenshots.
 
 Real model runs: the **Record real model runs** GitHub Actions workflow (`.github/workflows/record-runs.yml`) runs the sample cases through either a small open model on the runner's CPU or any OpenAI-compatible endpoint such as vLLM on the MI300X (needs repository secrets `HOMEWARD_LLM_BASE_URL` and `HOMEWARD_LLM_API_KEY`), and commits the outputs to a `runs/<label>` branch.
 

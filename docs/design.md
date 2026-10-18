@@ -111,6 +111,10 @@ The illustrations are drawn in-house as inline SVG: flat shapes, a 2.5 px evergr
 - **Porch light** (patient header).
 - **Spot illustrations** for empty states: a clipboard, a locked house and a chart.
 
+## Cover and slides
+
+`docs/brand/cover.html` and `docs/brand/slides.html` use the app's palette, typeface and mark (the mark is `homeward/static/favicon.svg`), and the slides show the screenshots in `docs/screenshots/`. When the screenshots change, re-run the walk-through to refresh them, then `node scripts/render_brand.mjs` to re-render `cover.png` and `homeward-slides.pdf`.
+
 ## Research behind it
 
 - NHS digital service manual, [colour](https://service-manual.nhs.uk/design-system/styles/colour): never rely on colour alone, aim for AAA, and use a tinted background to reduce glare.
